@@ -76,7 +76,7 @@ class Pet {
                 id: 103,
                 name: '渡鸦',
                 type: 'raven',
-                description: '战斗开始时渡鸦随机模仿玩家的一个技能作为本场战斗的技能，当渡鸦存活在场上时，每回合自动使用模仿的技能一次',
+                description: '存活在场上时提升10点玩家的速度',
                 icon: '🐦‍⬛',
                 rarity: 'legendary',
                 stats: { atk: 15, def: 5, hp: 80 },
@@ -84,8 +84,9 @@ class Pet {
                 hp: 80,
                 battleType: 'special',
                 specialAbility: {
-                    type: 'mimic',
-                    description: '每回合自动使用模仿的技能一次'
+                    type: 'speedBoost',
+                    value: 10,
+                    description: '提升玩家10点速度'
                 }
             }
         };
@@ -148,6 +149,19 @@ class Pet {
                 break;
 
             case 'taunt':
+                break;
+
+            case 'speedBoost':
+                const playerForSpeed = battle.getAlivePlayers()[0];
+                if (playerForSpeed) {
+                    playerForSpeed.spd += ability.value;
+                    battle.battleLog.push({
+                        type: 'petAbility',
+                        pet: this.name,
+                        ability: 'speedBoost',
+                        value: ability.value
+                    });
+                }
                 break;
 
             case 'mimic':
@@ -227,5 +241,5 @@ const SPECIAL_PETS = {
     'yueremu': { id: 100, name: '鱼儿木', icon: '🌿🐟', description: '半鱼半植物的生物，每回合可以治愈角色10滴血，攻击力5，防御力10，生命值150' },
     'maoning': { id: 101, name: '猫宁', icon: '🐱‍👤', description: '死里逃生的小猫，觉醒操纵阴影的能力，可以影子束缚敌人，攻击力8，防御力8，生命值100' },
     'humor': { id: 102, name: '滑稽', icon: '🤪', description: '一个巨大的漂浮的滑稽脸，敌人攻击时会优先以滑稽作为目标，攻击力0，防御力30，生命值400' },
-    'raven': { id: 103, name: '渡鸦', icon: '🐦‍⬛', description: '战斗开始时渡鸦随机模仿玩家的一个技能作为本场战斗的技能，当渡鸦存活在场上时，每回合自动使用模仿的技能一次，攻击力15，防御力5，生命值80' }
+    'raven': { id: 103, name: '渡鸦', icon: '🐦‍⬛', description: '存活在场上时提升10点玩家的速度，攻击力15，防御力5，生命值80' }
 };

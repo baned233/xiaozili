@@ -382,5 +382,17 @@ const SKILL_POOL = [
         icon: '👊',
         cost: 80,
         isMagic: false
+    },
+    {
+        id: 34,
+        name: '狠狠撕咬',
+        description: '造成中量物理伤害',
+        type: 'attack',
+        rarity: 'rare',
+        power: '50+1.2*atk',
+        level: 2,
+        icon: '🦷',
+        cost: 25,
+        isMagic: false
     }
 ];

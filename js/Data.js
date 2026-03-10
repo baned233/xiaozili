@@ -141,17 +141,6 @@ const RANDOM_EVENTS = [
         ]
     },
     {
-        id: 'shrine',
-        name: '祭坛',
-        icon: '⛩️',
-        desc: '一座古老的祭坛矗立在此，献祭金币以获得祝福？',
-        options: [
-            { text: '献祭30金币', effect: { cost: 30, buff: { atk: 5, turns: 3 } } },
-            { text: '献祭50金币', effect: { cost: 50, buff: { atk: 8, def: 3, turns: 3 } } },
-            { text: '离开', effect: {} }
-        ]
-    },
-    {
         id: 'merchant',
         name: '神秘商人',
         icon: '🧙',

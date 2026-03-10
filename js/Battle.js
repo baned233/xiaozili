@@ -330,29 +330,29 @@ class Battle {
             const playerCharacters = this.playerTeam.filter(c => !c.isDead && !c.banished && !c.isSummoned);
             const pets = this.playerTeam.filter(c => !c.isDead && !c.banished && c.isSummoned);
             
-            const priorityTarget = playerCharacters.find(c => c.isSummoned && c.priority);
-            if (priorityTarget) {
-                target = priorityTarget;
-            } else if (pets.length > 0) {
-                const humorPet = pets.find(p => p.name === '滑稽' || p.type === 'humor');
-                if (humorPet && Math.random() < 0.8) {
-                    target = humorPet;
-                } else {
+            const humorPet = pets.find(p => p.name === '滑稽' || p.type === 'humor');
+            if (humorPet) {
+                target = humorPet;
+            } else {
+                const priorityTarget = playerCharacters.find(c => c.isSummoned && c.priority);
+                if (priorityTarget) {
+                    target = priorityTarget;
+                } else if (pets.length > 0) {
                     if (Math.random() < 0.7 && playerCharacters.length > 0) {
                         target = playerCharacters[Math.floor(Math.random() * playerCharacters.length)];
                     } else if (pets.length > 0) {
                         target = pets[Math.floor(Math.random() * pets.length)];
                     }
+                } else if (playerCharacters.length > 0) {
+                    target = playerCharacters[Math.floor(Math.random() * playerCharacters.length)];
                 }
-            } else if (playerCharacters.length > 0) {
-                target = playerCharacters[Math.floor(Math.random() * playerCharacters.length)];
+                
+                if (!target) {
+                    target = this.playerTeam.find(c => !c.isDead && !c.banished);
+                }
+                
+                if (!target) return null;
             }
-            
-            if (!target) {
-                target = this.playerTeam.find(c => !c.isDead && !c.banished);
-            }
-            
-            if (!target) return null;
         }
         
         let result;
@@ -418,14 +418,14 @@ class Battle {
         
         const battleEnd = this.checkBattleEnd();
         if (battleEnd.ended) {
-            return { battleEnd, result };
+            return { battleEnd, result, target };
         }
 
         if (this.currentActorType === 'player') {
-            return { state: 'playerSelect', nextActor: this.currentActor, result };
+            return { state: 'playerSelect', nextActor: this.currentActor, result, target };
         }
 
-        return { state: 'enemyTurn', nextActor: this.currentActor, result };
+        return { state: 'enemyTurn', nextActor: this.currentActor, result, target };
     }
 
     handleEnemyDeath(enemy) {

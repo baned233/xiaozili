@@ -77,11 +77,11 @@ class Game {
                 pathType = 'battle';
             } else if (roll < 0.45 && !usedTypes.has('elite') && this.currentFloor % 5 === 0) {
                 pathType = 'elite';
-            } else if (roll < 0.60 && !usedTypes.has('shop')) {
+            } else if (roll < 0.55 && !usedTypes.has('shop')) {
                 pathType = 'shop';
-            } else if (roll < 0.75 && !usedTypes.has('rest')) {
+            } else if (roll < 0.65 && !usedTypes.has('rest')) {
                 pathType = 'rest';
-            } else if (roll < 0.90 && !usedTypes.has('event')) {
+            } else if (roll < 0.85 && !usedTypes.has('event')) {
                 pathType = 'event';
             } else {
                 pathType = 'battle';
@@ -311,7 +311,16 @@ class Game {
     
     processNextActorTurn() {
         const battle = this.battle;
+        if (!battle) return;
+        
         const nextActor = battle.currentActor;
+        if (!nextActor) {
+            const battleEnd = battle.checkBattleEnd();
+            if (battleEnd.ended) {
+                setTimeout(() => this.handleBattleEnd(battleEnd), 300);
+            }
+            return;
+        }
         
         if (battle.currentActorType === 'player' && nextActor && nextActor !== this.playerTeam[0]) {
             if (nextActor.specialAbility && nextActor.executeSpecialAbility) {
@@ -332,8 +341,8 @@ class Game {
                 setTimeout(() => this.processEnemyTurn(), 300);
             } else if (battle.currentActor === this.playerTeam[0]) {
                 this.updateSkillPanel();
-            } else {
-                this.processNextActorTurn();
+            } else if (battle.currentActor && battle.currentActor !== nextActor) {
+                setTimeout(() => this.processNextActorTurn(), 100);
             }
         } else if (battle.currentActor === this.playerTeam[0]) {
             this.updateSkillPanel();
@@ -353,8 +362,8 @@ class Game {
                 setTimeout(() => this.processEnemyTurn(), 300);
             } else if (battle.currentActor === this.playerTeam[0]) {
                 this.updateSkillPanel();
-            } else {
-                this.processNextActorTurn();
+            } else if (battle.currentActor && battle.currentActor !== nextActor) {
+                setTimeout(() => this.processNextActorTurn(), 100);
             }
         }
     }
@@ -391,7 +400,8 @@ class Game {
         
         if (result && result.damage) {
             audioManager.playHit();
-            this.ui.showDamageEffect(this.playerTeam[0], result, true);
+            const isPlayerTarget = result.target && (result.target.isSummoned || !result.target.isSummoned);
+            this.ui.showDamageEffect(result.target, result, true);
         }
         
         setTimeout(() => {

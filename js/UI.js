@@ -394,6 +394,23 @@ class UI {
                             <div class="tooltip-desc">${relic.description}</div>
                         </div>
                     `;
+                    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                    if (isTouchDevice) {
+                        relicItem.addEventListener('touchstart', (e) => {
+                            e.stopPropagation();
+                            const tooltip = relicItem.querySelector('.relic-tooltip');
+                            if (tooltip) {
+                                document.querySelectorAll('.relic-tooltip, .pet-tooltip').forEach(t => {
+                                    if (t !== tooltip) t.style.display = 'none';
+                                });
+                                tooltip.style.display = 'block';
+                            }
+                        });
+                        relicItem.addEventListener('touchend', () => {
+                            const tooltip = relicItem.querySelector('.relic-tooltip');
+                            if (tooltip) tooltip.style.display = 'none';
+                        });
+                    }
                     relicsList.appendChild(relicItem);
                 });
             } else {
@@ -418,6 +435,23 @@ class UI {
                             <div class="tooltip-stats">血量: ${pet.hp}/${pet.maxHp}</div>
                         </div>
                     `;
+                    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                    if (isTouchDevice) {
+                        petItem.addEventListener('touchstart', (e) => {
+                            e.stopPropagation();
+                            const tooltip = petItem.querySelector('.pet-tooltip');
+                            if (tooltip) {
+                                document.querySelectorAll('.relic-tooltip, .pet-tooltip').forEach(t => {
+                                    if (t !== tooltip) t.style.display = 'none';
+                                });
+                                tooltip.style.display = 'block';
+                            }
+                        });
+                        petItem.addEventListener('touchend', () => {
+                            const tooltip = petItem.querySelector('.pet-tooltip');
+                            if (tooltip) tooltip.style.display = 'none';
+                        });
+                    }
                     petList.appendChild(petItem);
                 });
             } else {
@@ -709,6 +743,7 @@ class UI {
                 <div class="status-attrs">
                     <span class="attr-atk">⚔️${enemy.atk}</span>
                     <span class="attr-def">🛡️${enemy.def}</span>
+                    <span class="attr-spd">⚡${enemy.spd}</span>
                 </div>
             </div>
         `;
@@ -843,6 +878,31 @@ class UI {
                 </div>
             `;
             btn.addEventListener('click', () => this.game.selectSkill(index));
+            
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            
+            if (isTouchDevice) {
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const tooltip = btn.querySelector('.skill-tooltip');
+                    if (tooltip) {
+                        document.querySelectorAll('.skill-tooltip').forEach(t => {
+                            if (t !== tooltip) t.style.display = 'none';
+                        });
+                        tooltip.style.display = 'block';
+                    }
+                });
+                
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    const tooltip = btn.querySelector('.skill-tooltip');
+                    if (tooltip) {
+                        tooltip.style.display = 'none';
+                    }
+                    this.game.selectSkill(index);
+                });
+            }
+            
             this.skillOptions.appendChild(btn);
         });
     }
