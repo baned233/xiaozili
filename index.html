@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小资历大冒险</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div class="main-menu-bg">
+            <div class="bg-particles"></div>
+            <div class="bg-glow bg-glow-1"></div>
+            <div class="bg-glow bg-glow-2"></div>
+        </div>
+        <div id="main-menu">
+            <div class="menu-header">
+                <div class="title-decoration"></div>
+                <h1 id="game-title">深渊爬塔</h1>
+                <p class="subtitle">小资历大冒险</p>
+                <div class="title-glow"></div>
+            </div>
+            <div class="menu-buttons">
+                <button id="btn-start" class="menu-btn btn-primary">
+                    <span class="btn-icon">⚔️</span>
+                    <span class="btn-text">开始游戏</span>
+                    <span class="btn-glow"></span>
+                </button>
+                <button id="btn-continue" class="menu-btn btn-secondary hidden">
+                    <span class="btn-icon">📜</span>
+                    <span class="btn-text">继续游戏</span>
+                </button>
+                <button id="btn-settings" class="menu-btn btn-secondary">
+                    <span class="btn-icon">⚙️</span>
+                    <span class="btn-text">设置</span>
+                </button>
+                <button id="btn-exit" class="menu-btn btn-danger">
+                    <span class="btn-icon">🚪</span>
+                    <span class="btn-text">退出</span>
+                </button>
+            </div>
+            <div class="menu-footer">
+                <p class="version">v1.0.0</p>
+            </div>
+        </div>
+        <div id="game-screen" class="hidden">
+            <div id="top-bar">
+                <span id="floor-display">层数: 1</span>
+                <span id="gold-display">金币: 0</span>
+                <span id="stamina-display">💪 100/100</span>
+                <span id="mana-display">💧 60/60</span>
+                <div id="hp-bar-container">
+                    <div id="hp-bar-fill"></div>
+                </div>
+                <div id="potion-bar"></div>
+                <div id="player-portrait"></div>
+                <div id="console-input-container">
+                    <input type="text" id="console-input" placeholder="输入密码" maxlength="10">
+                </div>
+            </div>
+            <div id="map-panel" class="hidden">
+                <h3>选择前进方向</h3>
+                <div id="path-options"></div>
+            </div>
+            <div id="battle-area" class="hidden">
+                <button id="btn-cancel-target" class="action-btn cancel-btn hidden">取消选择</button>
+                <div id="player-side"></div>
+                <div id="enemy-side"></div>
+            </div>
+            <div id="skill-panel" class="hidden">
+                <h3>选择技能</h3>
+                <div id="skill-options"></div>
+            </div>
+            <div id="shop-panel" class="hidden">
+                <h3>商店</h3>
+                <div id="shop-items"></div>
+                <button id="btn-leave-shop" class="action-btn">离开商店</button>
+            </div>
+            <div id="rest-panel" class="hidden">
+                <h3>安全屋</h3>
+                <p id="rest-desc">在这里休息可以恢复生命值</p>
+                <div id="rest-options">
+                    <button id="btn-rest" class="action-btn">休息 (恢复30%生命)</button>
+                    <button id="btn-enhance" class="action-btn">强化 (随机提升属性)</button>
+                    <button id="btn-leave-rest" class="action-btn">离开</button>
+                </div>
+            </div>
+            <div id="event-panel" class="hidden">
+                <h3 id="event-title">特殊事件</h3>
+                <p id="event-desc"></p>
+                <div id="event-options"></div>
+            </div>
+            <div id="dialog-panel" class="hidden">
+                <div id="dialog-text"></div>
+                <button id="btn-dialog-continue" class="action-btn">继续</button>
+            </div>
+            <div id="reward-panel" class="hidden">
+                <h3>选择奖励</h3>
+                <div id="reward-options"></div>
+            </div>
+            <div id="game-over" class="hidden">
+                <h2>游戏结束</h2>
+                <p id="death-message"></p>
+                <button id="btn-restart" class="menu-btn">重新开始</button>
+            </div>
+            <div id="victory" class="hidden">
+                <h2>恭喜通关！</h2>
+                <p>你成功爬上了30层塔！</p>
+                <button id="btn-victory-restart" class="menu-btn">再玩一次</button>
+            </div>
+            <div id="debug-console" class="hidden">
+                <div class="debug-header">
+                    <span>调试控制台</span>
+                    <button id="btn-close-console" class="close-btn">×</button>
+                </div>
+                <div class="debug-search-container">
+                    <input type="text" id="debug-search" placeholder="搜索技能/遗物/宠物...">
+                </div>
+                <div class="debug-tabs">
+                    <button class="debug-tab active" data-tab="skills">技能</button>
+                    <button class="debug-tab" data-tab="relics">遗物</button>
+                    <button class="debug-tab" data-tab="pets">宠物</button>
+                </div>
+                <div id="debug-content"></div>
+            </div>
+        </div>
+        <div id="settings-panel" class="hidden">
+            <h2>设置</h2>
+            <label>
+                音效音量: <input type="range" id="sfx-volume" min="0" max="100" value="50">
+            </label>
+            <label>
+                音乐音量: <input type="range" id="music-volume" min="0" max="100" value="30">
+            </label>
+            <label>
+                <input type="checkbox" id="music-toggle" checked> 背景音乐
+            </label>
+            <button id="btn-close-settings" class="menu-btn">返回</button>
+        </div>
+        <div id="character-panel" class="hidden">
+            <div class="panel-header">
+                <h2>角色属性</h2>
+                <button id="btn-close-character" class="close-btn">×</button>
+            </div>
+            <div class="panel-content">
+                <div class="character-base-info">
+                    <div id="character-portrait-large"></div>
+                    <div class="character-name-level">
+                        <div id="character-name-display"></div>
+                        <div id="character-level-display"></div>
+                    </div>
+                </div>
+                <div class="character-attributes">
+                    <div class="attr-row"><span>生命:</span> <span id="attr-hp"></span></div>
+                    <div class="attr-row"><span>攻击力:</span> <span id="attr-atk"></span></div>
+                    <div class="attr-row"><span>防御力:</span> <span id="attr-def"></span></div>
+                    <div class="attr-row"><span>速度:</span> <span id="attr-spd"></span></div>
+                    <div class="attr-row"><span>暴击率:</span> <span id="attr-crit"></span></div>
+                    <div class="attr-row"><span>暴击伤害:</span> <span id="attr-critdmg"></span></div>
+                    <div class="attr-row"><span>体力:</span> <span id="attr-stamina"></span></div>
+                    <div class="attr-row"><span>法力:</span> <span id="attr-mana"></span></div>
+                </div>
+                <div class="relics-section">
+                    <h3>遗物</h3>
+                    <div id="relics-list"></div>
+                </div>
+                <div class="pet-section">
+                    <h3>宠物</h3>
+                    <div id="pet-list"></div>
+                </div>
+            </div>
+        </div>
+        <div id="skill-replace-panel" class="hidden">
+            <h3>选择要替换的技能</h3>
+            <div id="replace-skill-options"></div>
+        </div>
+        <div id="battle-log-panel" class="hidden">
+            <div class="battle-log-header">
+                <span>战斗日志</span>
+                <button id="btn-toggle-battle-log" class="log-toggle-btn">▼</button>
+            </div>
+            <div id="battle-log-content"></div>
+        </div>
+    </div>
+    <script src="js/Data.js"></script>
+    <script src="js/Audio.js"></script>
+    <script src="js/Skill.js"></script>
+    <script src="js/Relic.js"></script>
+    <script src="js/Pet.js"></script>
+    <script src="js/Character.js"></script>
+    <script src="js/Enemy.js"></script>
+    <script src="js/Battle.js"></script>
+    <script src="js/UI.js"></script>
+    <script src="js/Game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
