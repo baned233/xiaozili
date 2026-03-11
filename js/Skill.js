@@ -146,13 +146,13 @@ const SKILL_POOL = [
     {
         id: 15,
         name: '鬼！',
-        description: '移除一个选中的敌方单位，两回合后该单位回归，若回归前其他敌方单位全灭，则玩家直接获得胜利（对精英怪以及BOSS无效）',
+        description: '放逐一个敌方单位，将其移除，对精英怪以及BOSS无效',
         type: 'banish',
         rarity: 'rare',
         power: 0,
         level: 3,
         icon: '👻',
-        cost: 60,
+        cost: 40,
         isMagic: true,
         effect: { type: 'banish', duration: 2, eliteImmune: true }
     },
@@ -172,7 +172,7 @@ const SKILL_POOL = [
     {
         id: 17,
         name: '嘶哈～！？',
-        description: '对敌方单位哈气，并造成对其造成该单位上回合对你造成的伤害',
+        description: '对敌方单位哈气，并对其造成该单位上回合对你造成的伤害',
         type: 'attack',
         rarity: 'common',
         power: 0,
@@ -206,7 +206,7 @@ const SKILL_POOL = [
         power: '60+1.4*atk',
         level: 5,
         icon: '🦖',
-        cost: 90,
+        cost: 80,
         isMagic: false,
         targetAll: true,
         effect: { type: 'weakness', threshold: 100, stacks: 3 }
@@ -234,7 +234,7 @@ const SKILL_POOL = [
         power: 0,
         level: 5,
         icon: '🤸',
-        cost: 60,
+        cost: 30,
         isMagic: true,
         targetAll: true,
         effect: { type: 'removePositiveBuffs' }
@@ -276,7 +276,7 @@ const SKILL_POOL = [
         power: 0,
         level: 3,
         icon: '⚾',
-        cost: 100,
+        cost: 50,
         isMagic: false,
         effect: { type: 'maxHpDamage', percent: 0.2 }
     },

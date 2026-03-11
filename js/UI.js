@@ -396,19 +396,23 @@ class UI {
                     `;
                     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
                     if (isTouchDevice) {
-                        relicItem.addEventListener('touchstart', (e) => {
+                        relicItem.addEventListener('click', (e) => {
                             e.stopPropagation();
                             const tooltip = relicItem.querySelector('.relic-tooltip');
                             if (tooltip) {
+                                const isVisible = tooltip.style.display === 'block';
                                 document.querySelectorAll('.relic-tooltip, .pet-tooltip').forEach(t => {
-                                    if (t !== tooltip) t.style.display = 'none';
+                                    t.style.display = 'none';
                                 });
-                                tooltip.style.display = 'block';
+                                if (!isVisible) {
+                                    tooltip.style.display = 'block';
+                                }
                             }
                         });
-                        relicItem.addEventListener('touchend', () => {
-                            const tooltip = relicItem.querySelector('.relic-tooltip');
-                            if (tooltip) tooltip.style.display = 'none';
+                        document.addEventListener('click', () => {
+                            document.querySelectorAll('.relic-tooltip, .pet-tooltip').forEach(t => {
+                                t.style.display = 'none';
+                            });
                         });
                     }
                     relicsList.appendChild(relicItem);
@@ -437,19 +441,23 @@ class UI {
                     `;
                     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
                     if (isTouchDevice) {
-                        petItem.addEventListener('touchstart', (e) => {
+                        petItem.addEventListener('click', (e) => {
                             e.stopPropagation();
                             const tooltip = petItem.querySelector('.pet-tooltip');
                             if (tooltip) {
+                                const isVisible = tooltip.style.display === 'block';
                                 document.querySelectorAll('.relic-tooltip, .pet-tooltip').forEach(t => {
-                                    if (t !== tooltip) t.style.display = 'none';
+                                    t.style.display = 'none';
                                 });
-                                tooltip.style.display = 'block';
+                                if (!isVisible) {
+                                    tooltip.style.display = 'block';
+                                }
                             }
                         });
-                        petItem.addEventListener('touchend', () => {
-                            const tooltip = petItem.querySelector('.pet-tooltip');
-                            if (tooltip) tooltip.style.display = 'none';
+                        document.addEventListener('click', () => {
+                            document.querySelectorAll('.relic-tooltip, .pet-tooltip').forEach(t => {
+                                t.style.display = 'none';
+                            });
                         });
                     }
                     petList.appendChild(petItem);
@@ -759,7 +767,8 @@ class UI {
         }
         
         const icons = ['🐀', '🪲', '💀', '🧟', '🦇', '👤', '👻', '😈', '🗿', '🦂'];
-        return `<div style="font-size:28px">${icons[Math.floor(Math.random() * icons.length)]}</div>`;
+        const index = enemy.name.charCodeAt(0) % icons.length;
+        return `<div style="font-size:28px">${icons[index]}</div>`;
     }
 
     showDamageEffect(target, result, isPlayer = false, skill = null, isHeal = false) {
@@ -854,7 +863,7 @@ class UI {
         }
         
         skills.forEach((skill, index) => {
-            const canUse = skill.canUse(character);
+            const canUse = skill.canUse(character) && !skill.passive;
             const costType = skill.getCostType();
             const cost = skill.getCost();
             const costIcon = costType === 'mana' ? '💧' : '💪';
@@ -877,7 +886,11 @@ class UI {
                     <div class="tooltip-cost">消耗: ${costIcon} ${cost} ${costType === 'mana' ? '法力' : '体力'}</div>
                 </div>
             `;
-            btn.addEventListener('click', () => this.game.selectSkill(index));
+            btn.addEventListener('click', () => {
+                if (!skill.passive) {
+                    this.game.selectSkill(index);
+                }
+            });
             
             const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             
@@ -899,7 +912,9 @@ class UI {
                     if (tooltip) {
                         tooltip.style.display = 'none';
                     }
-                    this.game.selectSkill(index);
+                    if (!skill.passive) {
+                        this.game.selectSkill(index);
+                    }
                 });
             }
             
@@ -1198,24 +1213,40 @@ class UI {
                 { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合随机偷取怪物技能进行攻击', icon: '🐦‍⬛', rarity: 'legendary' }
             ];
             items = specialPets.filter(p => !term || p.name.toLowerCase().includes(term) || p.description.toLowerCase().includes(term));
+        } else if (this.currentDebugTab === 'events') {
+            items = RANDOM_EVENTS.filter(e => !term || e.name.toLowerCase().includes(term) || e.desc.toLowerCase().includes(term));
         }
 
         items.forEach(item => {
             const div = document.createElement('div');
             div.className = 'debug-item';
-            div.innerHTML = `
-                <span class="debug-item-icon">${item.icon}</span>
-                <div class="debug-item-info">
-                    <div class="debug-item-name">${item.name}</div>
-                    <div class="debug-item-desc">${item.description}</div>
-                </div>
-                <span class="debug-item-rarity ${item.rarity}">${item.rarity}</span>
-            `;
-            div.addEventListener('click', () => {
-                audioManager.playClick();
-                this.game.obtainDebugItem(this.currentDebugTab, item);
-                this.hideDebugConsole();
-            });
+            
+            if (this.currentDebugTab === 'events') {
+                div.innerHTML = `
+                    <span class="debug-item-icon">${item.icon}</span>
+                    <div class="debug-item-info">
+                        <div class="debug-item-name">${item.name}</div>
+                        <div class="debug-item-desc">${item.desc}</div>
+                    </div>
+                `;
+                div.addEventListener('click', () => {
+                    audioManager.playClick();
+                    this.game.triggerDebugEvent(item);
+                });
+            } else {
+                div.innerHTML = `
+                    <span class="debug-item-icon">${item.icon}</span>
+                    <div class="debug-item-info">
+                        <div class="debug-item-name">${item.name}</div>
+                        <div class="debug-item-desc">${item.description}</div>
+                    </div>
+                    <span class="debug-item-rarity ${item.rarity}">${item.rarity}</span>
+                `;
+                div.addEventListener('click', () => {
+                    audioManager.playClick();
+                    this.game.obtainDebugItem(this.currentDebugTab, item);
+                });
+            }
             content.appendChild(div);
         });
 

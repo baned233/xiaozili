@@ -13,6 +13,7 @@ class Pet {
         this.battleType = data.battleType || 'buff';
         this.specialAbility = data.specialAbility || null;
         this.isDead = false;
+        this.abilityUsedThisTurn = false;
     }
 
     static createPet(petData) {
@@ -42,7 +43,7 @@ class Pet {
                 id: 101,
                 name: '猫宁',
                 type: 'shadow_cat',
-                description: '死里逃生的小猫，觉醒操纵阴影的能力，可以影子束缚敌人',
+                description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合为敌人添加1层破防',
                 icon: '🐱‍👤',
                 rarity: 'legendary',
                 stats: { atk: 8, def: 8, hp: 100 },
@@ -50,16 +51,16 @@ class Pet {
                 hp: 100,
                 battleType: 'special',
                 specialAbility: {
-                    type: 'bind',
+                    type: 'breakDefense',
                     chance: 1.0,
-                    description: '每回合束缚一只怪物'
+                    description: '每回合为随机敌人添加1层破防'
                 }
             },
             'humor': {
                 id: 102,
                 name: '滑稽',
                 type: 'humor',
-                description: '一个巨大的漂浮的滑稽脸，敌人攻击时会优先以滑稽作为目标',
+                description: '战斗开始时，给玩家提供一层滑稽',
                 icon: '🤪',
                 rarity: 'legendary',
                 stats: { atk: 0, def: 30, hp: 400 },
@@ -67,16 +68,16 @@ class Pet {
                 hp: 400,
                 battleType: 'special',
                 specialAbility: {
-                    type: 'taunt',
+                    type: 'giveHumorBuff',
                     chance: 1.0,
-                    description: '敌人攻击时会优先以滑稽作为目标'
+                    description: '战斗开始时，给玩家提供一层滑稽'
                 }
             },
             'raven': {
                 id: 103,
                 name: '渡鸦',
                 type: 'raven',
-                description: '存活在场上时提升10点玩家的速度',
+                description: '每回合提升玩家2点速度',
                 icon: '🐦‍⬛',
                 rarity: 'legendary',
                 stats: { atk: 15, def: 5, hp: 80 },
@@ -85,8 +86,8 @@ class Pet {
                 battleType: 'special',
                 specialAbility: {
                     type: 'speedBoost',
-                    value: 10,
-                    description: '提升玩家10点速度'
+                    value: 2,
+                    description: '每回合提升玩家2点速度'
                 }
             }
         };
@@ -117,6 +118,7 @@ class Pet {
 
     executeSpecialAbility(battle) {
         if (!this.specialAbility || this.isDead) return;
+        if (this.abilityUsedThisTurn) return;
 
         const ability = this.specialAbility;
         
@@ -148,7 +150,35 @@ class Pet {
                 }
                 break;
 
+            case 'breakDefense':
+                const breakEnemies = battle.getAliveEnemies();
+                if (breakEnemies.length > 0) {
+                    const breakTarget = breakEnemies[Math.floor(Math.random() * breakEnemies.length)];
+                    breakTarget.addBuff('破防', 1);
+                    battle.battleLog.push({
+                        type: 'petAbility',
+                        pet: this.name,
+                        ability: 'breakDefense',
+                        target: breakTarget.name,
+                        stacks: 1
+                    });
+                }
+                break;
+
             case 'taunt':
+                break;
+
+            case 'giveHumorBuff':
+                const playerForHumor = battle.getAlivePlayers()[0];
+                if (playerForHumor) {
+                    playerForHumor.addBuff('滑稽', 1);
+                    battle.battleLog.push({
+                        type: 'petAbility',
+                        pet: this.name,
+                        ability: 'giveHumorBuff',
+                        message: '滑稽给玩家添加了滑稽buff！'
+                    });
+                }
                 break;
 
             case 'speedBoost':
@@ -219,6 +249,8 @@ class Pet {
                 }
                 break;
         }
+        
+        this.abilityUsedThisTurn = true;
     }
 }
 
@@ -239,7 +271,7 @@ const PET_POOL = [
 
 const SPECIAL_PETS = {
     'yueremu': { id: 100, name: '鱼儿木', icon: '🌿🐟', description: '半鱼半植物的生物，每回合可以治愈角色10滴血，攻击力5，防御力10，生命值150' },
-    'maoning': { id: 101, name: '猫宁', icon: '🐱‍👤', description: '死里逃生的小猫，觉醒操纵阴影的能力，可以影子束缚敌人，攻击力8，防御力8，生命值100' },
+    'maoning': { id: 101, name: '猫宁', icon: '🐱‍👤', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合为敌人添加1层破防，攻击力8，防御力8，生命值100' },
     'humor': { id: 102, name: '滑稽', icon: '🤪', description: '一个巨大的漂浮的滑稽脸，敌人攻击时会优先以滑稽作为目标，攻击力0，防御力30，生命值400' },
-    'raven': { id: 103, name: '渡鸦', icon: '🐦‍⬛', description: '存活在场上时提升10点玩家的速度，攻击力15，防御力5，生命值80' }
+    'raven': { id: 103, name: '渡鸦', icon: '🐦‍⬛', description: '每回合提升玩家2点速度，攻击力15，防御力5，生命值80' }
 };

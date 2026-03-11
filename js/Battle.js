@@ -165,6 +165,10 @@ class Battle {
         this.playerTeam.forEach(c => {
             if (!c.isDead) {
                 c.defending = false;
+                if (c.restoreStamina && c.restoreMana) {
+                    c.restoreStamina(5);
+                    c.restoreMana(5);
+                }
                 if (c.buffs && c.buffs.length > 0) {
                     c.buffs.forEach(buff => {
                         const buffData = BUFF_DATA[buff.name];
@@ -175,6 +179,7 @@ class Battle {
                 }
             }
             if (c.specialAbility && typeof c.executeSpecialAbility === 'function') {
+                c.abilityUsedThisTurn = false;
                 c.executeSpecialAbility(this);
             }
         });
@@ -324,35 +329,33 @@ class Battle {
         
         let target = null;
         
-        if (this.marked && this.markTarget && !this.markTarget.isDead) {
+        const playerCharacters = this.playerTeam.filter(c => !c.isDead && !c.banished && !c.isSummoned);
+        const pets = this.playerTeam.filter(c => !c.isDead && !c.banished && c.isSummoned);
+        
+        const humorPet = pets.find(p => p.name === '滑稽' || p.type === 'humor');
+        if (humorPet) {
+            target = humorPet;
+        } else if (this.marked && this.markTarget && !this.markTarget.isDead) {
             target = this.markTarget;
         } else {
-            const playerCharacters = this.playerTeam.filter(c => !c.isDead && !c.banished && !c.isSummoned);
-            const pets = this.playerTeam.filter(c => !c.isDead && !c.banished && c.isSummoned);
-            
-            const humorPet = pets.find(p => p.name === '滑稽' || p.type === 'humor');
-            if (humorPet) {
-                target = humorPet;
-            } else {
-                const priorityTarget = playerCharacters.find(c => c.isSummoned && c.priority);
-                if (priorityTarget) {
-                    target = priorityTarget;
-                } else if (pets.length > 0) {
-                    if (Math.random() < 0.7 && playerCharacters.length > 0) {
-                        target = playerCharacters[Math.floor(Math.random() * playerCharacters.length)];
-                    } else if (pets.length > 0) {
-                        target = pets[Math.floor(Math.random() * pets.length)];
-                    }
-                } else if (playerCharacters.length > 0) {
+            const priorityTarget = playerCharacters.find(c => c.isSummoned && c.priority);
+            if (priorityTarget) {
+                target = priorityTarget;
+            } else if (pets.length > 0) {
+                if (Math.random() < 0.7 && playerCharacters.length > 0) {
                     target = playerCharacters[Math.floor(Math.random() * playerCharacters.length)];
+                } else if (pets.length > 0) {
+                    target = pets[Math.floor(Math.random() * pets.length)];
                 }
-                
-                if (!target) {
-                    target = this.playerTeam.find(c => !c.isDead && !c.banished);
-                }
-                
-                if (!target) return null;
+            } else if (playerCharacters.length > 0) {
+                target = playerCharacters[Math.floor(Math.random() * playerCharacters.length)];
             }
+            
+            if (!target) {
+                target = this.playerTeam.find(c => !c.isDead && !c.banished);
+            }
+            
+            if (!target) return null;
         }
         
         let result;

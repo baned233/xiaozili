@@ -563,7 +563,7 @@ body {
 }
 
 .relic-item:hover .relic-tooltip {
-    display: block;
+    display: block !important;
 }
 
 .relic-tooltip .tooltip-name {

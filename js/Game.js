@@ -81,7 +81,7 @@ class Game {
                 pathType = 'shop';
             } else if (roll < 0.65 && !usedTypes.has('rest')) {
                 pathType = 'rest';
-            } else if (roll < 0.85 && !usedTypes.has('event')) {
+            } else if (roll < 0.90 && !usedTypes.has('event')) {
                 pathType = 'event';
             } else {
                 pathType = 'battle';
@@ -133,6 +133,11 @@ class Game {
     startBattle(isElite = false, isBoss = false) {
         this.state = 'battle';
         this.battle = new Battle(this);
+        
+        const player = this.playerTeam[0];
+        if (player) {
+            player.baseSpd = player.baseSpd || player.spd;
+        }
         
         const battleResult = this.battle.startBattle(this.playerTeam, this.currentFloor, isElite, isBoss);
         
@@ -263,6 +268,7 @@ class Game {
         }
         
         this.ui.updatePlayerResources(this.playerTeam[0]);
+        this.updateBattleUI();
         
         if (skillResult) {
             if (skillResult.type === 'heal' && skillResult.heal) {
@@ -270,7 +276,7 @@ class Game {
             } else if (skillResult.damage !== undefined) {
                 const target = result.target;
                 if (target) {
-                    const isPlayerSide = target === this.playerTeam[0] || (target.isSummoned !== undefined && target.isSummoned);
+                    const isPlayerSide = target === this.playerTeam[0];
                     this.ui.showDamageEffect(target, skillResult, isPlayerSide, this.battle.selectedSkill);
                 }
             }
@@ -323,11 +329,6 @@ class Game {
         }
         
         if (battle.currentActorType === 'player' && nextActor && nextActor !== this.playerTeam[0]) {
-            if (nextActor.specialAbility && nextActor.executeSpecialAbility) {
-                nextActor.executeSpecialAbility(battle);
-                this.updateBattleUI();
-            }
-            
             battle.currentTurnIndex++;
             battle.updateCurrentActor();
             
@@ -426,12 +427,18 @@ class Game {
         this.ui.hideBattleLog();
         this.ui.hideCancelTargetSelect();
         
+        const player = this.playerTeam[0];
+        if (player) {
+            if (player.baseSpd !== undefined) {
+                player.spd = player.baseSpd;
+            }
+        }
+        
         if (battleEnd.isBoss || (this.battle && this.battle.isBoss)) {
             audioManager.stopBossMusic();
         }
         
         if (battleEnd.result === 'win') {
-            const player = this.playerTeam[0];
             if (player) {
                 player.restoreStamina(10);
                 player.restoreMana(10);
@@ -841,7 +848,12 @@ class Game {
             availableEvents = availableEvents.filter(e => e.id !== 'sacrifice');
         }
         
-        const event = availableEvents[Math.floor(Math.random() * availableEvents.length)];
+        const weightedEvents = [];
+        availableEvents.forEach(event => {
+            weightedEvents.push(event);
+        });
+        
+        const event = weightedEvents[Math.floor(Math.random() * weightedEvents.length)];
         this.currentEvent = event;
         this.ui.showEvent(event);
     }
@@ -1050,7 +1062,7 @@ class Game {
                         resultText = '被503中的成员邀请加入！最大生命值降低10点，';
                     } else if (option.effect.relic === 'world_line') {
                         this.currentFloor = Math.max(1, this.currentFloor + 3);
-                        resultText = '获得了变动的世界线！角色倒退3层！';
+                        resultText = '获得了变动的世界线！角色上升3层！';
                     } else if (option.effect.relic === 'bloody_soap') {
                         resultText = '在黑暗中摸索半天，摸到了一个东西！';
                     } else if (option.effect.relic === 'coward') {
@@ -1080,6 +1092,7 @@ class Game {
             const petName = sacrificedPet ? sacrificedPet.name : '宠物';
             player.pets = [];
             this.playerTeam[0].pets = [];
+            this.playerTeam = this.playerTeam.filter(p => p.id === player.id);
             this.saveGame();
             resultText = `你献祭了你的伙伴${petName}！`;
         }
@@ -1387,5 +1400,11 @@ class Game {
             }
         }
         this.saveGame();
+    }
+
+    triggerDebugEvent(event) {
+        this.state = 'event';
+        this.currentEvent = event;
+        this.ui.showEvent(event);
     }
 }

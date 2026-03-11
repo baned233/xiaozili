@@ -326,6 +326,10 @@ class Character {
                     }
                     target.atk += skill.effect.value;
                     return { type: 'debuff', effect: 'enrage', value: skill.effect.value, target: target.name };
+                } else if (skill.effect?.type === 'tauntDebuff') {
+                    target.atk += skill.effect.atkBoost;
+                    target.def -= skill.effect.defReduce;
+                    return { type: 'debuff', effect: 'tauntDebuff', atkBoost: skill.effect.atkBoost, defReduce: skill.effect.defReduce, target: target.name };
                 } else if (skill.effect?.type === 'fearAndBuff') {
                     const enemies = battle.getAliveEnemies();
                     enemies.forEach(enemy => {

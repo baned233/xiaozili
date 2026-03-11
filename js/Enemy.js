@@ -131,7 +131,7 @@ class Enemy {
             crit = 10;
             exp = Math.floor(level * 30);
             gold = Math.floor(level * 20);
-            icon = this.generateEliteIcon();
+            icon = this.generateEliteIcon(name);
         } else {
             const commonNames = ENEMY_NAMES.common;
             name = commonNames[Math.floor(Math.random() * commonNames.length)];
@@ -143,7 +143,7 @@ class Enemy {
             crit = 5;
             exp = Math.floor(level * 10);
             gold = Math.floor(level * 5);
-            icon = this.generateIcon();
+            icon = this.generateIcon(name);
         }
         
         const skills = [];
@@ -191,14 +191,16 @@ class Enemy {
         return new Enemy(data);
     }
 
-    static generateIcon() {
+    static generateIcon(name) {
         const icons = ['🐀', '🪲', '💀', '🧟', '🦇', '👤', '👻', '😈', '🗿', '🦂'];
-        return icons[Math.floor(Math.random() * icons.length)];
+        const index = name.charCodeAt(0) % icons.length;
+        return icons[index];
     }
 
-    static generateEliteIcon() {
+    static generateEliteIcon(name) {
         const icons = ['👹', '👺', '👽', '🤖', '🦖', '🧌', '🐉'];
-        return icons[Math.floor(Math.random() * icons.length)];
+        const index = name.charCodeAt(0) % icons.length;
+        return icons[index];
     }
 
     static generateBossIcon(floor) {
@@ -309,7 +311,7 @@ class Enemy {
                 description: BUFF_DATA[buffName].description
             });
         }
-        this.applyBuffEffect(buffName);
+        this.reapplyBuffs();
         return true;
     }
 
