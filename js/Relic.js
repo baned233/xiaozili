@@ -39,9 +39,11 @@ class Relic {
             switch(this.effect.type) {
                 case 'atk':
                     character.atk += this.effect.value;
+                    character.relicBonusAtk = (character.relicBonusAtk || 0) + this.effect.value;
                     break;
                 case 'def':
                     character.def += this.effect.value;
+                    character.relicBonusDef = (character.relicBonusDef || 0) + this.effect.value;
                     break;
                 case 'hp':
                     character.maxHp += this.effect.value;
@@ -60,6 +62,7 @@ class Relic {
                     break;
                 case 'speed':
                     character.spd += this.effect.value;
+                    character.relicBonusSpd = (character.relicBonusSpd || 0) + this.effect.value;
                     break;
                 case 'critDmg':
                     character.critDmg += this.effect.value;

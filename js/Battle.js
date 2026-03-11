@@ -56,6 +56,15 @@ class Battle {
             player.霸王之卵复活 = true;
         }
         
+        if (player.skills) {
+            player.skills.forEach(skill => {
+                if (skill.name === '开导') {
+                    player.skillUseCount = player.skillUseCount || {};
+                    player.skillUseCount['开导'] = 0;
+                }
+            });
+        }
+        
         let enemyCount;
         if (this.isBoss) {
             enemyCount = 1;
@@ -266,15 +275,6 @@ class Battle {
             this.calculateTurnOrder();
         }
         
-        if ((result.type === 'attack' || result.type === 'summon') && result.damage > 0) {
-            const lifestealSkill = playerChar.skills.find(s => s.effect === 'lifesteal');
-            if (lifestealSkill) {
-                const lifestealAmount = Math.floor(result.damage * 0.3);
-                playerChar.heal(lifestealAmount);
-                result.lifesteal = lifestealAmount;
-            }
-        }
-        
         this.battleLog.push({
             type: 'skill',
             character: playerChar.name,
@@ -289,8 +289,21 @@ class Battle {
         }
 
         const targetInfo = this.selectedTarget;
+        const skillUsed = this.selectedSkill;
+        const noEndTurn = skillUsed && (skillUsed.noEndTurn || skillUsed.name === '开导');
+        
         this.selectedSkill = null;
         this.selectedTarget = null;
+        
+        if (noEndTurn) {
+            this.battleState = 'playerSelect';
+            const battleEnd = this.checkBattleEnd();
+            if (battleEnd.ended) {
+                return { success: true, battleEnd, result, target: targetInfo };
+            }
+            return { success: true, state: 'playerSelect', nextActor: this.currentActor, result, target: targetInfo };
+        }
+        
         this.battleState = 'playerSelect';
         
         const battleEnd = this.checkBattleEnd();
@@ -420,6 +433,9 @@ class Battle {
             });
         } else if (target.isDead) {
             this.battleLog.push({ type: 'death', target: target.name });
+            if (target.isSummoned) {
+                this.handleAllyDeath(target);
+            }
         }
 
         this.currentTurnIndex++;
@@ -472,6 +488,16 @@ class Battle {
         }
         
         if (allEnemiesDead || allOthersDead) {
+            this.playerTeam.forEach(c => {
+                if (c.clearDebuffsOnBattleEnd) {
+                    c.clearDebuffsOnBattleEnd();
+                }
+            });
+            this.enemies.forEach(e => {
+                if (e.clearDebuffsOnBattleEnd) {
+                    e.clearDebuffsOnBattleEnd();
+                }
+            });
             return { ended: true, result: 'win', rewards: this.rewards, isElite: this.isElite, isBoss: this.isBoss };
         }
 
@@ -510,5 +536,31 @@ class Battle {
             return this.playerTeam[0].skills && this.playerTeam[0].skills.length > 0;
         }
         return true;
+    }
+
+    handleAllyDeath(deadAlly) {
+        const player = this.getPlayerCharacter();
+        if (!player || player.isDead) return;
+        
+        const resurrectSkill = player.skills?.find(s => s.effect?.type === 'resurrectAlly');
+        if (!resurrectSkill) return;
+        
+        if (player.resurrectAllyUsed) return;
+        
+        player.resurrectAllyUsed = true;
+        deadAlly.isDead = false;
+        deadAlly.hp = Math.floor(deadAlly.maxHp * 0.5);
+        
+        const existingAlly = this.playerTeam.find(c => c.id === deadAlly.id);
+        if (!existingAlly) {
+            this.playerTeam.push(deadAlly);
+        }
+        
+        this.battleLog.push({
+            type: 'passiveTrigger',
+            skill: resurrectSkill.name,
+            target: deadAlly.name,
+            message: `${player.name}的${resurrectSkill.name}触发了！${deadAlly.name}复活了！`
+        });
     }
 }

@@ -1291,14 +1291,18 @@ body {
     box-shadow: 0 5px 20px rgba(0,0,0,0.5);
 }
 
-.skill-btn.skill-rarity-common { border-color: #888; }
+.skill-btn.skill-rarity-common { border-color: #fff; }
 .skill-btn.skill-rarity-rare { border-color: #2ecc71; }
-.skill-btn.skill-rarity-epic { border-color: #3498db; }
+.skill-btn.skill-rarity-uncommon { border-color: #3498db; }
+.skill-btn.skill-rarity-epic { border-color: #9b59b6; }
 .skill-btn.skill-rarity-legendary { border-color: #ffd700; }
+.skill-btn.skill-rarity-mythic { border-color: #e74c3c; }
 
 .skill-btn.skill-rarity-rare:hover { box-shadow: 0 0 20px rgba(46, 204, 113, 0.5); }
-.skill-btn.skill-rarity-epic:hover { box-shadow: 0 0 20px rgba(52, 152, 219, 0.5); }
+.skill-btn.skill-rarity-uncommon:hover { box-shadow: 0 0 20px rgba(52, 152, 219, 0.5); }
+.skill-btn.skill-rarity-epic:hover { box-shadow: 0 0 20px rgba(155, 89, 182, 0.5); }
 .skill-btn.skill-rarity-legendary:hover { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+.skill-btn.skill-rarity-mythic:hover { box-shadow: 0 0 20px rgba(231, 76, 60, 0.5); }
 
 .skill-icon {
     font-size: clamp(20px, 3vw, 26px);
@@ -1808,26 +1812,26 @@ body {
     color: #fff;
 }
 
-.encyc-card-rarity.common { background: #666; }
-.encyc-card-rarity.rare { background: #2ecc71; }
-.encyc-card-rarity.epic { background: #3498db; }
+.encyc-card-rarity.common { background: #ffffff; color: #333; }
+.encyc-card-rarity.rare { background: #2ecc71; color: #fff; }
+.encyc-card-rarity.uncommon { background: #3498db; color: #fff; }
+.encyc-card-rarity.epic { background: #9b59b6; color: #fff; }
 .encyc-card-rarity.legendary { background: #ffd700; color: #000; }
-.encyc-card-rarity.elite { background: #9b59b6; }
-.encyc-card-rarity.boss { background: #e74c3c; }
+.encyc-card-rarity.mythic { background: #e74c3c; color: #fff; }
 
-.encyc-rarity-cn { font-size: 9px; padding: 2px 6px; border-radius: 3px; color: #fff; }
-.encyc-rarity-cn.common { background: #666; }
-.encyc-rarity-cn.rare { background: #2ecc71; }
-.encyc-rarity-cn.epic { background: #3498db; }
+.encyc-rarity-cn.common { background: #ffffff; color: #333; }
+.encyc-rarity-cn.rare { background: #2ecc71; color: #fff; }
+.encyc-rarity-cn.uncommon { background: #3498db; color: #fff; }
+.encyc-rarity-cn.epic { background: #9b59b6; color: #fff; }
 .encyc-rarity-cn.legendary { background: #ffd700; color: #000; }
-.encyc-rarity-cn.elite { background: #9b59b6; }
-.encyc-rarity-cn.boss { background: #e74c3c; }
-.encyc-rarity-cn.normal { background: #888; }
+.encyc-rarity-cn.mythic { background: #e74c3c; color: #fff; }
 
-.encyc-card.common { border-color: #666; }
+.encyc-card.common { border-color: #ffffff; }
 .encyc-card.rare { border-color: #2ecc71; }
-.encyc-card.epic { border-color: #3498db; }
+.encyc-card.uncommon { border-color: #3498db; }
+.encyc-card.epic { border-color: #9b59b6; }
 .encyc-card.legendary { border-color: #ffd700; }
+.encyc-card.mythic { border-color: #e74c3c; }
 .encyc-card.boss { border-color: #e74c3c; }
 
 #encyc-detail-popup {
@@ -2633,10 +2637,12 @@ body {
     border-radius: 4px;
 }
 
-.debug-item-rarity.common { background: #666; color: #fff; }
+.debug-item-rarity.common { background: #ffffff; color: #333; }
 .debug-item-rarity.rare { background: #2ecc71; color: #fff; }
-.debug-item-rarity.epic { background: #3498db; color: #fff; }
+.debug-item-rarity.uncommon { background: #3498db; color: #fff; }
+.debug-item-rarity.epic { background: #9b59b6; color: #fff; }
 .debug-item-rarity.legendary { background: #ffd700; color: #000; }
+.debug-item-rarity.mythic { background: #e74c3c; color: #fff; }
 
 .buff-icons {
     display: flex;
@@ -2699,7 +2705,7 @@ body {
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.95);
     color: #fff;
     padding: 6px 10px;
     border-radius: 6px;

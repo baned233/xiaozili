@@ -1,2 +1,3 @@
-1.将assets中的caidan.png作为开始界面的背景图
-2.将assets中的tujian.png作为开始界面的背景图
+1.在个人属性中不显示等级信息
+2.在战斗日志中不显示掉落的奖励和经验
+3.技能挥砍的图标改为assets中的huikan.png

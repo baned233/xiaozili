@@ -8,56 +8,92 @@ const WEAPONS = {
 };
 
 const FLOOR_DATA = {
-    1: { name: '地牢入口', enemyLevel: 1, bgClass: 'floor-bg-1' },
-    2: { name: '阴暗走廊', enemyLevel: 1, bgClass: 'floor-bg-1' },
-    3: { name: '囚室区', enemyLevel: 2, bgClass: 'floor-bg-1' },
-    4: { name: '废水池', enemyLevel: 2, bgClass: 'floor-bg-1' },
-    5: { name: '刑讯室', enemyLevel: 2, bgClass: 'floor-bg-1' },
-    6: { name: '武器库', enemyLevel: 3, bgClass: 'floor-bg-1' },
-    7: { name: '典狱室', enemyLevel: 3, bgClass: 'floor-bg-1' },
-    8: { name: '秘密通道', enemyLevel: 3, bgClass: 'floor-bg-1' },
-    9: { name: '看台', enemyLevel: 4, bgClass: 'floor-bg-1' },
-    10: { name: '地牢深处', enemyLevel: 5, isBoss: true, bossName: '地牢守卫者', bgClass: 'floor-bg-1' },
-    11: { name: '深渊入口', enemyLevel: 5, bgClass: 'floor-bg-2' },
-    12: { name: '熔岩河', enemyLevel: 5, bgClass: 'floor-bg-2' },
-    13: { name: '灼热洞穴', enemyLevel: 6, bgClass: 'floor-bg-2' },
-    14: { name: '岩浆池', enemyLevel: 6, bgClass: 'floor-bg-2' },
-    15: { name: '黑曜石殿', enemyLevel: 6, bgClass: 'floor-bg-2' },
-    16: { name: '深渊祭坛', enemyLevel: 7, bgClass: 'floor-bg-2' },
-    17: { name: '恶魔领域', enemyLevel: 7, bgClass: 'floor-bg-2' },
-    18: { name: '堕落的王座', enemyLevel: 7, bgClass: 'floor-bg-2' },
-    19: { name: '绝望深渊', enemyLevel: 8, bgClass: 'floor-bg-2' },
-    20: { name: '深渊最深处', enemyLevel: 10, isBoss: true, bossName: '大帝', bgClass: 'floor-bg-2' },
-    21: { name: '灵域入口', enemyLevel: 10, bgClass: 'floor-bg-3' },
-    22: { name: '云雾阶梯', enemyLevel: 10, bgClass: 'floor-bg-3' },
-    23: { name: '星辰回廊', enemyLevel: 11, bgClass: 'floor-bg-3' },
-    24: { name: '神圣花园', enemyLevel: 11, bgClass: 'floor-bg-3' },
-    25: { name: '光明圣殿', enemyLevel: 11, bgClass: 'floor-bg-3' },
-    26: { name: '天使长阶', enemyLevel: 12, bgClass: 'floor-bg-3' },
-    27: { name: '诸神黄昏', enemyLevel: 12, bgClass: 'floor-bg-3' },
-    28: { name: '最终试炼', enemyLevel: 12, bgClass: 'floor-bg-3' },
-    29: { name: '天门之前', enemyLevel: 13, bgClass: 'floor-bg-3' },
-    30: { name: '灵域之巅', enemyLevel: 15, isBoss: true, bossName: '灵域天王', bgClass: 'floor-bg-3' }
+    1: { name: '宿舍大门', enemyLevel: 1, bgClass: 'floor-bg-1' },
+    2: { name: '宿舍走廊', enemyLevel: 1, bgClass: 'floor-bg-1' },
+    3: { name: '101室', enemyLevel: 2, bgClass: 'floor-bg-1' },
+    4: { name: '102室', enemyLevel: 2, bgClass: 'floor-bg-1' },
+    5: { name: '103室', enemyLevel: 2, bgClass: 'floor-bg-1' },
+    6: { name: '104室', enemyLevel: 3, bgClass: 'floor-bg-1' },
+    7: { name: '105室', enemyLevel: 3, bgClass: 'floor-bg-1' },
+    8: { name: '106室', enemyLevel: 3, bgClass: 'floor-bg-1' },
+    9: { name: '107室', enemyLevel: 4, bgClass: 'floor-bg-1' },
+    10: { name: '108室', enemyLevel: 4, bgClass: 'floor-bg-1' },
+    11: { name: '109室', enemyLevel: 4, bgClass: 'floor-bg-1' },
+    12: { name: '110室', enemyLevel: 5, bgClass: 'floor-bg-1' },
+    13: { name: '111室', enemyLevel: 5, bgClass: 'floor-bg-1' },
+    14: { name: '112室', enemyLevel: 5, bgClass: 'floor-bg-1' },
+    15: { name: '宿舍楼顶', enemyLevel: 6, isBoss: true, bossName: '宿舍管理员', bgClass: 'floor-bg-1' },
+    16: { name: '实验室一楼', enemyLevel: 6, bgClass: 'floor-bg-2' },
+    17: { name: '化学实验室', enemyLevel: 7, bgClass: 'floor-bg-2' },
+    18: { name: '物理实验室', enemyLevel: 7, bgClass: 'floor-bg-2' },
+    19: { name: '生物实验室', enemyLevel: 7, bgClass: 'floor-bg-2' },
+    20: { name: '仪器室', enemyLevel: 8, bgClass: 'floor-bg-2' },
+    21: { name: '准备室', enemyLevel: 8, bgClass: 'floor-bg-2' },
+    22: { name: '器材室', enemyLevel: 8, bgClass: 'floor-bg-2' },
+    23: { name: '试剂库', enemyLevel: 9, bgClass: 'floor-bg-2' },
+    24: { name: '样品室', enemyLevel: 9, bgClass: 'floor-bg-2' },
+    25: { name: '分析室', enemyLevel: 9, bgClass: 'floor-bg-2' },
+    26: { name: '资料室', enemyLevel: 10, bgClass: 'floor-bg-2' },
+    27: { name: '档案室', enemyLevel: 10, bgClass: 'floor-bg-2' },
+    28: { name: '会议室', enemyLevel: 10, bgClass: 'floor-bg-2' },
+    29: { name: '主任办公室', enemyLevel: 11, bgClass: 'floor-bg-2' },
+    30: { name: '实验室顶层', enemyLevel: 12, isBoss: true, bossName: '176实验体', bgClass: 'floor-bg-2' },
+    31: { name: '磨砂迪加大厅', enemyLevel: 12, bgClass: 'floor-bg-3' },
+    32: { name: '前台', enemyLevel: 13, bgClass: 'floor-bg-3' },
+    33: { name: '休息区', enemyLevel: 13, bgClass: 'floor-bg-3' },
+    34: { name: 'KTV包间', enemyLevel: 13, bgClass: 'floor-bg-3' },
+    35: { name: '棋牌室', enemyLevel: 14, bgClass: 'floor-bg-3' },
+    36: { name: '健身房', enemyLevel: 14, bgClass: 'floor-bg-3' },
+    37: { name: '游泳池', enemyLevel: 14, bgClass: 'floor-bg-3' },
+    38: { name: '餐厅', enemyLevel: 15, bgClass: 'floor-bg-3' },
+    39: { name: '厨房', enemyLevel: 15, bgClass: 'floor-bg-3' },
+    40: { name: '储藏室', enemyLevel: 15, bgClass: 'floor-bg-3' },
+    41: { name: '员工区', enemyLevel: 16, bgClass: 'floor-bg-3' },
+    42: { name: '经理室', enemyLevel: 16, bgClass: 'floor-bg-3' },
+    43: { name: '财务室', enemyLevel: 16, bgClass: 'floor-bg-3' },
+    44: { name: '监控室', enemyLevel: 17, bgClass: 'floor-bg-3' },
+    45: { name: '顶楼天台', enemyLevel: 18, isBoss: true, bossName: '磨砂迪加老板', bgClass: 'floor-bg-3' },
+    46: { name: '教学楼一楼', enemyLevel: 18, bgClass: 'floor-bg-1' },
+    47: { name: '101教室', enemyLevel: 19, bgClass: 'floor-bg-1' },
+    48: { name: '102教室', enemyLevel: 19, bgClass: 'floor-bg-1' },
+    49: { name: '103教室', enemyLevel: 19, bgClass: 'floor-bg-1' },
+    50: { name: '104教室', enemyLevel: 20, bgClass: 'floor-bg-1' },
+    51: { name: '105教室', enemyLevel: 20, bgClass: 'floor-bg-1' },
+    52: { name: '106教室', enemyLevel: 20, bgClass: 'floor-bg-1' },
+    53: { name: '107教室', enemyLevel: 21, bgClass: 'floor-bg-1' },
+    54: { name: '108教室', enemyLevel: 21, bgClass: 'floor-bg-1' },
+    55: { name: '教师办公室', enemyLevel: 21, bgClass: 'floor-bg-1' },
+    56: { name: '教务处', enemyLevel: 22, bgClass: 'floor-bg-1' },
+    57: { name: '校长室', enemyLevel: 22, bgClass: 'floor-bg-1' },
+    58: { name: '会议室', enemyLevel: 22, bgClass: 'floor-bg-1' },
+    59: { name: '天台入口', enemyLevel: 23, bgClass: 'floor-bg-1' },
+    60: { name: '教学楼天台', enemyLevel: 25, isBoss: true, bossName: '教导主任', bgClass: 'floor-bg-1' }
 };
 
 const BOSS_DIALOGS = {
-    10: {
-        name: '地牢守卫者',
-        enter: '闯入者...死！',
-        battle: '休想...通过！',
-        death: '这就是...代价...'
-    },
-    20: {
-        name: '大帝',
-        enter: '亵渎者，接受审判！',
-        battle: '你的死期已至！',
-        death: '不可能...'
+    15: {
+        name: '宿舍管理员',
+        enter: '这么晚了，还不回宿舍？',
+        battle: '违反宿舍规定！',
+        death: '算你通过...'
     },
     30: {
-        name: '灵域天王',
-        enter: '凡人...止步！',
-        battle: '这是...最后！',
-        death: '你...通过了...'
+        name: '176实验体',
+        enter: '实验体失控了！',
+        battle: '接受实验的洗礼！',
+        death: '实验...成功...'
+    },
+    45: {
+        name: '磨砂迪加老板',
+        enter: '欢迎来到磨砂迪加！',
+        battle: '尽情享受吧！',
+        death: '这不可能...'
+    },
+    60: {
+        name: '教导主任',
+        enter: '哪个班的？',
+        battle: '违反校规！',
+        death: '明天来我办公室...'
     }
 };
 
@@ -101,7 +137,7 @@ const RANDOM_EVENTS = [
     {
         id: 'rescue',
         name: '拯救',
-        icon: '🐱',
+        icon: 'assets/images/maoning2.png',
         desc: '你发现了一只受伤的小猫，奄奄一息地躺在路边...',
         options: [
             { text: '花费50金币救治', effect: { cost: 50, pet: 'maoning', message: '你救治了这只小猫，它决定跟随你！获得奇遇宠物——猫宁' } },
@@ -120,16 +156,6 @@ const RANDOM_EVENTS = [
         ]
     },
     {
-        id: 'treasure',
-        name: '神秘宝箱',
-        icon: '📦',
-        desc: '你发现了一个神秘的宝箱，要打开它吗？',
-        options: [
-            { text: '打开宝箱', effect: { gold: [20, 50], extraReward: true, chance: 0.7, bad: { damage: 20 } } },
-            { text: '无视离开', effect: {} }
-        ]
-    },
-    {
         id: 'fountain',
         name: '神秘泉水',
         icon: '⛲',
@@ -144,9 +170,9 @@ const RANDOM_EVENTS = [
         id: 'merchant',
         name: '神秘商人',
         icon: '🧙',
-        desc: '一个神秘的商人出现在你面前，"想买点什么便宜货吗？"',
+        desc: '君子陈某出现在你面前，嘴角带笑"想买点什么便宜货吗？"',
         options: [
-            { text: '花费20金币购买', effect: { cost: 20, randomItem: true } },
+            { text: '花费35金币购买', effect: { cost: 35, randomItem: true } },
             { text: '拒绝', effect: {} }
         ]
     },
@@ -162,9 +188,9 @@ const RANDOM_EVENTS = [
 
     {
         id: 'rest_spot',
-        name: '休息处',
+        name: '米奇妙妙屋',
         icon: '🏕️',
-        desc: '你发现了一个舒适的休息处，可以恢复体力和法力。',
+        desc: '你发现了一个舒♂适的休息处，可以恢复体力和法力。',
         options: [
             { text: '休息恢复', effect: { stamina: 50, mana: 30 } },
             { text: '离开', effect: {} }
@@ -203,11 +229,12 @@ const RANDOM_EVENTS = [
 ];
 
 const PATH_TYPES = {
-    battle: { name: '战斗', icon: '⚔️', desc: '遭遇普通敌人', color: '#e74c3c' },
-    elite: { name: '精英战', icon: '👹', desc: '遭遇强力敌人，奖励更丰富', color: '#9b59b6' },
-    shop: { name: '商店', icon: '🏪', desc: '购买物品强化自身', color: '#f1c40f' },
-    rest: { name: '安全屋', icon: '🏕️', desc: '休息恢复或强化属性', color: '#2ecc71' },
-    event: { name: '未知事件', icon: '❓', desc: '可能遇到各种随机事件', color: '#3498db' }
+    battle: { name: '战斗', icon: 'assets/images/zhandou.png', desc: '遭遇普通敌人', color: '#e74c3c' },
+    elite: { name: '精英战', icon: 'assets/images/jingyingguai.png', desc: '遭遇强力敌人，奖励更丰富', color: '#9b59b6' },
+    shop: { name: '商店', icon: 'assets/images/shangdian.png', desc: '购买物品强化自身', color: '#f1c40f' },
+    rest: { name: '摆烂', icon: 'assets/images/bailan.png', desc: '休息恢复或强化属性', color: '#2ecc71' },
+    event: { name: '未知事件', icon: 'assets/images/shijian.png', desc: '可能遇到各种随机事件', color: '#3498db' },
+    boss: { name: 'BOSS', icon: 'assets/images/boss.png', desc: '遭遇强大的BOSS', color: '#e74c3c' }
 };
 
 const PET_EGG_CHANCE = 0.08;
@@ -235,9 +262,9 @@ const BUFF_DATA = {
         name: '勇气',
         icon: '💪',
         type: 'positive',
-        description: '拥有者临时获得X点攻击力，当拥有者攻击时移除一层',
+        description: '拥有者临时获得X点攻击力（每层+1点），当拥有者攻击时移除一层',
         effect: (character, stacks) => {
-            return { atk: stacks };
+            return { atk: 1 };
         }
     },
     '滑稽': {
@@ -284,7 +311,7 @@ const BUFF_DATA = {
         name: '肌无力',
         icon: '💪',
         type: 'negative',
-        description: '造成的伤害降低50%，每回合结束时移除一层',
+        description: '造成的伤害降低50%，每回合结束时移除一层，战斗结算后清零',
         effect: (character, stacks) => {
             return { damageReduction: 0.5 };
         }
@@ -314,6 +341,72 @@ const BUFF_DATA = {
         description: '减少S点防御（S为拥有的破防层数）',
         effect: (character, stacks) => {
             return { def: -stacks };
+        }
+    },
+    '流血': {
+        name: '流血',
+        icon: '🩸',
+        type: 'negative',
+        description: '拥有者每回合损失P点生命值（P为所拥有的流血层数）',
+        effect: (character, stacks) => {
+            return {};
+        },
+        onTurnStart: (battle, character, stacks) => {
+            const damage = stacks;
+            character.takeDamage(damage);
+            battle.battleLog.push({
+                type: 'buffDamage',
+                buff: '流血',
+                target: character.name,
+                damage: damage
+            });
+            return damage;
+        }
+    },
+    '束缚': {
+        name: '束缚',
+        icon: '⛓️',
+        type: 'negative',
+        description: '该单位行动时立即受到自身最大生命值5%的物理伤害，每回合结束时移除一层，战斗结算后清零',
+        effect: (character, stacks) => {
+            return {};
+        },
+        onTurnStart: (battle, character, stacks) => {
+            const damage = Math.floor(character.maxHp * 0.05 * stacks);
+            character.takeDamage(damage);
+            battle.battleLog.push({
+                type: 'buffDamage',
+                buff: '束缚',
+                target: character.name,
+                damage: damage
+            });
+            return damage;
+        }
+    },
+    '流血': {
+        name: '流血',
+        icon: '🩸',
+        type: 'negative',
+        description: '每回合开始时受到1点物理伤害每层，伤害结算后移除1层',
+        effect: (character, stacks) => {
+            return {};
+        },
+        onTurnStart: (battle, character, stacks) => {
+            const damage = stacks;
+            character.takeDamage(damage);
+            battle.battleLog.push({
+                type: 'buffDamage',
+                buff: '流血',
+                target: character.name,
+                damage: damage
+            });
+            character.buffs.forEach(buff => {
+                if (buff.name === '流血') {
+                    buff.stacks = Math.max(0, buff.stacks - 1);
+                }
+            });
+            character.buffs = character.buffs.filter(b => b.name !== '流血' || b.stacks > 0);
+            return damage;
         }
     }
 };

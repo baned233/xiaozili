@@ -26,8 +26,8 @@ class Pet {
                 id: 100,
                 name: '鱼儿木',
                 type: 'plant_fish',
-                description: '半鱼半植物的生物，每回合可以治愈角色10滴血',
-                icon: '🌿🐟',
+                description: '半鱼半植物的生物，每回合可以治愈角色当前层数点血',
+                icon: 'assets/images/yuermu.png',
                 rarity: 'legendary',
                 stats: { atk: 5, def: 10, hp: 150 },
                 maxHp: 150,
@@ -35,16 +35,16 @@ class Pet {
                 battleType: 'special',
                 specialAbility: {
                     type: 'heal',
-                    value: 10,
-                    description: '每回合治愈角色10滴血'
+                    useFloor: true,
+                    description: '每回合治愈角色当前层数点血'
                 }
             },
             'maoning': {
                 id: 101,
                 name: '猫宁',
                 type: 'shadow_cat',
-                description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合为敌人添加1层破防',
-                icon: '🐱‍👤',
+                description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合为敌人添加2层破防',
+                icon: 'assets/images/maoning1.png',
                 rarity: 'legendary',
                 stats: { atk: 8, def: 8, hp: 100 },
                 maxHp: 100,
@@ -53,7 +53,8 @@ class Pet {
                 specialAbility: {
                     type: 'breakDefense',
                     chance: 1.0,
-                    description: '每回合为随机敌人添加1层破防'
+                    stacks: 2,
+                    description: '每回合为随机敌人添加2层破防'
                 }
             },
             'humor': {
@@ -63,9 +64,9 @@ class Pet {
                 description: '战斗开始时，给玩家提供一层滑稽',
                 icon: '🤪',
                 rarity: 'legendary',
-                stats: { atk: 0, def: 30, hp: 400 },
-                maxHp: 400,
-                hp: 400,
+                stats: { atk: 0, def: 20, hp: 50 },
+                maxHp: 50,
+                hp: 50,
                 battleType: 'special',
                 specialAbility: {
                     type: 'giveHumorBuff',
@@ -78,7 +79,7 @@ class Pet {
                 name: '渡鸦',
                 type: 'raven',
                 description: '每回合提升玩家2点速度',
-                icon: '🐦‍⬛',
+                icon: 'assets/images/duya.png',
                 rarity: 'legendary',
                 stats: { atk: 15, def: 5, hp: 80 },
                 maxHp: 80,
@@ -113,6 +114,8 @@ class Pet {
             character.def += this.stats.def;
             character.maxHp += this.stats.hp;
             character.hp += this.stats.hp;
+            character.relicBonusAtk = (character.relicBonusAtk || 0) + this.stats.atk;
+            character.relicBonusDef = (character.relicBonusDef || 0) + this.stats.def;
         }
     }
 
@@ -123,18 +126,25 @@ class Pet {
         const ability = this.specialAbility;
         
         switch (ability.type) {
-            case 'heal':
+            case 'heal': {
                 const player = battle.getAlivePlayers()[0];
                 if (player) {
-                    player.heal(ability.value);
+                    let healValue;
+                    if (ability.useFloor && battle.game && battle.game.currentFloor) {
+                        healValue = battle.game.currentFloor;
+                    } else {
+                        healValue = ability.value || 1;
+                    }
+                    player.heal(healValue);
                     battle.battleLog.push({
                         type: 'petAbility',
                         pet: this.name,
                         ability: 'heal',
-                        value: ability.value
+                        value: healValue
                     });
                 }
                 break;
+            }
 
             case 'bind':
                 const enemies = battle.getAliveEnemies();
@@ -154,13 +164,14 @@ class Pet {
                 const breakEnemies = battle.getAliveEnemies();
                 if (breakEnemies.length > 0) {
                     const breakTarget = breakEnemies[Math.floor(Math.random() * breakEnemies.length)];
-                    breakTarget.addBuff('破防', 1);
+                    const breakStacks = this.specialAbility?.stacks || 1;
+                    breakTarget.addBuff('破防', breakStacks);
                     battle.battleLog.push({
                         type: 'petAbility',
                         pet: this.name,
                         ability: 'breakDefense',
                         target: breakTarget.name,
-                        stacks: 1
+                        stacks: breakStacks
                     });
                 }
                 break;
@@ -270,8 +281,8 @@ const PET_POOL = [
 ];
 
 const SPECIAL_PETS = {
-    'yueremu': { id: 100, name: '鱼儿木', icon: '🌿🐟', description: '半鱼半植物的生物，每回合可以治愈角色10滴血，攻击力5，防御力10，生命值150' },
-    'maoning': { id: 101, name: '猫宁', icon: '🐱‍👤', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合为敌人添加1层破防，攻击力8，防御力8，生命值100' },
+    'yueremu': { id: 100, name: '鱼儿木', icon: 'assets/images/yuermu.png', description: '半鱼半植物的生物，每回合可以治愈角色当前层数点血，攻击力5，防御力10，生命值150' },
+    'maoning': { id: 101, name: '猫宁', icon: 'assets/images/maoning1.png', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合为敌人添加2层破防，攻击力8，防御力8，生命值100' },
     'humor': { id: 102, name: '滑稽', icon: '🤪', description: '一个巨大的漂浮的滑稽脸，敌人攻击时会优先以滑稽作为目标，攻击力0，防御力20，生命值200' },
-    'raven': { id: 103, name: '渡鸦', icon: '🐦‍⬛', description: '每回合提升玩家2点速度，攻击力15，防御力5，生命值80' }
+    'raven': { id: 103, name: '渡鸦', icon: 'assets/images/duya.png', description: '每回合提升玩家2点速度，攻击力15，防御力5，生命值80' }
 };

@@ -379,9 +379,6 @@ class UI {
         const nameDisplay = document.getElementById('character-name-display');
         if (nameDisplay) nameDisplay.textContent = player.name;
         
-        const levelDisplay = document.getElementById('character-level-display');
-        if (levelDisplay) levelDisplay.textContent = `等级 ${player.level || 1}`;
-        
         document.getElementById('attr-hp').textContent = `${player.hp}/${player.maxHp}`;
         document.getElementById('attr-atk').textContent = player.atk;
         document.getElementById('attr-def').textContent = player.def;
@@ -443,8 +440,11 @@ class UI {
                     const petItem = document.createElement('div');
                     petItem.className = 'pet-item';
                     const petDesc = pet.specialAbility ? pet.specialAbility.description : pet.description || '';
+                    const petIconHtml = pet.icon && pet.icon.endsWith('.png') 
+                        ? `<img src="${pet.icon}" alt="${pet.name}" style="width: 40px; height: 40px; object-fit: contain;">`
+                        : `<span class="pet-icon">${pet.icon}</span>`;
                     petItem.innerHTML = `
-                        <span class="pet-icon">${pet.icon}</span>
+                        ${petIconHtml}
                         <div class="pet-tooltip">
                             <div class="tooltip-name">${pet.name}</div>
                             <div class="tooltip-desc">${petDesc}</div>
@@ -492,10 +492,13 @@ class UI {
         
         currentSkills.forEach((skill, index) => {
             const shortDesc = skill.description.split('，')[0].split(',')[0];
+            const skillIconHtml = skill.icon && skill.icon.endsWith('.png')
+                ? `<img src="${skill.icon}" alt="${skill.name}" style="width:28px;height:28px;object-fit:contain;">`
+                : `<span class="skill-icon">${skill.icon}</span>`;
             const btn = document.createElement('button');
             btn.className = `replace-skill-btn ${Skill.getRarityColor(skill.rarity)}`;
             btn.innerHTML = `
-                <span class="skill-icon">${skill.icon}</span>
+                ${skillIconHtml}
                 <span class="skill-name">${skill.name}</span>
                 <span class="skill-desc">${shortDesc}</span>
             `;
@@ -549,39 +552,46 @@ class UI {
             const entry = document.createElement('div');
             entry.className = 'battle-log-entry';
             
+            if (log.type === 'reward' || log.type === 'drop') {
+                return;
+            }
+            
             if (log.type === 'enemyAttack') {
-                entry.textContent = `${log.enemy} 攻击 ${log.target} 造成 ${log.damage} 伤害${log.isCrit ? ' (暴击!)' : ''}`;
+                entry.innerHTML = `${log.enemy} 攻击 ${log.target} 造成 <strong>${log.damage}</strong> 伤害${log.isCrit ? ' (暴击!)' : ''}`;
                 entry.classList.add('enemy-action');
             } else if (log.type === 'enemySkill') {
                 entry.textContent = `${log.enemy} 使用 ${log.skill} 攻击 ${log.target}`;
                 if (log.result && log.result.damage) {
-                    entry.textContent += ` 造成 ${log.result.damage} 伤害`;
+                    entry.innerHTML += ` 造成 <strong>${log.result.damage}</strong> 伤害`;
                     entry.classList.add('enemy-action');
                 } else if (log.result && log.result.heal) {
-                    entry.textContent += ` 恢复 ${log.result.heal} 生命`;
+                    entry.innerHTML += ` 恢复 <strong>${log.result.heal}</strong> 生命`;
                     entry.classList.add('enemy-action');
                 }
             } else if (log.type === 'skill') {
                 entry.textContent = `${log.character} 使用 ${log.skill}`;
                 if (log.result && log.result.damage) {
-                    entry.textContent += ` 攻击 ${log.target} 造成 ${log.result.damage} 伤害`;
+                    entry.innerHTML += ` 攻击 ${log.target} 造成 <strong>${log.result.damage}</strong> 伤害`;
                     entry.classList.add('player-action');
                 } else if (log.result && log.result.heal) {
-                    entry.textContent += ` 恢复 ${log.result.heal} 生命`;
+                    entry.innerHTML += ` 恢复 <strong>${log.result.heal}</strong> 生命`;
+                    entry.classList.add('player-action');
+                } else if (log.result && log.result.summonName) {
+                    entry.innerHTML += ` 召唤了 <strong>${log.result.summonName}</strong>`;
                     entry.classList.add('player-action');
                 }
             } else if (log.type === 'death') {
                 entry.textContent = `${log.target} 被击败!`;
                 entry.classList.add('enemy-action');
             } else if (log.type === 'reward') {
-                entry.textContent = `获得 ${log.exp} 经验, ${log.gold} 金币`;
+                entry.innerHTML = `获得 <strong>${log.exp}</strong> 经验, <strong>${log.gold}</strong> 金币`;
             } else if (log.type === 'drop') {
                 entry.textContent = `掉落: ${log.item}`;
             } else if (log.type === 'pet') {
                 entry.textContent = `获得宠物: ${log.item}`;
             } else if (log.type === 'petAbility') {
                 if (log.ability === 'heal') {
-                    entry.textContent = `${log.pet} 使用治愈能力恢复了 ${log.value} 生命`;
+                    entry.innerHTML = `${log.pet} 使用治愈能力恢复了 <strong>${log.value}</strong> 生命`;
                 } else if (log.ability === 'bind') {
                     entry.textContent = `${log.pet} 束缚了 ${log.target}`;
                 } else if (log.ability === 'breakDefense') {
@@ -593,17 +603,20 @@ class UI {
                 } else if (log.ability === 'mimic') {
                     entry.textContent = `${log.pet} 复制了技能 ${log.skill}`;
                 } else if (log.ability === 'mimicAttack') {
-                    entry.textContent = `${log.pet} 使用 ${log.skill} 攻击 ${log.target} 造成 ${log.result?.damage || 0} 伤害`;
+                    entry.innerHTML = `${log.pet} 使用 ${log.skill} 攻击 ${log.target} 造成 <strong>${log.result?.damage || 0}</strong> 伤害`;
                 } else if (log.ability === 'steal') {
-                    entry.textContent = `${log.pet} 偷取 ${log.target} 的 ${log.skill} 造成 ${log.damage} 伤害`;
+                    entry.innerHTML = `${log.pet} 偷取 ${log.target} 的 ${log.skill} 造成 <strong>${log.damage}</strong> 伤害`;
                 }
                 entry.classList.add('player-action');
             } else if (log.type === 'buffDamage') {
-                entry.textContent = `${log.buff} 对 ${log.target} 造成 ${log.damage} 伤害`;
+                entry.innerHTML = `${log.buff} 对 ${log.target} 造成 <strong>${log.damage}</strong> 伤害`;
+                entry.classList.add('player-action');
+            } else if (log.type === 'passiveTrigger') {
+                entry.textContent = log.message;
                 entry.classList.add('player-action');
             }
             
-            if (entry.textContent) {
+            if (entry.textContent || entry.innerHTML) {
                 logContent.appendChild(entry);
             }
         });
@@ -631,8 +644,11 @@ class UI {
         paths.forEach((path, index) => {
             const option = document.createElement('div');
             option.className = `path-option path-${path.type}`;
+            const pathIconHtml = path.icon && path.icon.endsWith('.png')
+                ? `<img src="${path.icon}" alt="${path.name}" style="width: 32px; height: 32px; object-fit: contain;">`
+                : `<div class="path-icon">${path.icon}</div>`;
             option.innerHTML = `
-                <div class="path-icon">${path.icon}</div>
+                ${pathIconHtml}
                 <div class="path-name">${path.name}</div>
                 <div class="path-desc">${path.desc}</div>
             `;
@@ -705,6 +721,8 @@ class UI {
         let iconHtml = '';
         if (char.image) {
             iconHtml = `<img src="${char.image}" style="width:100%;height:100%;object-fit:cover;border-radius:9px;" onerror="this.style.display='none';this.parentNode.innerHTML='${char.icon}'">`;
+        } else if (char.icon && char.icon.endsWith('.png')) {
+            iconHtml = `<img src="${char.icon}" style="width:100%;height:100%;object-fit:contain;border-radius:9px;" onerror="this.style.display='none';this.parentNode.innerHTML='❓'">`;
         } else {
             iconHtml = char.icon;
         }
@@ -723,7 +741,10 @@ class UI {
         if (char.buffs && char.buffs.length > 0) {
             buffsHtml = `<div class="buff-icons">`;
             char.buffs.forEach(buff => {
-                buffsHtml += `<div class="buff-icon ${buff.type}" data-buff="${buff.name}" data-stacks="${buff.stacks}" data-description="${buff.description}" title="${buff.name} (${buff.stacks}层)">${buff.icon}</div>`;
+                const buffData = BUFF_DATA[buff.name];
+                const buffDesc = buffData ? buffData.description : buff.description || '';
+                const buffType = buffData ? buffData.type : (buff.type || 'positive');
+                buffsHtml += `<div class="buff-icon ${buffType}" data-buff="${buff.name}" data-stacks="${buff.stacks}" data-description="${buff.name}: ${buffDesc}" title="${buff.name} (${buff.stacks}层)">${buffData ? buffData.icon : buff.icon}</div>`;
             });
             buffsHtml += `</div>`;
         }
@@ -773,7 +794,10 @@ class UI {
         if (enemy.buffs && enemy.buffs.length > 0) {
             buffsHtml = `<div class="buff-icons">`;
             enemy.buffs.forEach(buff => {
-                buffsHtml += `<div class="buff-icon ${buff.type}" data-buff="${buff.name}" data-stacks="${buff.stacks}" data-description="${buff.description}" title="${buff.name} (${buff.stacks}层)">${buff.icon}</div>`;
+                const buffData = BUFF_DATA[buff.name];
+                const buffDesc = buffData ? buffData.description : buff.description || '';
+                const buffType = buffData ? buffData.type : (buff.type || 'positive');
+                buffsHtml += `<div class="buff-icon ${buffType}" data-buff="${buff.name}" data-stacks="${buff.stacks}" data-description="${buff.name}: ${buffDesc}" title="${buff.name} (${buff.stacks}层)">${buffData ? buffData.icon : buff.icon}</div>`;
             });
             buffsHtml += `</div>`;
         }
@@ -815,8 +839,10 @@ class UI {
         let card = document.getElementById(cardId);
         
         if (!card) {
-            this.updateBattleUI();
-            card = document.getElementById(cardId);
+            if (this.game && this.game.battle) {
+                this.updateBattleArea(this.game.battle);
+                card = document.getElementById(cardId);
+            }
         }
         
         if (!card) return;
@@ -910,10 +936,14 @@ class UI {
             
             const shortDesc = skill.description.split('，')[0].split(',')[0];
             
+            const skillIconHtml = skill.icon && skill.icon.endsWith('.png')
+                ? `<img src="${skill.icon}" alt="${skill.name}" style="width:28px;height:28px;object-fit:contain;">`
+                : `<span class="skill-icon">${skill.icon}</span>`;
+            
             const btn = document.createElement('button');
             btn.className = `skill-btn ${Skill.getRarityColor(skill.rarity)} ${!canUse ? 'disabled' : ''}`;
             btn.innerHTML = `
-                <span class="skill-icon">${skill.icon}</span>
+                ${skillIconHtml}
                 <span class="skill-name">${skill.name}</span>
                 <span class="skill-desc">${shortDesc}</span>
                 <span class="skill-cost" style="color:${costColor}">${costIcon} ${cost}</span>
@@ -1022,7 +1052,29 @@ class UI {
                     <div class="reward-icon">${skill.icon}</div>
                     <div class="reward-name">${skill.name}</div>
                     <div class="reward-desc">${shortDesc}</div>
+                    <div class="skill-tooltip" style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); z-index: 1000; white-space: normal; width: 200px;">
+                        <div class="tooltip-name">${skill.name}</div>
+                        <div class="tooltip-type">${skill.type === 'attack' ? '攻击技能' : skill.type === 'heal' ? '治疗技能' : skill.type === 'defense' ? '防御技能' : skill.type === 'buff' ? '增益技能' : skill.type === 'summon' ? '召唤技能' : skill.type === 'debuff' ? '减益技能' : skill.type === 'fear' ? '恐惧技能' : skill.type === 'mark' ? '标记技能' : skill.type === 'banish' ? '放逐技能' : skill.type === 'passive' ? '被动技能' : '被动技能'}</div>
+                        <div class="tooltip-desc">${skill.description}</div>
+                        <div class="tooltip-cost">消耗: ${skill.cost} ${skill.isMagic ? '法力' : '体力'}</div>
+                    </div>
                 `;
+                option.addEventListener('mouseenter', function() {
+                    const tooltip = this.querySelector('.skill-tooltip');
+                    if (tooltip) tooltip.style.display = 'block';
+                });
+                option.addEventListener('mouseleave', function() {
+                    const tooltip = this.querySelector('.skill-tooltip');
+                    if (tooltip) tooltip.style.display = 'none';
+                });
+                option.addEventListener('touchstart', function(e) {
+                    const tooltip = this.querySelector('.skill-tooltip');
+                    if (tooltip) {
+                        document.querySelectorAll('.skill-tooltip').forEach(t => t.style.display = 'none');
+                        tooltip.style.display = 'block';
+                    }
+                    e.stopPropagation();
+                }, {passive: true});
             } else if (reward.type === 'relic') {
                 const relic = reward.item;
                 if (relic) {
@@ -1080,8 +1132,15 @@ class UI {
                 <div class="shop-item-desc">${item.desc}</div>
             `;
             
-            if (!item.sold && canAfford) {
-                div.addEventListener('click', () => this.game.buyItem(index));
+            if (!item.sold) {
+                if (canAfford) {
+                    div.addEventListener('click', () => this.game.buyItem(index));
+                } else {
+                    div.addEventListener('click', () => {
+                        audioManager.playClick();
+                        this.showDialog('金币不足！', () => {});
+                    });
+                }
             }
             
             this.shopItems.appendChild(div);
@@ -1107,6 +1166,17 @@ class UI {
         this.eventPanel.classList.remove('hidden');
         this.eventTitle.textContent = event.name;
         document.getElementById('event-desc').textContent = event.desc;
+        
+        const eventImage = document.getElementById('event-image');
+        if (event.id === 'rescue' && event.icon) {
+            eventImage.src = event.icon;
+            eventImage.style.display = 'block';
+            eventImage.style.filter = 'blur(0px) drop-shadow(0 0 15px rgba(255, 255, 255, 0.8))';
+            eventImage.style.borderRadius = '50%';
+            eventImage.style.boxShadow = '0 0 30px rgba(255, 255, 255, 0.5), 0 0 60px rgba(100, 200, 255, 0.3)';
+        } else {
+            eventImage.style.display = 'none';
+        }
         
         this.eventOptionsEl.innerHTML = '';
         event.options.forEach((option, index) => {
@@ -1246,10 +1316,10 @@ class UI {
             items = RELIC_POOL.filter(r => !term || r.name.toLowerCase().includes(term) || r.description.toLowerCase().includes(term));
         } else if (this.currentDebugTab === 'pets') {
             const specialPets = [
-                { id: 100, name: '鱼儿木', type: 'yueremu', description: '半鱼半植物的生物，每回合可以治愈角色10滴血', icon: '🌿🐟', rarity: 'legendary' },
-                { id: 101, name: '猫宁', type: 'maoning', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合有50%概率束缚一只怪物', icon: '🐱‍👤', rarity: 'legendary' },
-                { id: 102, name: '滑稽', type: 'humor', description: '一个巨大的漂浮的滑稽脸，敌人80%概率以它作为目标', icon: '🤪', rarity: 'legendary' },
-                { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合随机偷取怪物技能进行攻击', icon: '🐦‍⬛', rarity: 'legendary' }
+                { id: 100, name: '鱼儿木', type: 'yueremu', description: '半鱼半植物的生物，每回合可以治愈角色当前层数点血', icon: 'assets/images/yuermu.png', rarity: 'legendary' },
+                { id: 101, name: '猫宁', type: 'maoning', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合随机给一个敌人挂2层破防', icon: 'assets/images/maoning1.png', rarity: 'legendary' },
+                { id: 102, name: '滑稽', type: 'humor', description: '一个巨大的漂浮的滑稽脸，可以给角色提供滑稽BUFF', icon: '🤪', rarity: 'legendary' },
+                { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合可以给与角色速度加成', icon: 'assets/images/duya.png', rarity: 'legendary' }
             ];
             items = specialPets.filter(p => !term || p.name.toLowerCase().includes(term) || p.description.toLowerCase().includes(term));
         } else if (this.currentDebugTab === 'events') {
@@ -1276,8 +1346,11 @@ class UI {
                     this.game.triggerDebugEvent(item);
                 });
             } else {
+                const itemIconHtml = item.icon && item.icon.endsWith('.png')
+                    ? `<img src="${item.icon}" alt="${item.name}" style="width: 40px; height: 40px; object-fit: contain;">`
+                    : `<span class="debug-item-icon">${item.icon}</span>`;
                 div.innerHTML = `
-                    <span class="debug-item-icon">${item.icon}</span>
+                    ${itemIconHtml}
                     <div class="debug-item-info">
                         <div class="debug-item-name">${item.name}</div>
                         <div class="debug-item-desc">${item.description}</div>
@@ -1310,8 +1383,7 @@ class UI {
             { key: 'crit', label: '暴击率', value: player.crit },
             { key: 'critDmg', label: '暴击伤害', value: player.critDmg },
             { key: 'maxStamina', label: '最大体力', value: player.maxStamina },
-            { key: 'maxMana', label: '最大法力', value: player.maxMana },
-            { key: 'level', label: '等级', value: player.level }
+            { key: 'maxMana', label: '最大法力', value: player.maxMana }
         ];
 
         stats.forEach(stat => {
@@ -1431,7 +1503,7 @@ class UI {
 
 getRarityCN(rarity) {
         const map = {
-            'common': '普通', 'rare': '稀有', 'epic': '史诗', 'legendary': '传说',
+            'common': '普通', 'rare': '稀有', 'uncommon': '罕见', 'epic': '史诗', 'legendary': '传说', 'mythic': '神话',
             'normal': '普通', 'elite': '精英', 'boss': 'BOSS'
         };
         return map[rarity] || rarity;
@@ -1470,16 +1542,19 @@ getRarityCN(rarity) {
     renderEncyclopediaPets(content) {
         content.className = 'encyc-grid-1';
         const specialPets = [
-            { id: 100, name: '鱼儿木', type: 'yueremu', description: '半鱼半植物的生物，每回合可以治愈角色10滴血，攻击力5，防御力10，生命值150', icon: '🌿🐟', rarity: 'legendary' },
-            { id: 101, name: '猫宁', type: 'maoning', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合有50%概率束缚一只怪物，攻击力8，防御力8，生命值100', icon: '🐱‍👤', rarity: 'legendary' },
+            { id: 100, name: '鱼儿木', type: 'yueremu', description: '半鱼半植物的生物，每回合可以治愈角色当前层数点血，攻击力5，防御力10，生命值150', icon: 'assets/images/yuermu.png', rarity: 'legendary' },
+            { id: 101, name: '猫宁', type: 'maoning', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合有50%概率束缚一只怪物，攻击力8，防御力8，生命值100', icon: 'assets/images/maoning1.png', rarity: 'legendary' },
             { id: 102, name: '滑稽', type: 'humor', description: '一个巨大的漂浮的滑稽脸，敌人攻击时会优先以滑稽作为目标，攻击力0，防御力20，生命值200', icon: '🤪', rarity: 'legendary' },
-            { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合随机偷取怪物技能进行攻击，攻击力15，防御力5，生命值80', icon: '🐦‍⬛', rarity: 'legendary' }
+            { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合随机偷取怪物技能进行攻击，攻击力15，防御力5，生命值80', icon: 'assets/images/duya.png', rarity: 'legendary' }
         ];
         specialPets.forEach(pet => {
             const card = document.createElement('div');
             card.className = `encyc-card ${pet.rarity}`;
+            const petIconHtml = pet.icon && pet.icon.endsWith('.png') 
+                ? `<img src="${pet.icon}" alt="${pet.name}" style="width: 50px; height: 50px; object-fit: contain;">`
+                : `<div class="encyc-card-icon">${pet.icon}</div>`;
             card.innerHTML = `
-                <div class="encyc-card-icon">${pet.icon}</div>
+                ${petIconHtml}
                 <div class="encyc-card-name">${pet.name}</div>
                 <div class="encyc-rarity-cn ${pet.rarity}">${this.getRarityCN(pet.rarity)}</div>
             `;
@@ -1491,23 +1566,24 @@ getRarityCN(rarity) {
     renderEncyclopediaEnemies(content) {
         content.className = 'encyc-grid';
         const enemies = [
-            { name: '老鼠', icon: '🐀', type: 'common', desc: '最弱的敌人，攻击力弱' },
-            { name: '蟑螂', icon: '🪲', type: 'common', desc: '生命力顽强，难以击杀' },
-            { name: '骷髅', icon: '💀', type: 'common', desc: '亡灵生物，物理防御较高' },
-            { name: '僵尸', icon: '🧟', type: 'common', desc: '行动迟缓，但生命值高' },
-            { name: '蝙蝠', icon: '🦇', type: 'common', desc: '飞行单位，速度快' },
-            { name: '幽灵', icon: '👻', type: 'common', desc: '虚无形态，难以捕捉' },
-            { name: '魅魔', icon: '😈', type: 'common', desc: '迷惑敌人，降低防御' },
-            { name: '石魔', icon: '🗿', type: 'common', desc: '防御极高，攻击力弱' },
-            { name: '精英骷髅', icon: '💀', type: 'elite', desc: '更强的亡灵，各项属性提升' },
-            { name: '腐尸统领', icon: '🧟', type: 'elite', desc: '僵尸的首领，拥有号召力' },
-            { name: '深渊恶魔', icon: '👹', type: 'elite', desc: '来自深渊的恶魔，强大无比' },
-            { name: '黑暗巫师', icon: '🧙', type: 'elite', desc: '掌握黑暗魔法，擅长诅咒' },
-            { name: '炎魔', icon: '🔥', type: 'elite', desc: '火焰化身，附带灼烧' },
-            { name: '暗金龙', icon: '🐉', type: 'elite', desc: '黑暗之龙，攻防兼备' },
-            { name: '地牢守卫者', icon: '👹', type: 'boss', desc: '第10层Boss，守护地牢入口' },
-            { name: '大帝', icon: '👿', type: 'boss', desc: '第20层Boss，来自深渊的王者' },
-            { name: '灵域天王', icon: '👼', type: 'boss', desc: '第30层Boss，灵域最强者' }
+            { name: '老鼠', icon: '🐀', type: 'common', desc: '宿舍常见生物' },
+            { name: '蟑螂', icon: '🪲', type: 'common', desc: '生命力顽强' },
+            { name: '臭虫', icon: '🐛', type: 'common', desc: '令人厌恶' },
+            { name: '跳蚤', icon: '🦟', type: 'common', desc: '吸血害虫' },
+            { name: '衣蛾', icon: '🦋', type: 'common', desc: '衣服杀手' },
+            { name: '螨虫', icon: '🐜', type: 'common', desc: '微小生物' },
+            { name: '虱子', icon: '🐝', type: 'common', desc: '寄生生物' },
+            { name: '蚊子', icon: '🪰', type: 'common', desc: '嗡嗡作响' },
+            { name: '学霸', icon: '👓', type: 'elite', desc: '成绩优异' },
+            { name: '纪检', icon: '👮', type: 'elite', desc: '检查纪律' },
+            { name: '学生会', icon: '🎫', type: 'elite', desc: '管理学生' },
+            { name: '导员', icon: '📋', type: 'elite', desc: '辅导员' },
+            { name: '实验员', icon: '🥼', type: 'elite', desc: '科研人员' },
+            { name: '酒吧经理', icon: '🎰', type: 'elite', desc: '娱乐场所管理者' },
+            { name: '宿舍管理员', icon: '🔑', type: 'boss', desc: '第15层Boss' },
+            { name: '176实验体', icon: '🧪', type: 'boss', desc: '第30层Boss' },
+            { name: '磨砂迪加老板', icon: '💼', type: 'boss', desc: '第45层Boss' },
+            { name: '教导主任', icon: '📏', type: 'boss', desc: '第60层Boss' }
         ];
         enemies.forEach(enemy => {
             const card = document.createElement('div');
@@ -1569,17 +1645,20 @@ getRarityCN(rarity) {
 
     renderEncyclopediaPets(content) {
         const specialPets = [
-            { id: 100, name: '鱼儿木', type: 'yueremu', description: '半鱼半植物的生物，每回合可以治愈角色10滴血', icon: '🌿🐟', rarity: 'legendary' },
-            { id: 101, name: '猫宁', type: 'maoning', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合有50%概率束缚一只怪物', icon: '🐱‍👤', rarity: 'legendary' },
+            { id: 100, name: '鱼儿木', type: 'yueremu', description: '半鱼半植物的生物，每回合可以治愈角色当前层数点血', icon: 'assets/images/yuermu.png', rarity: 'legendary' },
+            { id: 101, name: '猫宁', type: 'maoning', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合有50%概率束缚一只怪物', icon: 'assets/images/maoning1.png', rarity: 'legendary' },
             { id: 102, name: '滑稽', type: 'humor', description: '一个巨大的漂浮的滑稽脸，敌人80%概率以它作为目标', icon: '🤪', rarity: 'legendary' },
-            { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合随机偷取怪物技能进行攻击', icon: '🐦‍⬛', rarity: 'legendary' }
+            { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合随机偷取怪物技能进行攻击', icon: 'assets/images/duya.png', rarity: 'legendary' }
         ];
         specialPets.forEach(pet => {
             const div = document.createElement('div');
             div.className = 'debug-item';
             div.style.cssText = 'flex-direction: row; padding: 12px; gap: 12px;';
+            const petIconHtml = pet.icon && pet.icon.endsWith('.png') 
+                ? `<img src="${pet.icon}" alt="${pet.name}" style="width: 40px; height: 40px; object-fit: contain;">`
+                : `<span class="debug-item-icon" style="font-size:32px;">${pet.icon}</span>`;
             div.innerHTML = `
-                <span class="debug-item-icon" style="font-size:32px;">${pet.icon}</span>
+                ${petIconHtml}
                 <div class="debug-item-info" style="flex:1;">
                     <div class="debug-item-name">${pet.name}</div>
                     <div class="debug-item-desc" style="text-align:left;">${pet.description}</div>
@@ -1592,23 +1671,24 @@ getRarityCN(rarity) {
 
     renderEncyclopediaEnemies(content) {
         const enemies = [
-            { name: '老鼠', icon: '🐀', type: 'common', desc: '最弱的敌人' },
+            { name: '老鼠', icon: '🐀', type: 'common', desc: '宿舍常见生物' },
             { name: '蟑螂', icon: '🪲', type: 'common', desc: '生命力顽强' },
-            { name: '骷髅', icon: '💀', type: 'common', desc: '亡灵生物' },
-            { name: '僵尸', icon: '🧟', type: 'common', desc: '行动迟缓' },
-            { name: '蝙蝠', icon: '🦇', type: 'common', desc: '飞行单位' },
-            { name: '幽灵', icon: '👻', type: 'common', desc: '虚无形态' },
-            { name: '魅魔', icon: '😈', type: 'common', desc: '迷惑敌人' },
-            { name: '石魔', icon: '🗿', type: 'common', desc: '防御极高' },
-            { name: '精英骷髅', icon: '💀', type: 'elite', desc: '更强的亡灵' },
-            { name: '腐尸统领', icon: '🧟', type: 'elite', desc: '僵尸的首领' },
-            { name: '深渊恶魔', icon: '👹', type: 'elite', desc: '来自深渊的恶魔' },
-            { name: '黑暗巫师', icon: '🧙', type: 'elite', desc: '掌握黑暗魔法' },
-            { name: '炎魔', icon: '🔥', type: 'elite', desc: '火焰化身' },
-            { name: '暗金龙', icon: '🐉', type: 'elite', desc: '黑暗之龙' },
-            { name: '地牢守卫者', icon: '👹', type: 'boss', desc: '第10层Boss' },
-            { name: '大帝', icon: '👿', type: 'boss', desc: '第20层Boss' },
-            { name: '灵域天王', icon: '👼', type: 'boss', desc: '第30层Boss' }
+            { name: '臭虫', icon: '🐛', type: 'common', desc: '令人厌恶' },
+            { name: '跳蚤', icon: '🦟', type: 'common', desc: '吸血害虫' },
+            { name: '衣蛾', icon: '🦋', type: 'common', desc: '衣服杀手' },
+            { name: '螨虫', icon: '🐜', type: 'common', desc: '微小生物' },
+            { name: '虱子', icon: '🐝', type: 'common', desc: '寄生生物' },
+            { name: '蚊子', icon: '🪰', type: 'common', desc: '嗡嗡作响' },
+            { name: '学霸', icon: '👓', type: 'elite', desc: '成绩优异' },
+            { name: '纪检', icon: '👮', type: 'elite', desc: '检查纪律' },
+            { name: '学生会', icon: '🎫', type: 'elite', desc: '管理学生' },
+            { name: '导员', icon: '📋', type: 'elite', desc: '辅导员' },
+            { name: '实验员', icon: '🥼', type: 'elite', desc: '科研人员' },
+            { name: '酒吧经理', icon: '🎰', type: 'elite', desc: '娱乐场所管理者' },
+            { name: '宿舍管理员', icon: '🔑', type: 'boss', desc: '第15层Boss' },
+            { name: '176实验体', icon: '🧪', type: 'boss', desc: '第30层Boss' },
+            { name: '磨砂迪加老板', icon: '💼', type: 'boss', desc: '第45层Boss' },
+            { name: '教导主任', icon: '📏', type: 'boss', desc: '第60层Boss' }
         ];
         enemies.forEach(enemy => {
             const div = document.createElement('div');

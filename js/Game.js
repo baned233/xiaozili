@@ -14,6 +14,7 @@ class Game {
         this.obtainedRelicIds = [];
         this.potions = [];
         this.maxPotions = 3;
+        this.usedEventIds = [];
     }
 
     init() {
@@ -30,6 +31,7 @@ class Game {
         this.obtainedSkillIds = [11];
         this.obtainedRelicIds = [];
         this.potions = [];
+        this.usedEventIds = [];
         this.state = 'map';
         
         this.clearSave();
@@ -63,8 +65,9 @@ class Game {
     generatePaths() {
         const paths = [];
         
-        if (this.currentFloor % 10 === 0) {
-            return [{ type: 'boss', name: 'BOSS战', icon: '👹', desc: FLOOR_DATA[this.currentFloor].bossName }];
+        if (this.currentFloor % 15 === 0) {
+            const bossPath = PATH_TYPES['boss'];
+            return [{ type: 'boss', name: 'BOSS战', icon: bossPath.icon, desc: FLOOR_DATA[this.currentFloor].bossName }];
         }
         
         const usedTypes = new Set();
@@ -77,7 +80,7 @@ class Game {
                 pathType = 'battle';
             } else if (roll < 0.45 && !usedTypes.has('elite') && this.currentFloor % 5 === 0) {
                 pathType = 'elite';
-            } else if (roll < 0.55 && !usedTypes.has('shop')) {
+            } else if (roll < 0.50 && !usedTypes.has('shop')) {
                 pathType = 'shop';
             } else if (roll < 0.65 && !usedTypes.has('rest')) {
                 pathType = 'rest';
@@ -249,11 +252,6 @@ class Game {
                 if (skillResult.isCrit || skillResult.doubleStrike) {
                     audioManager.playCrit();
                 }
-                
-                const player = this.playerTeam[0];
-                if (player && player.hasBuff('勇气')) {
-                    player.removeBuff('勇气', 1);
-                }
             } else if (skillResult.type === 'summon') {
                 audioManager.playSummon();
             } else if (skillResult.type === 'heal') {
@@ -300,6 +298,12 @@ class Game {
             } else {
                 setTimeout(() => this.processEnemyTurn(), 300);
             }
+            return;
+        }
+        
+        if (result.state === 'playerSelect') {
+            this.updateBattleUI();
+            this.updateSkillPanel();
             return;
         }
         
@@ -432,6 +436,14 @@ class Game {
             if (player.baseSpd !== undefined) {
                 player.spd = player.baseSpd;
             }
+            if (player.skills) {
+                player.skills.forEach(skill => {
+                    if (skill.name === '开导') {
+                        player.skillUseCount = player.skillUseCount || {};
+                        player.skillUseCount['开导'] = 0;
+                    }
+                });
+            }
         }
         
         if (battleEnd.isBoss || (this.battle && this.battle.isBoss)) {
@@ -443,6 +455,7 @@ class Game {
                 player.restoreStamina(10);
                 player.restoreMana(10);
                 player.removeBuff('勇气', player.getBuffStacks('勇气'));
+                player.removeBuff('士气', player.getBuffStacks('士气'));
                 this.ui.updatePlayerResources(player);
             }
             this.playerTeam = this.playerTeam.filter(char => !char.isSummoned);
@@ -476,7 +489,15 @@ class Game {
             }});
         }
         
-        const randomSkill = Skill.getRandomSkill(this.currentFloor, this.obtainedSkillIds);
+        let randomSkill;
+        if (isBoss) {
+            randomSkill = this.getBossSkill();
+        } else if (isElite) {
+            randomSkill = this.getEliteSkill();
+        } else {
+            randomSkill = Skill.getRandomSkill(this.currentFloor, this.obtainedSkillIds);
+        }
+        
         if (randomSkill) {
             choiceRewards.push({ type: 'skill', item: randomSkill });
         } else {
@@ -490,6 +511,44 @@ class Game {
         
         this.pendingRewards = choiceRewards;
         this.ui.showRewards(choiceRewards, goldGain);
+    }
+
+    getSkillByRarity(rarities, rarityWeights) {
+        let targetRarity;
+        const random = Math.random() * 100;
+        let cumulative = 0;
+        for (const [rarity, weight] of Object.entries(rarityWeights)) {
+            cumulative += weight;
+            if (random < cumulative) {
+                targetRarity = rarity;
+                break;
+            }
+        }
+        targetRarity = targetRarity || Object.keys(rarityWeights)[0];
+        
+        const pool = SKILL_POOL.filter(s => !this.obtainedSkillIds.includes(s.id) && s.rarity === targetRarity);
+        if (pool.length === 0) {
+            for (const r of rarities) {
+                const fallbackPool = SKILL_POOL.filter(s => !this.obtainedSkillIds.includes(s.id) && s.rarity === r);
+                if (fallbackPool.length > 0) {
+                    return new Skill(fallbackPool[Math.floor(Math.random() * fallbackPool.length)]);
+                }
+            }
+            return Skill.getRandomSkill(this.currentFloor, this.obtainedSkillIds);
+        }
+        return new Skill(pool[Math.floor(Math.random() * pool.length)]);
+    }
+
+    getEliteSkill() {
+        return this.getSkillByRarity(['epic', 'legendary', 'mythic'], {
+            'epic': 70, 'legendary': 25, 'mythic': 5
+        });
+    }
+
+    getBossSkill() {
+        return this.getSkillByRarity(['legendary', 'mythic'], {
+            'legendary': 80, 'mythic': 20
+        });
     }
 
     getRandomAttributeBoost() {
@@ -557,7 +616,7 @@ class Game {
             }
         });
         
-        if (this.currentFloor > 30) {
+        if (this.currentFloor > 60) {
             audioManager.playVictory();
             this.ui.showVictory();
             this.clearSave();
@@ -689,6 +748,7 @@ class Game {
                 break;
             case 'atk':
                 player.atk += item.effect.value;
+                player.relicBonusAtk = (player.relicBonusAtk || 0) + item.effect.value;
                 audioManager.playBuff();
                 this.ui.showDialog(`攻击力 +${item.effect.value}！`, () => {
                     this.ui.updateGold(this.gold);
@@ -697,6 +757,7 @@ class Game {
                 break;
             case 'def':
                 player.def += item.effect.value;
+                player.relicBonusDef = (player.relicBonusDef || 0) + item.effect.value;
                 audioManager.playDefense();
                 this.ui.showDialog(`防御力 +${item.effect.value}！`, () => {
                     this.ui.updateGold(this.gold);
@@ -830,6 +891,8 @@ class Game {
         this.state = 'event';
         let availableEvents = [...RANDOM_EVENTS];
         
+        availableEvents = availableEvents.filter(e => !this.usedEventIds.includes(e.id));
+        
         const player = this.playerTeam[0];
         if (!player.pets || player.pets.length === 0) {
             availableEvents = availableEvents.filter(e => e.id !== 'sacrifice');
@@ -901,6 +964,8 @@ class Game {
         if (option.effect.buff) {
             player.atk += option.effect.buff.atk || 0;
             player.def += option.effect.buff.def || 0;
+            player.relicBonusAtk = (player.relicBonusAtk || 0) + (option.effect.buff.atk || 0);
+            player.relicBonusDef = (player.relicBonusDef || 0) + (option.effect.buff.def || 0);
             audioManager.playBuff();
             resultText = '获得了增益效果！';
         }
@@ -914,8 +979,16 @@ class Game {
                     case 'heal': player.heal(baseItem.effect.value); audioManager.playHeal(); break;
                     case 'stamina': player.restoreStamina(baseItem.effect.value); audioManager.playHeal(); break;
                     case 'mana': player.restoreMana(baseItem.effect.value); audioManager.playHeal(); break;
-                    case 'atk': player.atk += baseItem.effect.value; audioManager.playBuff(); break;
-                    case 'def': player.def += baseItem.effect.value; audioManager.playDefense(); break;
+                    case 'atk': 
+                        player.atk += baseItem.effect.value; 
+                        player.relicBonusAtk = (player.relicBonusAtk || 0) + baseItem.effect.value;
+                        audioManager.playBuff(); 
+                        break;
+                    case 'def': 
+                        player.def += baseItem.effect.value; 
+                        player.relicBonusDef = (player.relicBonusDef || 0) + baseItem.effect.value;
+                        audioManager.playDefense(); 
+                        break;
                 }
                 resultText = `获得了 ${baseItem.name}！`;
             }
@@ -1005,7 +1078,7 @@ class Game {
             
             if (rewardType === 'relic') {
                 const relic = Relic.getRandomRelic(this.obtainedRelicIds);
-                if (relic && player.addRelic(relic)) {
+                if (relic && player && typeof player.addRelic === 'function' && player.addRelic(relic)) {
                     this.obtainedRelicIds.push(relic.id);
                     resultText += ` 额外获得了遗物——${relic.name}！`;
                 }
@@ -1061,7 +1134,7 @@ class Game {
                         resultText = option.effect.message || '';
                     }
                     
-                    if (player.addRelic(relic)) {
+                    if (player && typeof player.addRelic === 'function' && player.addRelic(relic)) {
                         this.obtainedRelicIds.push(relic.id);
                         const relicText = resultText ? ` ${resultText}` : `获得圣人遗物——${relic.name}！`;
                         resultText = relicText;
@@ -1089,6 +1162,10 @@ class Game {
         
         this.ui.updateGold(this.gold);
         this.ui.updatePlayerResources(player);
+        
+        if (['cliff', 'rescue', 'crossroad'].includes(event.id)) {
+            this.usedEventIds.push(event.id);
+        }
         
         if (player.isDead) {
             audioManager.playDefeat();
@@ -1147,6 +1224,14 @@ class Game {
                 if (player.maxMana === undefined) {
                     player.maxMana = 120;
                     player.mana = 120;
+                }
+                if (player.baseAtk === undefined) {
+                    player.baseAtk = player.atk;
+                    player.baseDef = player.def;
+                    player.baseSpd = player.spd;
+                    player.relicBonusAtk = 0;
+                    player.relicBonusDef = 0;
+                    player.relicBonusSpd = 0;
                 }
                 player.getHpPercent = function() {
                     return Math.floor((this.hp / this.maxHp) * 100);

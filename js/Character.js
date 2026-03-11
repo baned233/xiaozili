@@ -27,6 +27,9 @@ class Character {
         this.baseAtk = this.atk;
         this.baseDef = this.def;
         this.baseSpd = this.spd;
+        this.relicBonusAtk = 0;
+        this.relicBonusDef = 0;
+        this.relicBonusSpd = 0;
         this.霸王之卵免疫一次 = false;
         this.霸王之卵复活 = false;
     }
@@ -112,7 +115,28 @@ class Character {
             damage = Math.floor(damage * (this.critDmg / 100));
         }
         
+        const damageReduction = target.getDamageReduction();
+        if (damageReduction > 0) {
+            damage = Math.floor(damage * (1 - damageReduction));
+        }
+        
         const actualDamage = target.takeDamage(damage);
+        
+        if (this.skills) {
+            this.skills.forEach(skill => {
+                if (skill.passive && skill.effect) {
+                    if (skill.effect.type === 'bleedOnHit') {
+                        const stacks = skill.stacks || 1;
+                        target.addBuff('流血', stacks);
+                    }
+                    if (skill.effect.type === 'lifesteal' && actualDamage > 0) {
+                        const lifestealAmount = Math.floor(actualDamage * skill.effect.percent);
+                        this.heal(lifestealAmount);
+                    }
+                }
+            });
+        }
+        
         return { damage: actualDamage, isCrit };
     }
 
@@ -149,7 +173,11 @@ class Character {
                                 enemy.hp = 0;
                                 killedCount++;
                             } else {
-                                const damage = this.calculateSkillDamage(skill.power);
+                                let damage = this.calculateSkillDamage(skill.power);
+                                const damageReduction = enemy.getDamageReduction ? enemy.getDamageReduction() : 0;
+                                if (damageReduction > 0) {
+                                    damage = Math.floor(damage * (1 - damageReduction));
+                                }
                                 const result = enemy.takeDamage(damage);
                                 totalDamage += result;
                             }
@@ -157,7 +185,11 @@ class Character {
                         return { damage: totalDamage, killedCount: killedCount, type: 'attack' };
                     } else {
                         enemies.forEach(enemy => {
-                            const damage = this.calculateSkillDamage(skill.power);
+                            let damage = this.calculateSkillDamage(skill.power);
+                            const damageReduction = enemy.getDamageReduction ? enemy.getDamageReduction() : 0;
+                            if (damageReduction > 0) {
+                                damage = Math.floor(damage * (1 - damageReduction));
+                            }
                             const result = enemy.takeDamage(damage);
                             totalDamage += result;
                         });
@@ -168,13 +200,41 @@ class Character {
                         const enemies = battle.getAliveEnemies();
                         if (enemies.length > 0) {
                             const randomTarget = enemies[Math.floor(Math.random() * enemies.length)];
-                            const percentDamage = Math.floor(randomTarget.hp * skill.effect.percent);
+                            let percentDamage = Math.floor(randomTarget.hp * skill.effect.percent);
+                            const damageReduction = randomTarget.getDamageReduction ? randomTarget.getDamageReduction() : 0;
+                            if (damageReduction > 0) {
+                                percentDamage = Math.floor(percentDamage * (1 - damageReduction));
+                            }
                             const actualDamage = randomTarget.takeDamage(percentDamage);
                             return { damage: actualDamage, type: 'attack', target: randomTarget.name, percentDamage: true };
                         }
                     }
                     
                     let damage = this.calculateSkillDamage(skill.power);
+                    
+                    if (skill.effect?.type === 'escalatingDamage') {
+                        this.skillUseCount = this.skillUseCount || {};
+                        this.skillUseCount[skill.name] = (this.skillUseCount[skill.name] || 0) + 1;
+                        const useCount = this.skillUseCount[skill.name];
+                        damage = skill.effect.baseDamage + (useCount - 1) * skill.effect.damageIncrease;
+                    }
+                    
+                    if (skill.effect?.type === 'sacrificeDamage') {
+                        const sacrificeCost = Math.floor(this.maxHp * skill.effect.costPercent);
+                        this.hp -= sacrificeCost;
+                        let percentDamage = Math.floor(target.maxHp * skill.effect.percent);
+                        const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;
+                        if (damageReduction > 0) {
+                            percentDamage = Math.floor(percentDamage * (1 - damageReduction));
+                        }
+                        const result = target.takeDamage(percentDamage);
+                        return { 
+                            damage: result, 
+                            type: 'attack', 
+                            sacrifice: sacrificeCost,
+                            effect: 'sacrificeDamage' 
+                        };
+                    }
                     
                     if (skill.effect?.type === 'counter') {
                         damage = battle.lastPlayerDamage || 1;
@@ -185,12 +245,48 @@ class Character {
                     }
                     if (skill.effect === 'doubleStrike') {
                         damage = Math.floor(damage * 0.7);
-                        const result1 = target.takeDamage(damage);
-                        const result2 = target.takeDamage(damage);
+                        const damageReduction1 = target.getDamageReduction ? target.getDamageReduction() : 0;
+                        const d1 = damageReduction1 > 0 ? Math.floor(damage * (1 - damageReduction1)) : damage;
+                        const result1 = target.takeDamage(d1);
+                        const damageReduction2 = target.getDamageReduction ? target.getDamageReduction() : 0;
+                        const d2 = damageReduction2 > 0 ? Math.floor(damage * (1 - damageReduction2)) : damage;
+                        const result2 = target.takeDamage(d2);
                         return { damage: result1 + result2, type: 'attack', doubleStrike: true };
                     }
                     
+                    const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;
+                    if (damageReduction > 0) {
+                        damage = Math.floor(damage * (1 - damageReduction));
+                    }
                     const result = target.takeDamage(damage);
+                    
+                    if (this.skills) {
+                        this.skills.forEach(skill => {
+                            if (skill.passive && skill.effect) {
+                                if (skill.effect.type === 'bleedOnHit') {
+                                    const stacks = skill.stacks || 1;
+                                    target.addBuff('流血', stacks);
+                                }
+                                if (skill.effect.type === 'lifesteal' && result > 0) {
+                                    const lifestealAmount = Math.floor(result * skill.effect.percent);
+                                    this.heal(lifestealAmount);
+                                }
+                            }
+                        });
+                    }
+                    
+                    if (skill.effect?.type === 'bleedOnHit') {
+                        target.addBuff('流血', 1);
+                    }
+                    
+                    if (skill.effect?.type === 'lifesteal' && result > 0) {
+                        const lifestealAmount = Math.floor(result * skill.effect.percent);
+                        this.heal(lifestealAmount);
+                    }
+                    
+                    if (skill.effect?.type === 'gainBuff') {
+                        this.addBuff(skill.effect.buffName, skill.effect.stacks);
+                    }
                     
                     if (skill.effect?.type === 'enrage') {
                         const enemies = battle.getAliveEnemies();
@@ -221,6 +317,34 @@ class Character {
                 }
             
             case 'heal':
+                if (skill.effect?.type === 'shield') {
+                    const lostHp = this.maxHp - this.hp;
+                    const shieldValue = Math.floor(skill.effect.base + lostHp * skill.effect.multiplier);
+                    this.shield = (this.shield || 0) + shieldValue;
+                    return { shield: shieldValue, type: 'heal', effect: 'shield' };
+                } else if (skill.effect?.type === 'lifeShare') {
+                    const totalHp = this.hp + target.hp;
+                    const sharedHp = Math.floor(totalHp / 2);
+                    const oldSelfHp = this.hp;
+                    const oldTargetHp = target.hp;
+                    this.hp = sharedHp;
+                    target.hp = sharedHp;
+                    return { 
+                        type: 'heal', 
+                        effect: 'lifeShare', 
+                        selfChange: sharedHp - oldSelfHp,
+                        targetChange: sharedHp - oldTargetHp,
+                        target: target.name
+                    };
+                } else if (skill.effect?.type === 'healIfAllyExists') {
+                    const aliveAllies = battle.playerTeam.filter(c => !c.isDead && c !== this);
+                    if (aliveAllies.length > 0) {
+                        const healAmount = Math.floor(this.maxHp * skill.effect.percent);
+                        this.heal(healAmount);
+                        return { heal: healAmount, type: 'heal', effect: 'healIfAllyExists' };
+                    }
+                    return { type: 'heal', effect: 'noAlly', failed: true };
+                }
                 if (target && target !== this) {
                     target.heal(skill.heal);
                     return { heal: skill.heal, target: target.name, type: 'heal' };
@@ -280,7 +404,11 @@ class Character {
                     battle.playerTeam.push(summonData);
                     return { summonName: skill.effect.name, type: 'summon' };
                 } else {
-                    const summonDmg = skill.power;
+                    let summonDmg = skill.power;
+                    const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;
+                    if (damageReduction > 0) {
+                        summonDmg = Math.floor(summonDmg * (1 - damageReduction));
+                    }
                     const summonResult = target.takeDamage(summonDmg);
                     return { damage: summonResult, type: 'summon', summonName: skill.name };
                 }
@@ -371,12 +499,20 @@ class Character {
                             target.removeBuff(stolenBuff.name);
                         }
                     }
-                    const damage = skill.power;
+                    let damage = skill.power;
+                    const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;
+                    if (damageReduction > 0) {
+                        damage = Math.floor(damage * (1 - damageReduction));
+                    }
                     const result = target.takeDamage(damage);
                     return { type: 'debuff', effect: 'stealBuff', damage: result };
                 } else if (skill.effect?.type === 'silence') {
                     target.silenced = true;
-                    const damage = skill.power;
+                    let damage = skill.power;
+                    const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;
+                    if (damageReduction > 0) {
+                        damage = Math.floor(damage * (1 - damageReduction));
+                    }
                     const result = target.takeDamage(damage);
                     return { type: 'debuff', effect: 'silence', damage: result };
                 } else if (skill.effect?.type === 'sleep') {
@@ -396,8 +532,25 @@ class Character {
                     }
                     target.addBuff('虚弱', skill.effect.stacks || 1);
                     return { type: 'debuff', effect: 'weakness', target: target.name };
+                } else if (skill.effect?.type === 'addDebuff') {
+                    let stacks = skill.effect.defaultStacks;
+                    if (skill.effect.requiresSkill) {
+                        const hasRequiredSkill = this.skills.some(s => s.name === skill.effect.requiresSkill);
+                        if (hasRequiredSkill) {
+                            stacks = skill.effect.bonusStacks;
+                        }
+                    }
+                    target.addBuff(skill.effect.buffName, stacks);
+                    return { type: 'debuff', effect: 'addDebuff', buffName: skill.effect.buffName, stacks: stacks, target: target.name };
+                } else if (skill.effect?.type === 'gainBuff') {
+                    this.addBuff(skill.effect.buffName, skill.effect.stacks);
+                    return { type: 'debuff', effect: 'gainBuff', buffName: skill.effect.buffName, stacks: skill.effect.stacks };
                 } else {
-                    const damage = skill.power;
+                    let damage = skill.power;
+                    const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;
+                    if (damageReduction > 0) {
+                        damage = Math.floor(damage * (1 - damageReduction));
+                    }
                     const result = target.takeDamage(damage);
                     return { damage: result, type: 'debuff' };
                 }
@@ -417,6 +570,8 @@ class Character {
             this.atk += weapon.atkBonus || 0;
             this.def += weapon.defBonus || 0;
             this.crit += weapon.critBonus || 0;
+            this.relicBonusAtk = (this.relicBonusAtk || 0) + (weapon.atkBonus || 0);
+            this.relicBonusDef = (this.relicBonusDef || 0) + (weapon.defBonus || 0);
         }
         return this.weapon;
     }
@@ -463,6 +618,7 @@ class Character {
             stacks = 1;
         }
         
+        let isNewBuff = false;
         const existingBuff = this.buffs.find(b => b.name === buffName);
         if (existingBuff) {
             if (buffName === '滑稽') {
@@ -471,6 +627,7 @@ class Character {
                 existingBuff.stacks += stacks;
             }
         } else {
+            isNewBuff = true;
             this.buffs.push({
                 name: buffName,
                 stacks: stacks,
@@ -479,7 +636,12 @@ class Character {
                 description: BUFF_DATA[buffName].description
             });
         }
-        this.applyBuffEffect(buffName);
+        
+        if (isNewBuff) {
+            this.applyBuffEffect(buffName, this.getBuffStacks(buffName));
+        } else {
+            this.applyBuffEffect(buffName, stacks);
+        }
         return true;
     }
 
@@ -497,15 +659,18 @@ class Character {
         return true;
     }
 
-    applyBuffEffect(buffName) {
+    applyBuffEffect(buffName, stacks = null) {
         const buff = BUFF_DATA[buffName];
         if (!buff || !buff.effect) return;
 
-        const effect = buff.effect(this, this.getBuffStacks(buffName));
+        const actualStacks = stacks !== null ? stacks : this.getBuffStacks(buffName);
         
-        if (effect.atk) this.atk += effect.atk;
-        if (effect.def) this.def += effect.def;
-        if (effect.spd) this.spd += effect.spd;
+        for (let i = 0; i < actualStacks; i++) {
+            const effect = buff.effect(this, 1);
+            if (effect.atk) this.atk += effect.atk;
+            if (effect.def) this.def += effect.def;
+            if (effect.spd) this.spd += effect.spd;
+        }
     }
 
     getBuffStacks(buffName) {
@@ -518,38 +683,71 @@ class Character {
     }
 
     reapplyBuffs() {
-        this.atk = this.baseAtk || this.atk;
-        this.def = this.baseDef || this.def;
-        this.spd = this.baseSpd || this.spd;
+        const savedBaseAtk = this.baseAtk;
+        const savedBaseDef = this.baseDef;
+        const savedBaseSpd = this.baseSpd;
         
-        this.baseAtk = this.baseAtk || this.atk;
-        this.baseDef = this.baseDef || this.def;
-        this.baseSpd = this.baseSpd || this.spd;
+        this.atk = (savedBaseAtk !== undefined ? savedBaseAtk : this.atk) + (this.relicBonusAtk || 0);
+        this.def = (savedBaseDef !== undefined ? savedBaseDef : this.def) + (this.relicBonusDef || 0);
+        this.spd = (savedBaseSpd !== undefined ? savedBaseSpd : this.spd) + (this.relicBonusSpd || 0);
+        
+        this.baseAtk = savedBaseAtk;
+        this.baseDef = savedBaseDef;
+        this.baseSpd = savedBaseSpd;
 
         this.buffs.forEach(buff => {
             const buffData = BUFF_DATA[buff.name];
             if (buffData && buffData.effect) {
-                const effect = buffData.effect(this, buff.stacks);
-                if (effect.atk) this.atk += effect.atk;
-                if (effect.def) this.def += effect.def;
-                if (effect.spd) this.spd += effect.spd;
+                for (let i = 0; i < buff.stacks; i++) {
+                    const effect = buffData.effect(this, 1);
+                    if (effect.atk) this.atk += effect.atk;
+                    if (effect.def) this.def += effect.def;
+                    if (effect.spd) this.spd += effect.spd;
+                }
             }
         });
     }
 
     endRoundBuffs() {
         const buffsToRemove = [];
+        let needsReapply = false;
         
         this.buffs.forEach(buff => {
             const buffData = BUFF_DATA[buff.name];
+            if (buffData && buffData.type === 'positive') {
+                if (buff.name === '勇气') {
+                    buff.stacks--;
+                    needsReapply = true;
+                    if (buff.stacks <= 0) {
+                        buffsToRemove.push(buff.name);
+                    }
+                }
+            }
             if (buffData && buffData.type === 'negative') {
-                if (buff.name === '虚弱' || buff.name === '肌无力' || buff.name === '凝滞') {
+                if (buff.name === '虚弱' || buff.name === '凝滞') {
                     buffsToRemove.push(buff.name);
+                } else if (buff.name === '肌无力' || buff.name === '束缚') {
+                    buff.stacks--;
+                    needsReapply = true;
+                    if (buff.stacks <= 0) {
+                        buffsToRemove.push(buff.name);
+                    }
                 }
             }
         });
 
+        if (needsReapply) {
+            this.reapplyBuffs();
+        }
+        
         buffsToRemove.forEach(buffName => {
+            this.removeBuff(buffName);
+        });
+    }
+
+    clearDebuffsOnBattleEnd() {
+        const debuffsToRemove = ['肌无力', '束缚'];
+        debuffsToRemove.forEach(buffName => {
             this.removeBuff(buffName);
         });
     }

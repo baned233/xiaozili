@@ -16,6 +16,8 @@ class Skill {
         this.isMagic = data.isMagic || false;
         this.targetAll = data.targetAll || false;
         this.passive = data.passive || false;
+        this.stacks = data.stacks || 1;
+        this.noEndTurn = data.noEndTurn || false;
     }
 
     needsTarget() {
@@ -60,7 +62,7 @@ class Skill {
             return null;
         }
         
-        const weights = pool.map(s => this.getWeight(s.rarity));
+        const weights = pool.map(s => this.getWeight(s.rarity, level));
         const totalWeight = weights.reduce((a, b) => a + b, 0);
         let random = Math.random() * totalWeight;
         
@@ -71,14 +73,16 @@ class Skill {
         return new Skill(pool[pool.length - 1]);
     }
 
-    static getWeight(rarity) {
-        switch(rarity) {
-            case 'common': return 60;
-            case 'rare': return 25;
-            case 'epic': return 10;
-            case 'legendary': return 5;
-            default: return 60;
-        }
+    static getWeight(rarity, level = 1) {
+        const baseWeights = {
+            'common': 45,
+            'rare': 25,
+            'uncommon': 15,
+            'epic': 8,
+            'legendary': 5,
+            'mythic': 2
+        };
+        return baseWeights[rarity] || 45;
     }
 
     static getRarityColor(rarity) {
@@ -87,6 +91,7 @@ class Skill {
             case 'rare': return 'skill-rarity-rare';
             case 'epic': return 'skill-rarity-epic';
             case 'legendary': return 'skill-rarity-legendary';
+            case 'mythic': return 'skill-rarity-mythic';
             default: return 'skill-rarity-common';
         }
     }
@@ -95,13 +100,13 @@ class Skill {
 const SKILL_POOL = [
     {
         id: 11,
-        name: '爪击',
+        name: '挥砍',
         description: '造成少量物理伤害',
         type: 'attack',
         rarity: 'common',
         power: '30+1*atk',
         level: 1,
-        icon: '🐾',
+        icon: 'assets/images/huikan.png',
         cost: 0,
         isMagic: false
     },
@@ -110,7 +115,7 @@ const SKILL_POOL = [
         name: '魔术飞弹',
         description: '对敌方单位造成较大魔法伤害',
         type: 'attack',
-        rarity: 'rare',
+        rarity: 'uncommon',
         power: '60+1.4*atk',
         level: 3,
         icon: '🪄',
@@ -126,7 +131,7 @@ const SKILL_POOL = [
         power: '120+2*atk',
         level: 5,
         icon: '🦶',
-        cost: 100,
+        cost: 80,
         isMagic: false,
         targetAll: true
     },
@@ -148,7 +153,7 @@ const SKILL_POOL = [
         name: '鬼！',
         description: '放逐一个敌方单位，将其移除，对精英怪以及BOSS无效',
         type: 'banish',
-        rarity: 'rare',
+        rarity: 'uncommon',
         power: 0,
         level: 3,
         icon: '👻',
@@ -174,7 +179,7 @@ const SKILL_POOL = [
         name: '嘶哈～！？',
         description: '对敌方单位哈气，并对其造成该单位上回合对你造成的伤害',
         type: 'attack',
-        rarity: 'common',
+        rarity: 'rare',
         power: 0,
         level: 2,
         icon: '😤',
@@ -244,7 +249,7 @@ const SKILL_POOL = [
         name: '召唤滑稽',
         description: '滑稽的笑声让人抓耳挠腮，使用该技能后获得BUFF：滑稽',
         type: 'buff',
-        rarity: 'common',
+        rarity: 'rare',
         power: 0,
         level: 2,
         icon: '🤪',
@@ -272,7 +277,7 @@ const SKILL_POOL = [
         name: '回来了我的原子弹！',
         description: '你在看球赛，并高呼"我的原子弹，回来了！"，你随机对一名敌方单位造成20%当前生命值伤害',
         type: 'attack',
-        rarity: 'rare',
+        rarity: 'uncommon',
         power: 0,
         level: 3,
         icon: '⚾',
@@ -285,7 +290,7 @@ const SKILL_POOL = [
         name: '猪鼻吧，这怎么这么菜啊',
         description: '你对敌方单位进行嘲讽，使其攻击力+5，防御力-10',
         type: 'debuff',
-        rarity: 'common',
+        rarity: 'rare',
         power: 0,
         level: 1,
         icon: '🐷',
@@ -325,7 +330,7 @@ const SKILL_POOL = [
         name: '吞食',
         description: '吞食选中的敌方单位，若目标血量低于10%最大生命值则将其斩杀并获得5点最大生命值',
         type: 'attack',
-        rarity: 'rare',
+        rarity: 'uncommon',
         power: '1*atk',
         level: 3,
         icon: '😋',
@@ -338,7 +343,7 @@ const SKILL_POOL = [
         name: '脱衣',
         description: '敌方单位获得3层勇气，你获得5层勇气',
         type: 'buff',
-        rarity: 'common',
+        rarity: 'rare',
         power: 0,
         level: 2,
         icon: '👕',
@@ -351,7 +356,7 @@ const SKILL_POOL = [
         name: '夺食',
         description: '夺走敌方单位的一个正面buff，若该单位无正面buff则无事发生，并造成少量物理伤害',
         type: 'attack',
-        rarity: 'common',
+        rarity: 'rare',
         power: 30,
         level: 1,
         icon: '🍖',
@@ -373,8 +378,8 @@ const SKILL_POOL = [
     },
     {
         id: 33,
-        name: '数值之拳',
-        description: '对敌方单位造成极大量物理伤害',
+        name: '手痒难耐',
+        description: '对敌方单位造成极大量物理伤害，“左拳伤害高，右拳高伤害”',
         type: 'attack',
         rarity: 'legendary',
         power: '120+2*atk',
@@ -394,5 +399,155 @@ const SKILL_POOL = [
         icon: '🦷',
         cost: 25,
         isMagic: false
+    },
+    {
+        id: 35,
+        name: '利刃',
+        description: '玩家攻击敌方单位时会给该单位增加3层流血效果',
+        type: 'passive',
+        rarity: 'common',
+        power: 0,
+        level: 1,
+        icon: '🗡️',
+        cost: 0,
+        isMagic: false,
+        passive: true,
+        effect: { type: 'bleedOnHit' },
+        stacks: 3
+    },
+    {
+        id: 36,
+        name: '嗜血',
+        description: '吸血，对敌方单位发起攻击并造成伤害时，立即为玩家恢复等同于所造成伤害值×20%的生命值',
+        type: 'passive',
+        rarity: 'epic',
+        power: 0,
+        level: 3,
+        icon: '🩸',
+        cost: 0,
+        isMagic: false,
+        passive: true,
+        effect: { type: 'lifesteal', percent: 0.2 }
+    },
+    {
+        id: 37,
+        name: '哭泣',
+        description: '这是泪水织成的毛衣，该单位获得护盾值=50+0.8×自身已损失生命值',
+        type: 'heal',
+        rarity: 'uncommon',
+        power: 0,
+        level: 2,
+        icon: '😭',
+        cost: 30,
+        isMagic: true,
+        targetSelf: true,
+        effect: { type: 'shield', base: 50, multiplier: 0.8 }
+    },
+    {
+        id: 38,
+        name: '开导',
+        description: '开导！本场战斗内每使用一次该技能，其伤害都会提升；且使用该技能后，不会结束玩家的当前回合',
+        type: 'attack',
+        rarity: 'legendary',
+        power: '20+skillUseCount*15',
+        level: 4,
+        icon: '📢',
+        cost: 20,
+        isMagic: true,
+        effect: { type: 'escalatingDamage', baseDamage: 20, damageIncrease: 15 },
+        noEndTurn: true
+    },
+    {
+        id: 39,
+        name: '曼巴OUT',
+        description: '我真得肘击你了，MAN!对目标造成其60%最大生命值的物理伤害',
+        type: 'attack',
+        rarity: 'mythic',
+        power: 0,
+        level: 5,
+        icon: '🏀',
+        cost: 0,
+        isMagic: false,
+        effect: { type: 'sacrificeDamage', percent: 0.6, costPercent: 0.5 }
+    },
+    {
+        id: 40,
+        name: '苦命鸳鸯',
+        description: '将自身与被选中目标的生命值，统一设置为双方当前生命值总和除以2的数值',
+        type: 'heal',
+        rarity: 'mythic',
+        power: 0,
+        level: 5,
+        icon: '�鸳鸯',
+        cost: 80,
+        isMagic: true,
+        effect: { type: 'lifeShare' }
+    },
+    {
+        id: 41,
+        name: '盐津虾',
+        description: '对指定敌方单位施加1层束缚；若玩家同时拥有尔多隆技能，则改为对该敌方单位施加3层束缚',
+        type: 'debuff',
+        rarity: 'rare',
+        power: 0,
+        level: 2,
+        icon: '🦐',
+        cost: 30,
+        isMagic: true,
+        effect: { type: 'addDebuff', buffName: '束缚', defaultStacks: 1, bonusStacks: 3, requiresSkill: '尔多隆' }
+    },
+    {
+        id: 42,
+        name: '尔多隆',
+        description: '对指定敌方单位施加1层肌无力；若玩家同时拥有盐津虾技能，则改为对该敌方单位施加3层肌无力',
+        type: 'debuff',
+        rarity: 'rare',
+        power: 0,
+        level: 2,
+        icon: '🐟',
+        cost: 30,
+        isMagic: true,
+        effect: { type: 'addDebuff', buffName: '肌无力', defaultStacks: 1, bonusStacks: 3, requiresSkill: '盐津虾' }
+    },
+    {
+        id: 43,
+        name: '走A',
+        description: '造成物理伤害，玩家获得1层士气',
+        type: 'attack',
+        rarity: 'rare',
+        power: '10+2*atk',
+        level: 2,
+        icon: '🏃',
+        cost: 15,
+        isMagic: false,
+        effect: { type: 'gainBuff', buffName: '士气', stacks: 1 }
+    },
+    {
+        id: 44,
+        name: '啊！徒弟！',
+        description: '当场上任意友方单位死亡时，使其立即复活，并恢复至50%最大生命值。该效果一场战斗只能触发一次',
+        type: 'passive',
+        rarity: 'epic',
+        power: 0,
+        level: 4,
+        icon: '👨‍🏫',
+        cost: 0,
+        isMagic: false,
+        passive: true,
+        effect: { type: 'resurrectAlly' }
+    },
+    {
+        id: 45,
+        name: '队友呢救一下啊',
+        description: '场上存在友方单位时，使用该技能后，玩家恢复等同于自身最大生命值20%的生命值',
+        type: 'heal',
+        rarity: 'common',
+        power: 0,
+        level: 1,
+        icon: '🆘',
+        cost: 20,
+        isMagic: true,
+        targetSelf: true,
+        effect: { type: 'healIfAllyExists', percent: 0.2 }
     }
 ];
