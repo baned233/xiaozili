@@ -60,6 +60,18 @@ class UI {
             this.showSettings();
         });
         
+        document.getElementById('btn-encyclopedia').addEventListener('click', () => {
+            audioManager.playClick();
+            this.showEncyclopedia();
+        });
+        
+        document.getElementById('btn-close-encyclopedia').addEventListener('click', () => {
+            audioManager.playClick();
+            this.hideEncyclopedia();
+        });
+        
+        this.bindEncyclopediaTabEvents();
+        
         const exitBtn = document.getElementById('btn-exit');
         if (exitBtn) {
             exitBtn.addEventListener('click', () => {
@@ -567,6 +579,28 @@ class UI {
                 entry.textContent = `掉落: ${log.item}`;
             } else if (log.type === 'pet') {
                 entry.textContent = `获得宠物: ${log.item}`;
+            } else if (log.type === 'petAbility') {
+                if (log.ability === 'heal') {
+                    entry.textContent = `${log.pet} 使用治愈能力恢复了 ${log.value} 生命`;
+                } else if (log.ability === 'bind') {
+                    entry.textContent = `${log.pet} 束缚了 ${log.target}`;
+                } else if (log.ability === 'breakDefense') {
+                    entry.textContent = `${log.pet} 对 ${log.target} 施加破防 (${log.stacks}层)`;
+                } else if (log.ability === 'giveHumorBuff') {
+                    entry.textContent = log.message || `${log.pet} 给玩家添加了滑稽buff`;
+                } else if (log.ability === 'speedBoost') {
+                    entry.textContent = `${log.pet} 提升了玩家 ${log.value} 点速度`;
+                } else if (log.ability === 'mimic') {
+                    entry.textContent = `${log.pet} 复制了技能 ${log.skill}`;
+                } else if (log.ability === 'mimicAttack') {
+                    entry.textContent = `${log.pet} 使用 ${log.skill} 攻击 ${log.target} 造成 ${log.result?.damage || 0} 伤害`;
+                } else if (log.ability === 'steal') {
+                    entry.textContent = `${log.pet} 偷取 ${log.target} 的 ${log.skill} 造成 ${log.damage} 伤害`;
+                }
+                entry.classList.add('player-action');
+            } else if (log.type === 'buffDamage') {
+                entry.textContent = `${log.buff} 对 ${log.target} 造成 ${log.damage} 伤害`;
+                entry.classList.add('player-action');
             }
             
             if (entry.textContent) {
@@ -664,7 +698,8 @@ class UI {
 
     createCharacterCard(char, isActive) {
         const card = document.createElement('div');
-        card.className = `character-card ${char.isDead ? 'dead' : ''} ${isActive ? 'active' : ''}`;
+        const isPet = char.isSummoned;
+        card.className = `character-card ${char.isDead ? 'dead' : ''} ${isActive ? 'active' : ''} ${isPet ? 'pet-card' : ''}`;
         card.id = `char-${char.id}`;
         
         let iconHtml = '';
@@ -693,6 +728,14 @@ class UI {
             buffsHtml += `</div>`;
         }
         
+        const attrsHtml = isPet ? '' : `
+            <div class="status-attrs">
+                <span class="attr-atk">⚔️${char.atk}</span>
+                <span class="attr-def">🛡️${char.def}</span>
+                <span class="attr-spd">⚡${char.spd}</span>
+            </div>
+        `;
+        
         card.innerHTML = `
             <div class="character-icon battle-entity">${iconHtml}</div>
             ${buffsHtml}
@@ -702,11 +745,7 @@ class UI {
                     <div class="status-hp-fill ${hpClass}" style="width: ${hpPercent}%"></div>
                 </div>
                 <div class="status-hp-text">HP: ${char.hp}/${char.maxHp}</div>
-                <div class="status-attrs">
-                    <span class="attr-atk">⚔️${char.atk}</span>
-                    <span class="attr-def">🛡️${char.def}</span>
-                    <span class="attr-spd">⚡${char.spd}</span>
-                </div>
+                ${attrsHtml}
             </div>
         `;
         
@@ -1215,6 +1254,9 @@ class UI {
             items = specialPets.filter(p => !term || p.name.toLowerCase().includes(term) || p.description.toLowerCase().includes(term));
         } else if (this.currentDebugTab === 'events') {
             items = RANDOM_EVENTS.filter(e => !term || e.name.toLowerCase().includes(term) || e.desc.toLowerCase().includes(term));
+        } else if (this.currentDebugTab === 'stats') {
+            this.renderDebugStats(content);
+            return;
         }
 
         items.forEach(item => {
@@ -1253,5 +1295,333 @@ class UI {
         if (items.length === 0) {
             content.innerHTML = '<div style="color:#666;text-align:center;padding:20px;">未找到相关内容</div>';
         }
+    }
+
+    renderDebugStats(content) {
+        const player = this.game.playerTeam[0];
+        if (!player) return;
+
+        const stats = [
+            { key: 'maxHp', label: '最大生命', value: player.maxHp },
+            { key: 'hp', label: '当前生命', value: player.hp },
+            { key: 'atk', label: '攻击力', value: player.atk },
+            { key: 'def', label: '防御力', value: player.def },
+            { key: 'spd', label: '速度', value: player.spd },
+            { key: 'crit', label: '暴击率', value: player.crit },
+            { key: 'critDmg', label: '暴击伤害', value: player.critDmg },
+            { key: 'maxStamina', label: '最大体力', value: player.maxStamina },
+            { key: 'maxMana', label: '最大法力', value: player.maxMana },
+            { key: 'level', label: '等级', value: player.level }
+        ];
+
+        stats.forEach(stat => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #333;';
+            row.innerHTML = `
+                <span style="color:#ccc;">${stat.label}</span>
+                <div style="display:flex;align-items:center;gap:5px;">
+                    <button class="debug-stat-btn" data-stat="${stat.key}" data-action="dec" style="width:24px;height:24px;border-radius:4px;border:1px solid #555;background:#333;color:#fff;cursor:pointer;">-</button>
+                    <input type="number" class="debug-stat-input" data-stat="${stat.key}" value="${stat.value}" style="width:50px;padding:4px;text-align:center;background:#222;border:1px solid #444;color:#fff;border-radius:4px;">
+                    <button class="debug-stat-btn" data-stat="${stat.key}" data-action="inc" style="width:24px;height:24px;border-radius:4px;border:1px solid #555;background:#333;color:#fff;cursor:pointer;">+</button>
+                </div>
+            `;
+            content.appendChild(row);
+        });
+
+        const resetBtn = document.createElement('button');
+        resetBtn.textContent = '重置属性';
+        resetBtn.style.cssText = 'width:100%;padding:10px;margin-top:15px;background:#c0392b;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:14px;';
+        resetBtn.onclick = () => {
+            player.maxHp = 120;
+            player.hp = 120;
+            player.atk = 15;
+            player.def = 8;
+            player.spd = 12;
+            player.crit = 8;
+            player.critDmg = 150;
+            player.maxStamina = 80;
+            player.maxMana = 120;
+            player.level = 1;
+            this.renderDebugStats(content);
+        };
+        content.appendChild(resetBtn);
+
+        const inputs = content.querySelectorAll('.debug-stat-input');
+        inputs.forEach(input => {
+            input.addEventListener('change', () => {
+                const statKey = input.dataset.stat;
+                let newValue = parseInt(input.value) || 1;
+                if (statKey === 'maxHp' || statKey === 'hp') {
+                    newValue = Math.max(1, newValue);
+                } else if (statKey === 'atk' || statKey === 'def' || statKey === 'spd' || statKey === 'crit' || statKey === 'level') {
+                    newValue = Math.max(1, newValue);
+                } else if (statKey === 'critDmg') {
+                    newValue = Math.max(100, newValue);
+                } else {
+                    newValue = Math.max(0, newValue);
+                }
+                player[statKey] = newValue;
+                this.renderDebugStats(content);
+            });
+        });
+
+        const btns = content.querySelectorAll('.debug-stat-btn');
+        btns.forEach(btn => {
+            btn.onclick = () => {
+                const statKey = btn.dataset.stat;
+                const action = btn.dataset.action;
+                const change = action === 'inc' ? 1 : -1;
+                
+                if (statKey === 'maxHp' || statKey === 'hp') {
+                    player[statKey] = Math.max(1, player[statKey] + change * 10);
+                } else if (statKey === 'atk' || statKey === 'def' || statKey === 'spd') {
+                    player[statKey] = Math.max(1, player[statKey] + change);
+                } else if (statKey === 'crit' || statKey === 'level') {
+                    player[statKey] = Math.max(1, player[statKey] + change);
+                } else if (statKey === 'critDmg') {
+                    player[statKey] = Math.max(100, player[statKey] + change * 10);
+                } else {
+                    player[statKey] = Math.max(0, player[statKey] + change);
+                }
+                this.renderDebugStats(content);
+            };
+        });
+    }
+
+    showEncyclopedia() {
+        const panel = document.getElementById('encyclopedia-panel');
+        if (!panel) return;
+        panel.classList.remove('hidden');
+        this.currentEncyclopediaTab = 'skills';
+        this.updateEncyclopediaContent();
+    }
+
+    hideEncyclopedia() {
+        const panel = document.getElementById('encyclopedia-panel');
+        if (panel) panel.classList.add('hidden');
+    }
+
+    bindEncyclopediaTabEvents() {
+        const tabs = document.querySelectorAll('.encyc-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                this.currentEncyclopediaTab = tab.dataset.tab;
+                this.updateEncyclopediaContent();
+            });
+        });
+    }
+
+    updateEncyclopediaContent() {
+        const content = document.getElementById('encyclopedia-content');
+        if (!content) return;
+        content.innerHTML = '';
+
+        if (this.currentEncyclopediaTab === 'skills') {
+            this.renderEncyclopediaSkills(content);
+        } else if (this.currentEncyclopediaTab === 'relics') {
+            this.renderEncyclopediaRelics(content);
+        } else if (this.currentEncyclopediaTab === 'pets') {
+            this.renderEncyclopediaPets(content);
+        } else if (this.currentEncyclopediaTab === 'enemies') {
+            this.renderEncyclopediaEnemies(content);
+        }
+    }
+
+getRarityCN(rarity) {
+        const map = {
+            'common': '普通', 'rare': '稀有', 'epic': '史诗', 'legendary': '传说',
+            'normal': '普通', 'elite': '精英', 'boss': 'BOSS'
+        };
+        return map[rarity] || rarity;
+    }
+
+    renderEncyclopediaSkills(content) {
+        content.className = 'encyc-grid';
+        SKILL_POOL.forEach(skill => {
+            const card = document.createElement('div');
+            card.className = `encyc-card ${skill.rarity}`;
+            card.innerHTML = `
+                <div class="encyc-card-icon">${skill.icon}</div>
+                <div class="encyc-card-name">${skill.name}</div>
+                <div class="encyc-rarity-cn ${skill.rarity}">${this.getRarityCN(skill.rarity)}</div>
+            `;
+            card.addEventListener('click', () => this.showEncyclopediaDetail(skill.name, skill.icon, this.getRarityCN(skill.rarity), skill.description));
+            content.appendChild(card);
+        });
+    }
+
+    renderEncyclopediaRelics(content) {
+        content.className = 'encyc-grid-4';
+        RELIC_POOL.forEach(relic => {
+            const card = document.createElement('div');
+            card.className = 'encyc-card normal';
+            const desc = relic.description || '暂无描述';
+            card.innerHTML = `
+                <div class="encyc-card-icon">${relic.icon}</div>
+                <div class="encyc-card-name">${relic.name}</div>
+            `;
+            card.addEventListener('click', () => this.showEncyclopediaDetail(relic.name, relic.icon, '遗物', desc));
+            content.appendChild(card);
+        });
+    }
+
+    renderEncyclopediaPets(content) {
+        content.className = 'encyc-grid-1';
+        const specialPets = [
+            { id: 100, name: '鱼儿木', type: 'yueremu', description: '半鱼半植物的生物，每回合可以治愈角色10滴血，攻击力5，防御力10，生命值150', icon: '🌿🐟', rarity: 'legendary' },
+            { id: 101, name: '猫宁', type: 'maoning', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合有50%概率束缚一只怪物，攻击力8，防御力8，生命值100', icon: '🐱‍👤', rarity: 'legendary' },
+            { id: 102, name: '滑稽', type: 'humor', description: '一个巨大的漂浮的滑稽脸，敌人攻击时会优先以滑稽作为目标，攻击力0，防御力20，生命值200', icon: '🤪', rarity: 'legendary' },
+            { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合随机偷取怪物技能进行攻击，攻击力15，防御力5，生命值80', icon: '🐦‍⬛', rarity: 'legendary' }
+        ];
+        specialPets.forEach(pet => {
+            const card = document.createElement('div');
+            card.className = `encyc-card ${pet.rarity}`;
+            card.innerHTML = `
+                <div class="encyc-card-icon">${pet.icon}</div>
+                <div class="encyc-card-name">${pet.name}</div>
+                <div class="encyc-rarity-cn ${pet.rarity}">${this.getRarityCN(pet.rarity)}</div>
+            `;
+            card.addEventListener('click', () => this.showEncyclopediaDetail(pet.name, pet.icon, this.getRarityCN(pet.rarity), pet.description));
+            content.appendChild(card);
+        });
+    }
+
+    renderEncyclopediaEnemies(content) {
+        content.className = 'encyc-grid';
+        const enemies = [
+            { name: '老鼠', icon: '🐀', type: 'common', desc: '最弱的敌人，攻击力弱' },
+            { name: '蟑螂', icon: '🪲', type: 'common', desc: '生命力顽强，难以击杀' },
+            { name: '骷髅', icon: '💀', type: 'common', desc: '亡灵生物，物理防御较高' },
+            { name: '僵尸', icon: '🧟', type: 'common', desc: '行动迟缓，但生命值高' },
+            { name: '蝙蝠', icon: '🦇', type: 'common', desc: '飞行单位，速度快' },
+            { name: '幽灵', icon: '👻', type: 'common', desc: '虚无形态，难以捕捉' },
+            { name: '魅魔', icon: '😈', type: 'common', desc: '迷惑敌人，降低防御' },
+            { name: '石魔', icon: '🗿', type: 'common', desc: '防御极高，攻击力弱' },
+            { name: '精英骷髅', icon: '💀', type: 'elite', desc: '更强的亡灵，各项属性提升' },
+            { name: '腐尸统领', icon: '🧟', type: 'elite', desc: '僵尸的首领，拥有号召力' },
+            { name: '深渊恶魔', icon: '👹', type: 'elite', desc: '来自深渊的恶魔，强大无比' },
+            { name: '黑暗巫师', icon: '🧙', type: 'elite', desc: '掌握黑暗魔法，擅长诅咒' },
+            { name: '炎魔', icon: '🔥', type: 'elite', desc: '火焰化身，附带灼烧' },
+            { name: '暗金龙', icon: '🐉', type: 'elite', desc: '黑暗之龙，攻防兼备' },
+            { name: '地牢守卫者', icon: '👹', type: 'boss', desc: '第10层Boss，守护地牢入口' },
+            { name: '大帝', icon: '👿', type: 'boss', desc: '第20层Boss，来自深渊的王者' },
+            { name: '灵域天王', icon: '👼', type: 'boss', desc: '第30层Boss，灵域最强者' }
+        ];
+        enemies.forEach(enemy => {
+            const card = document.createElement('div');
+            card.className = `encyc-card ${enemy.type}`;
+            card.innerHTML = `
+                <div class="encyc-card-icon">${enemy.icon}</div>
+                <div class="encyc-card-name">${enemy.name}</div>
+                <div class="encyc-rarity-cn ${enemy.type}">${this.getRarityCN(enemy.type)}</div>
+            `;
+            card.addEventListener('click', () => this.showEncyclopediaDetail(enemy.name, enemy.icon, this.getRarityCN(enemy.type), enemy.desc));
+            content.appendChild(card);
+        });
+    }
+
+    showEncyclopediaDetail(name, icon, rarity, description) {
+        let popup = document.getElementById('encyc-detail-popup');
+        if (!popup) {
+            popup = document.createElement('div');
+            popup.id = 'encyc-detail-popup';
+            popup.className = 'hidden';
+            document.body.appendChild(popup);
+        }
+        
+        popup.innerHTML = `
+            <div class="encyc-detail-content">
+                <div class="encyc-detail-icon">${icon}</div>
+                <div class="encyc-detail-name">${name}</div>
+                <div class="encyc-detail-rarity ${rarity}">${rarity}</div>
+                <div class="encyc-detail-desc">${description}</div>
+                <button class="encyc-detail-close">关闭</button>
+            </div>
+        `;
+        
+        popup.classList.remove('hidden');
+        popup.querySelector('.encyc-detail-close').addEventListener('click', () => {
+            popup.classList.add('hidden');
+        });
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) {
+                popup.classList.add('hidden');
+            }
+        });
+    }
+
+    renderEncyclopediaRelics(content) {
+        RELIC_POOL.forEach(relic => {
+            const div = document.createElement('div');
+            div.className = 'debug-item';
+            div.innerHTML = `
+                <span class="debug-item-icon">${relic.icon}</span>
+                <div class="debug-item-info">
+                    <div class="debug-item-name">${relic.name}</div>
+                    <div class="debug-item-desc">${relic.description}</div>
+                </div>
+            `;
+            content.appendChild(div);
+        });
+    }
+
+    renderEncyclopediaPets(content) {
+        const specialPets = [
+            { id: 100, name: '鱼儿木', type: 'yueremu', description: '半鱼半植物的生物，每回合可以治愈角色10滴血', icon: '🌿🐟', rarity: 'legendary' },
+            { id: 101, name: '猫宁', type: 'maoning', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合有50%概率束缚一只怪物', icon: '🐱‍👤', rarity: 'legendary' },
+            { id: 102, name: '滑稽', type: 'humor', description: '一个巨大的漂浮的滑稽脸，敌人80%概率以它作为目标', icon: '🤪', rarity: 'legendary' },
+            { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合随机偷取怪物技能进行攻击', icon: '🐦‍⬛', rarity: 'legendary' }
+        ];
+        specialPets.forEach(pet => {
+            const div = document.createElement('div');
+            div.className = 'debug-item';
+            div.style.cssText = 'flex-direction: row; padding: 12px; gap: 12px;';
+            div.innerHTML = `
+                <span class="debug-item-icon" style="font-size:32px;">${pet.icon}</span>
+                <div class="debug-item-info" style="flex:1;">
+                    <div class="debug-item-name">${pet.name}</div>
+                    <div class="debug-item-desc" style="text-align:left;">${pet.description}</div>
+                </div>
+                <span class="debug-item-rarity ${pet.rarity}">${pet.rarity}</span>
+            `;
+            content.appendChild(div);
+        });
+    }
+
+    renderEncyclopediaEnemies(content) {
+        const enemies = [
+            { name: '老鼠', icon: '🐀', type: 'common', desc: '最弱的敌人' },
+            { name: '蟑螂', icon: '🪲', type: 'common', desc: '生命力顽强' },
+            { name: '骷髅', icon: '💀', type: 'common', desc: '亡灵生物' },
+            { name: '僵尸', icon: '🧟', type: 'common', desc: '行动迟缓' },
+            { name: '蝙蝠', icon: '🦇', type: 'common', desc: '飞行单位' },
+            { name: '幽灵', icon: '👻', type: 'common', desc: '虚无形态' },
+            { name: '魅魔', icon: '😈', type: 'common', desc: '迷惑敌人' },
+            { name: '石魔', icon: '🗿', type: 'common', desc: '防御极高' },
+            { name: '精英骷髅', icon: '💀', type: 'elite', desc: '更强的亡灵' },
+            { name: '腐尸统领', icon: '🧟', type: 'elite', desc: '僵尸的首领' },
+            { name: '深渊恶魔', icon: '👹', type: 'elite', desc: '来自深渊的恶魔' },
+            { name: '黑暗巫师', icon: '🧙', type: 'elite', desc: '掌握黑暗魔法' },
+            { name: '炎魔', icon: '🔥', type: 'elite', desc: '火焰化身' },
+            { name: '暗金龙', icon: '🐉', type: 'elite', desc: '黑暗之龙' },
+            { name: '地牢守卫者', icon: '👹', type: 'boss', desc: '第10层Boss' },
+            { name: '大帝', icon: '👿', type: 'boss', desc: '第20层Boss' },
+            { name: '灵域天王', icon: '👼', type: 'boss', desc: '第30层Boss' }
+        ];
+        enemies.forEach(enemy => {
+            const div = document.createElement('div');
+            div.className = 'debug-item';
+            div.innerHTML = `
+                <span class="debug-item-icon">${enemy.icon}</span>
+                <div class="debug-item-info">
+                    <div class="debug-item-name">${enemy.name}</div>
+                    <div class="debug-item-desc">${enemy.desc}</div>
+                </div>
+                <span class="debug-item-rarity ${enemy.type}">${enemy.type}</span>
+            `;
+            content.appendChild(div);
+        });
     }
 }

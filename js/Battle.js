@@ -16,6 +16,7 @@ class Battle {
         this.isElite = false;
         this.isBoss = false;
         this.skipEnemyTurn = false;
+        this.lastPlayerDamage = 0;
     }
 
     startBattle(playerTeam, floor, isElite = false, isBoss = false) {
@@ -30,6 +31,7 @@ class Battle {
                 if (!pet.isDead && pet.battleType === 'special') {
                     const alreadyInTeam = this.playerTeam.some(p => p.id === pet.id);
                     if (!alreadyInTeam) {
+                        pet.isSummoned = true;
                         this.playerTeam.push(pet);
                         if (pet.specialAbility && pet.specialAbility.type === 'mimic') {
                             pet.mimickedSkill = null;
@@ -401,6 +403,10 @@ class Battle {
                 damage: result.damage,
                 isCrit: result.isCrit
             });
+        }
+
+        if (!target.isSummoned) {
+            this.lastPlayerDamage = result.damage;
         }
 
         if (target.isDead && target.霸王之卵复活 && !target.isSummoned) {

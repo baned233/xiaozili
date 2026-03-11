@@ -464,35 +464,22 @@ class Game {
         
         const choiceRewards = [];
         
-        const skill = Skill.getRandomSkill(this.currentFloor, this.obtainedSkillIds);
-        const availableRelics = rewards.filter(r => r.type === 'relic' && !this.obtainedRelicIds.includes(r.item?.id));
-        
-        let relic = availableRelics.length > 0 
-            ? availableRelics[0] 
-            : { type: 'relic', item: Relic.getRandomRelic(this.obtainedRelicIds) };
-        
-        if (relic && relic.item && this.obtainedRelicIds.includes(relic.item.id)) {
-            relic = null;
+        const randomRelic = Relic.getRandomRelic(this.obtainedRelicIds);
+        if (randomRelic && !this.obtainedRelicIds.includes(randomRelic.id)) {
+            choiceRewards.push({ type: 'relic', item: randomRelic });
+        } else {
+            choiceRewards.push({ type: 'attribute', item: { 
+                name: '属性提升', 
+                icon: '⬆️', 
+                description: '随机提升一项属性',
+                effect: this.getRandomAttributeBoost()
+            }});
         }
         
-        if (skill && Math.random() < 0.6) {
-            choiceRewards.push({ type: 'skill', item: skill });
-        }
-        
-        if (relic && relic.item && Math.random() < 0.5) {
-            choiceRewards.push(relic);
-        }
-        
-        if (choiceRewards.length === 0) {
-            if (skill) {
-                choiceRewards.push({ type: 'skill', item: skill });
-            }
-            if (relic && relic.item) {
-                choiceRewards.push(relic);
-            }
-        }
-        
-        if (choiceRewards.length === 0) {
+        const randomSkill = Skill.getRandomSkill(this.currentFloor, this.obtainedSkillIds);
+        if (randomSkill) {
+            choiceRewards.push({ type: 'skill', item: randomSkill });
+        } else {
             choiceRewards.push({ type: 'attribute', item: { 
                 name: '属性提升', 
                 icon: '⬆️', 
@@ -981,12 +968,15 @@ class Game {
             const petType = petInfo[0];
             const petDesc = petInfo[1] || '';
             
-            if (player.pets && player.pets.length > 0) {
-                resultText = '你已经有宠物了，无法再获得新宠物！';
+            if (player.pets && player.pets.length >= 2) {
+                resultText = '宠物栏已满，无法再获得新宠物！';
             } else {
                 const pet = Pet.createPet(Pet.getSpecialPet(petType));
                 if (pet) {
-                    player.pets = [pet];
+                    if (!player.pets) {
+                        player.pets = [];
+                    }
+                    player.pets.push(pet);
                     resultText = option.effect.message || `获得了奇遇宠物——${pet.name}！`;
                     audioManager.playMagic();
                 }
@@ -1394,6 +1384,10 @@ class Game {
             if (pet) {
                 if (!player.pets) {
                     player.pets = [];
+                }
+                if (player.pets.length >= 2) {
+                    this.ui.showDialog('宠物栏已满！', () => {});
+                    return;
                 }
                 player.pets.push(pet);
                 this.ui.showDialog(`获得宠物: ${pet.name}！`, () => {});

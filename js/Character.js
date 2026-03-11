@@ -164,7 +164,21 @@ class Character {
                         return { damage: totalDamage, type: 'attack' };
                     }
                 } else {
+                    if (skill.effect?.type === 'currentHpDamage') {
+                        const enemies = battle.getAliveEnemies();
+                        if (enemies.length > 0) {
+                            const randomTarget = enemies[Math.floor(Math.random() * enemies.length)];
+                            const percentDamage = Math.floor(randomTarget.hp * skill.effect.percent);
+                            const actualDamage = randomTarget.takeDamage(percentDamage);
+                            return { damage: actualDamage, type: 'attack', target: randomTarget.name, percentDamage: true };
+                        }
+                    }
+                    
                     let damage = this.calculateSkillDamage(skill.power);
+                    
+                    if (skill.effect?.type === 'counter') {
+                        damage = battle.lastPlayerDamage || 1;
+                    }
                     
                     if (skill.effect === 'pierce') {
                         damage = Math.floor(damage * 1.5);
@@ -190,6 +204,17 @@ class Character {
                         this.maxHp += skill.effect.hpBonus;
                         this.hp += skill.effect.hpBonus;
                         return { damage: result, type: 'attack', drain: skill.effect.hpBonus };
+                    }
+                    
+                    if (skill.effect?.type === 'drainExecute') {
+                        const threshold = target.maxHp * skill.effect.threshold;
+                        if (target.hp <= threshold) {
+                            target.isDead = true;
+                            target.hp = 0;
+                            this.maxHp += skill.effect.hpBonus;
+                            this.hp += skill.effect.hpBonus;
+                            return { damage: result, type: 'attack', executed: true, drain: skill.effect.hpBonus };
+                        }
                     }
                     
                     return { damage: result, type: 'attack' };
@@ -405,6 +430,9 @@ class Character {
     }
 
     addPet(pet) {
+        if (this.pets && this.pets.length >= 2) {
+            return false;
+        }
         pet.applyBuff(this);
         this.pets.push(pet);
         return true;

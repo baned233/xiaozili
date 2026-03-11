@@ -30,6 +30,10 @@
                     <span class="btn-icon">📜</span>
                     <span class="btn-text">继续游戏</span>
                 </button>
+                <button id="btn-encyclopedia" class="menu-btn btn-secondary">
+                    <span class="btn-icon">📖</span>
+                    <span class="btn-text">图鉴</span>
+                </button>
                 <button id="btn-settings" class="menu-btn btn-secondary">
                     <span class="btn-icon">⚙️</span>
                     <span class="btn-text">设置</span>
@@ -122,6 +126,7 @@
                     <button class="debug-tab" data-tab="relics">遗物</button>
                     <button class="debug-tab" data-tab="pets">宠物</button>
                     <button class="debug-tab" data-tab="events">事件</button>
+                    <button class="debug-tab" data-tab="stats">属性</button>
                 </div>
                 <div id="debug-content"></div>
             </div>
@@ -182,6 +187,19 @@
                 <button id="btn-toggle-battle-log" class="log-toggle-btn">▼</button>
             </div>
             <div id="battle-log-content"></div>
+        </div>
+        <div id="encyclopedia-panel" class="hidden">
+            <div class="panel-header">
+                <h2>图鉴</h2>
+                <button id="btn-close-encyclopedia" class="close-btn">×</button>
+            </div>
+            <div class="debug-tabs">
+                <button class="encyc-tab active" data-tab="skills">技能</button>
+                <button class="encyc-tab" data-tab="relics">遗物</button>
+                <button class="encyc-tab" data-tab="pets">宠物</button>
+                <button class="encyc-tab" data-tab="enemies">敌人</button>
+            </div>
+            <div id="encyclopedia-content"></div>
         </div>
     </div>
     <script src="js/Data.js"></script>

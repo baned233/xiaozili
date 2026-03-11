@@ -272,6 +272,6 @@ const PET_POOL = [
 const SPECIAL_PETS = {
     'yueremu': { id: 100, name: '鱼儿木', icon: '🌿🐟', description: '半鱼半植物的生物，每回合可以治愈角色10滴血，攻击力5，防御力10，生命值150' },
     'maoning': { id: 101, name: '猫宁', icon: '🐱‍👤', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合为敌人添加1层破防，攻击力8，防御力8，生命值100' },
-    'humor': { id: 102, name: '滑稽', icon: '🤪', description: '一个巨大的漂浮的滑稽脸，敌人攻击时会优先以滑稽作为目标，攻击力0，防御力30，生命值400' },
+    'humor': { id: 102, name: '滑稽', icon: '🤪', description: '一个巨大的漂浮的滑稽脸，敌人攻击时会优先以滑稽作为目标，攻击力0，防御力20，生命值200' },
     'raven': { id: 103, name: '渡鸦', icon: '🐦‍⬛', description: '每回合提升玩家2点速度，攻击力15，防御力5，生命值80' }
 };

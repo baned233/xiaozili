@@ -46,6 +46,10 @@ body {
     overflow: hidden;
     z-index: 0;
     pointer-events: none;
+    background: linear-gradient(180deg, rgba(10, 10, 20, 0.9) 0%, rgba(20, 20, 40, 0.9) 100%);
+    background-image: linear-gradient(180deg, rgba(10, 10, 20, 0.85) 0%, rgba(20, 20, 40, 0.85) 100%), url('../assets/images/caidan.png');
+    background-size: cover;
+    background-position: center;
 }
 
 .bg-particles {
@@ -1041,6 +1045,11 @@ body {
     filter: grayscale(50%);
 }
 
+.character-card.pet-card {
+    transform: scale(0.8);
+    padding: 6px;
+}
+
 .character-card, .enemy-card {
     background: transparent;
     border: none;
@@ -1670,6 +1679,225 @@ body {
     transform: scale(1.3);
 }
 
+#encyclopedia-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(180deg, rgba(20, 20, 40, 0.95) 0%, rgba(10, 10, 25, 0.95) 100%);
+    background-image: linear-gradient(180deg, rgba(20, 20, 40, 0.92) 0%, rgba(10, 10, 25, 0.92) 100%), url('../assets/images/tujian.png');
+    background-size: cover;
+    background-position: center;
+    border: 3px solid #4a4a6a;
+    border-radius: 12px;
+    padding: clamp(15px, 3vw, 25px);
+    text-align: center;
+    width: min(700px, 90vw);
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+#encyclopedia-panel h2 {
+    margin-bottom: 15px;
+    color: #ffd700;
+    font-size: clamp(14px, 2vw, 18px);
+}
+
+.encyc-tab {
+    padding: 8px 15px;
+    margin: 0 3px;
+    background: #333;
+    border: 1px solid #555;
+    color: #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.encyc-tab.active {
+    background: #4a4a6a;
+    color: #fff;
+    border-color: #6a6a8a;
+}
+
+#encyclopedia-content {
+    max-height: 60vh;
+    overflow-y: auto;
+    margin-top: 15px;
+}
+
+.encyc-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    padding: 5px;
+}
+
+.encyc-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 5px;
+}
+
+.encyc-grid-1 {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 10px;
+    padding: 5px;
+}
+
+.encyc-grid-1 .encyc-card {
+    flex-direction: row;
+    padding: 15px 20px;
+    gap: 15px;
+}
+
+.encyc-grid-1 .encyc-card-icon {
+    font-size: 36px;
+    margin-bottom: 0;
+}
+
+.encyc-grid-1 .encyc-card-name {
+    font-size: 16px;
+    flex: 1;
+    text-align: left;
+}
+
+.encyc-card {
+    background: linear-gradient(145deg, #2a2a4a, #1e1e38);
+    border: 1px solid #3a3a5a;
+    border-radius: 8px;
+    padding: 10px 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.encyc-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    border-color: #6a6a9a;
+    background: linear-gradient(145deg, #3a3a6a, #2e2e58);
+}
+
+.encyc-card-icon {
+    font-size: 24px;
+    margin-bottom: 6px;
+}
+
+.encyc-card-name {
+    font-size: 11px;
+    color: #ddd;
+    text-align: center;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.encyc-card-rarity {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: #fff;
+}
+
+.encyc-card-rarity.common { background: #666; }
+.encyc-card-rarity.rare { background: #2ecc71; }
+.encyc-card-rarity.epic { background: #3498db; }
+.encyc-card-rarity.legendary { background: #ffd700; color: #000; }
+.encyc-card-rarity.elite { background: #9b59b6; }
+.encyc-card-rarity.boss { background: #e74c3c; }
+
+.encyc-rarity-cn { font-size: 9px; padding: 2px 6px; border-radius: 3px; color: #fff; }
+.encyc-rarity-cn.common { background: #666; }
+.encyc-rarity-cn.rare { background: #2ecc71; }
+.encyc-rarity-cn.epic { background: #3498db; }
+.encyc-rarity-cn.legendary { background: #ffd700; color: #000; }
+.encyc-rarity-cn.elite { background: #9b59b6; }
+.encyc-rarity-cn.boss { background: #e74c3c; }
+.encyc-rarity-cn.normal { background: #888; }
+
+.encyc-card.common { border-color: #666; }
+.encyc-card.rare { border-color: #2ecc71; }
+.encyc-card.epic { border-color: #3498db; }
+.encyc-card.legendary { border-color: #ffd700; }
+.encyc-card.boss { border-color: #e74c3c; }
+
+#encyc-detail-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+#encyc-detail-popup.hidden {
+    display: none;
+}
+
+.encyc-detail-content {
+    background: linear-gradient(180deg, #2a2a4a 0%, #1a1a2a 100%);
+    border: 2px solid #4a4a6a;
+    border-radius: 12px;
+    padding: 25px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+}
+
+.encyc-detail-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.encyc-detail-name {
+    font-size: 20px;
+    color: #ffd700;
+    margin-bottom: 10px;
+}
+
+.encyc-detail-rarity {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    color: #fff;
+    margin-bottom: 15px;
+    font-size: 12px;
+}
+
+.encyc-detail-desc {
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.encyc-detail-close {
+    padding: 10px 30px;
+    background: #4a4a6a;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.encyc-detail-close:hover {
+    background: #5a5a8a;
+}
+
 .floor-bg-1 { background: linear-gradient(180deg, #1a1510 0%, #0f0a05 100%); }
 .floor-bg-2 { background: linear-gradient(180deg, #1a0a0a 0%, #0a0505 100%); }
 .floor-bg-3 { background: linear-gradient(180deg, #0a0a2a 0%, #050515 100%); }
@@ -1805,6 +2033,88 @@ body {
     .menu-btn {
         padding: 12px 20px;
         font-size: 14px;
+    }
+    
+    #encyclopedia-panel {
+        width: 95vw;
+        max-height: 90vh;
+        padding: 10px;
+    }
+    
+    #encyclopedia-panel h2 {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    
+    .encyc-tab {
+        padding: 6px 10px;
+        font-size: 11px;
+        margin: 0 2px;
+    }
+    
+    .encyc-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+    
+    .encyc-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    
+    .encyc-grid-1 {
+        grid-template-columns: repeat(1, 1fr);
+    }
+    
+    .encyc-card {
+        padding: 6px 3px;
+    }
+    
+    .encyc-card-icon {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+    
+    .encyc-card-name {
+        font-size: 10px;
+    }
+    
+    .encyc-rarity-cn {
+        font-size: 8px;
+        padding: 1px 4px;
+    }
+    
+    .encyc-grid-1 .encyc-card {
+        flex-direction: row;
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .encyc-grid-1 .encyc-card-icon {
+        font-size: 28px;
+        margin-bottom: 0;
+    }
+    
+    .encyc-grid-1 .encyc-card-name {
+        font-size: 14px;
+        text-align: left;
+    }
+    
+    .encyc-detail-content {
+        padding: 15px;
+        max-width: 90vw;
+    }
+    
+    .encyc-detail-icon {
+        font-size: 36px;
+    }
+    
+    .encyc-detail-name {
+        font-size: 16px;
+    }
+    
+    .encyc-detail-desc {
+        font-size: 12px;
     }
     
     #top-bar {
@@ -2391,14 +2701,17 @@ body {
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.9);
     color: #fff;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-radius: 6px;
     font-size: 12px;
-    white-space: nowrap;
-    max-width: 200px;
     white-space: normal;
+    max-width: 300px;
+    min-width: 150px;
     z-index: 1000;
     border: 1px solid #444;
     margin-bottom: 5px;
     pointer-events: none;
+    writing-mode: horizontal-tb;
+    text-align: left;
+    line-height: 1.4;
 }

@@ -152,7 +152,7 @@ const SKILL_POOL = [
         power: 0,
         level: 3,
         icon: '👻',
-        cost: 40,
+        cost: 60,
         isMagic: true,
         effect: { type: 'banish', duration: 2, eliteImmune: true }
     },
@@ -270,7 +270,7 @@ const SKILL_POOL = [
     {
         id: 24,
         name: '回来了我的原子弹！',
-        description: '你在看球赛，并高呼"我的原子弹，回来了！"，你随机对一名敌方单位造成20%最大生命值伤害',
+        description: '你在看球赛，并高呼"我的原子弹，回来了！"，你随机对一名敌方单位造成20%当前生命值伤害',
         type: 'attack',
         rarity: 'rare',
         power: 0,
@@ -278,12 +278,12 @@ const SKILL_POOL = [
         icon: '⚾',
         cost: 50,
         isMagic: false,
-        effect: { type: 'maxHpDamage', percent: 0.2 }
+        effect: { type: 'currentHpDamage', percent: 0.2 }
     },
     {
         id: 25,
         name: '猪鼻吧，这怎么这么菜啊',
-        description: '你对敌方单位进行了嘲讽，被嘲讽的单位红温了，他们获得攻击力+2，但下次攻击有50%攻击到其他敌方单位',
+        description: '你对敌方单位进行嘲讽，使其攻击力+5，防御力-10',
         type: 'debuff',
         rarity: 'common',
         power: 0,
@@ -291,7 +291,7 @@ const SKILL_POOL = [
         icon: '🐷',
         cost: 15,
         isMagic: false,
-        effect: { type: 'enrage', value: 2, selfAttack: 0.5 }
+        effect: { type: 'tauntDebuff', atkBoost: 5, defReduce: 10 }
     },
     {
         id: 26,
@@ -323,7 +323,7 @@ const SKILL_POOL = [
     {
         id: 29,
         name: '吞食',
-        description: '若使用此技能杀死敌方单位，使用者最大生命值+5',
+        description: '吞食选中的敌方单位，若目标血量低于10%最大生命值则将其斩杀并获得5点最大生命值',
         type: 'attack',
         rarity: 'rare',
         power: '1*atk',
@@ -331,7 +331,7 @@ const SKILL_POOL = [
         icon: '😋',
         cost: 30,
         isMagic: true,
-        effect: { type: 'drain', hpBonus: 5 }
+        effect: { type: 'drainExecute', hpBonus: 5, threshold: 0.1 }
     },
     {
         id: 30,
