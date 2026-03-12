@@ -1,8 +1,8 @@
-1.遗物：物理转魔法出现问题：
-最大体力值的**逻辑数值**已被设置为0，但**UI显示数值**未同步更新，导致视觉展示与实际逻辑不一致。
-【预期结果】
-UI中显示的「最大体力值」应同步更新为0，与实际逻辑数值保持一致。
-2.1.遗物：魔法转物理出现问题：
-最大法力值的**逻辑数值**已被设置为0，但**UI显示数值**未同步更新，导致视觉展示与实际逻辑不一致。
-【预期结果】
-UI中显示的「最大法力值」应同步更新为0，与实际逻辑数值保持一致。
+
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+每次进网页都有这个，删掉游戏中的btn-debug-from-character来解决这个问题

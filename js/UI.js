@@ -162,30 +162,6 @@ class UI {
             });
         }
 
-        const debugFromCharacterBtn = document.getElementById('btn-debug-from-character');
-        if (debugFromCharacterBtn) {
-            debugFromCharacterBtn.addEventListener('click', () => {
-                audioManager.playClick();
-                this.hideCharacterPanel();
-                if (typeof VConsole !== 'undefined' && !window.vConsole) {
-                    try {
-                        window.vConsole = new VConsole();
-                    } catch (e) {
-                        console.warn('vConsole cannot be initialized due to storage restrictions');
-                    }
-                }
-                if (window.vConsole) {
-                    try {
-                        window.vConsole.show();
-                    } catch (e) {
-                        this.showDebugConsole();
-                    }
-                } else {
-                    this.showDebugConsole();
-                }
-            });
-        }
-
         const consoleInput = document.getElementById('console-input');
         if (consoleInput) {
             consoleInput.addEventListener('keypress', (e) => {
@@ -1615,9 +1591,9 @@ getRarityCN(rarity) {
         content.className = 'encyc-grid-1';
         const specialPets = [
             { id: 100, name: '鱼儿木', type: 'yueremu', description: '半鱼半植物的生物，每回合可以治愈角色当前层数点血，攻击力5，防御力10，生命值150', icon: 'assets/images/yuermu.png', rarity: 'legendary' },
-            { id: 101, name: '猫宁', type: 'maoning', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合有50%概率束缚一只怪物，攻击力8，防御力8，生命值100', icon: 'assets/images/maoning1.png', rarity: 'legendary' },
-            { id: 102, name: '滑稽', type: 'humor', description: '一个巨大的漂浮的滑稽脸，敌人攻击时会优先以滑稽作为目标，攻击力0，防御力20，生命值200', icon: '🤪', rarity: 'legendary' },
-            { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合随机偷取怪物技能进行攻击，攻击力15，防御力5，生命值80', icon: 'assets/images/duya.png', rarity: 'legendary' }
+            { id: 101, name: '猫宁', type: 'maoning', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合随机给一个敌人挂2层破防，攻击力8，防御力8，生命值100', icon: 'assets/images/maoning1.png', rarity: 'legendary' },
+            { id: 102, name: '滑稽', type: 'humor', description: '一个巨大的漂浮的滑稽脸，可以给玩家提供滑稽BUFF，攻击力0，防御力20，生命值200', icon: '🤪', rarity: 'legendary' },
+            { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合给玩家提供2点速度，攻击力15，防御力5，生命值80', icon: 'assets/images/duya.png', rarity: 'legendary' }
         ];
         specialPets.forEach(pet => {
             const card = document.createElement('div');
@@ -1718,9 +1694,9 @@ getRarityCN(rarity) {
     renderEncyclopediaPets(content) {
         const specialPets = [
             { id: 100, name: '鱼儿木', type: 'yueremu', description: '半鱼半植物的生物，每回合可以治愈角色当前层数点血', icon: 'assets/images/yuermu.png', rarity: 'legendary' },
-            { id: 101, name: '猫宁', type: 'maoning', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合有50%概率束缚一只怪物', icon: 'assets/images/maoning1.png', rarity: 'legendary' },
-            { id: 102, name: '滑稽', type: 'humor', description: '一个巨大的漂浮的滑稽脸，敌人80%概率以它作为目标', icon: '🤪', rarity: 'legendary' },
-            { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合随机偷取怪物技能进行攻击', icon: 'assets/images/duya.png', rarity: 'legendary' }
+            { id: 101, name: '猫宁', type: 'maoning', description: '死里逃生的小猫，觉醒操纵阴影的能力，每回合随机给一个敌人挂2层破防', icon: 'assets/images/maoning1.png', rarity: 'legendary' },
+            { id: 102, name: '滑稽', type: 'humor', description: '一个巨大的漂浮的滑稽脸，可以给角色提供滑稽BUFF', icon: '🤪', rarity: 'legendary' },
+            { id: 103, name: '渡鸦', type: 'raven', description: '一只漆黑的渡鸦，每回合可以给玩家提供2点速度', icon: 'assets/images/duya.png', rarity: 'legendary' }
         ];
         specialPets.forEach(pet => {
             const div = document.createElement('div');
