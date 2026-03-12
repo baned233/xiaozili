@@ -16,18 +16,7 @@ class Game {
         this.maxPotions = 3;
         this.usedEventIds = [];
         this._memoryStorage = {};
-        this._storageAvailable = this._checkStorageAvailable();
-    }
-
-    _checkStorageAvailable() {
-        try {
-            const test = '__storage_test__';
-            localStorage.setItem(test, test);
-            localStorage.removeItem(test);
-            return true;
-        } catch (e) {
-            return false;
-        }
+        this._storageAvailable = false;
     }
 
     _saveToStorage(key, value) {
