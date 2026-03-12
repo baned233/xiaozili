@@ -95,8 +95,13 @@ class Pet {
         return specialPets[type] ? new Pet(specialPets[type]) : null;
     }
 
-    takeDamage(damage) {
-        const actualDamage = Math.max(1, damage - this.stats.def);
+    takeDamage(damage, damageType = 'physical') {
+        let actualDamage;
+        if (damageType === 'true') {
+            actualDamage = damage;
+        } else {
+            actualDamage = Math.max(1, damage - (this.stats.def || 0));
+        }
         this.hp = Math.max(0, this.hp - actualDamage);
         if (this.hp <= 0) {
             this.isDead = true;

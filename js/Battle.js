@@ -180,6 +180,40 @@ class Battle {
                     c.restoreStamina(5);
                     c.restoreMana(5);
                 }
+                
+                if (c.relics) {
+                    c.relics.forEach(relic => {
+                        if (relic.effect?.type === 'manaPerTurn') {
+                            c.restoreMana(relic.effect.value);
+                            this.battleLog.push({
+                                type: 'relicEffect',
+                                message: `${relic.name} 恢复了 ${relic.effect.value} 点法力`
+                            });
+                        }
+                        if (relic.effect?.type === 'staminaPerTurn') {
+                            let staminaValue = relic.effect.value;
+                            if (c.skills && c.skills.some(s => s.name === '开导')) {
+                                staminaValue = 10;
+                            }
+                            c.restoreStamina(staminaValue);
+                            this.battleLog.push({
+                                type: 'relicEffect',
+                                message: `${relic.name} 恢复了 ${staminaValue} 点体力`
+                            });
+                        }
+                        if (relic.effect?.type === 'def' && relic.name === '猫宁的围巾') {
+                            const maoningPet = this.playerTeam.find(p => (p.name === '猫宁' || p.type === 'maoning') && !p.isDead && p.isSummoned);
+                            if (maoningPet) {
+                                maoningPet.heal(10);
+                                this.battleLog.push({
+                                    type: 'relicEffect',
+                                    message: `${relic.name} 恢复了猫宁 10 点生命值`
+                                });
+                            }
+                        }
+                    });
+                }
+                
                 if (c.buffs && c.buffs.length > 0) {
                     c.buffs.forEach(buff => {
                         const buffData = BUFF_DATA[buff.name];

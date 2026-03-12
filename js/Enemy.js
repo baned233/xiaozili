@@ -32,9 +32,24 @@ class EnemySkill {
                     const lifestealAmount = Math.floor(damage * 0.3);
                     enemy.hp = Math.min(enemy.maxHp, enemy.hp + lifestealAmount);
                 }
-                const damageReduction = target.getDamageReduction();
+                const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;
                 if (damageReduction > 0) {
                     damage = Math.floor(damage * (1 - damageReduction));
+                }
+                if (!target.takeDamage) {
+                    target.takeDamage = function(dmg, damageType = 'physical') {
+                        let actualDmg;
+                        if (damageType === 'true') {
+                            actualDmg = dmg;
+                        } else {
+                            actualDmg = Math.max(1, dmg - (this.def || 0));
+                        }
+                        this.hp = Math.max(0, this.hp - actualDmg);
+                        if (this.hp <= 0) {
+                            this.isDead = true;
+                        }
+                        return actualDmg;
+                    };
                 }
                 const result = target.takeDamage(damage);
                 return { damage: result, type: 'attack', skillName: this.name, isMagic: this.isMagic };
@@ -238,8 +253,13 @@ class Enemy {
         return true;
     }
 
-    takeDamage(damage) {
-        const actualDamage = Math.max(1, damage - this.def);
+    takeDamage(damage, damageType = 'physical') {
+        let actualDamage;
+        if (damageType === 'true') {
+            actualDamage = damage;
+        } else {
+            actualDamage = Math.max(1, damage - this.def);
+        }
         this.hp = Math.max(0, this.hp - actualDamage);
         if (this.hp <= 0) {
             this.isDead = true;
@@ -263,6 +283,17 @@ class Enemy {
             damage = Math.floor(damage * (1 - damageReduction));
         }
         
+        if (!target.takeDamage) {
+            target.takeDamage = function(dmg) {
+                const actualDmg = Math.max(1, dmg - (this.def || 0));
+                this.hp = Math.max(0, this.hp - actualDmg);
+                if (this.hp <= 0) {
+                    this.isDead = true;
+                }
+                return actualDmg;
+            };
+        }
+        
         const actualDamage = target.takeDamage(damage);
         return { damage: actualDamage, isCrit };
     }
@@ -282,6 +313,21 @@ class Enemy {
                 const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;
                 if (damageReduction > 0) {
                     damage = Math.floor(damage * (1 - damageReduction));
+                }
+                if (!target.takeDamage) {
+                    target.takeDamage = function(dmg, damageType = 'physical') {
+                        let actualDmg;
+                        if (damageType === 'true') {
+                            actualDmg = dmg;
+                        } else {
+                            actualDmg = Math.max(1, dmg - (this.def || 0));
+                        }
+                        this.hp = Math.max(0, this.hp - actualDmg);
+                        if (this.hp <= 0) {
+                            this.isDead = true;
+                        }
+                        return actualDmg;
+                    };
                 }
                 const result = target.takeDamage(damage);
                 return { damage: result, type: 'attack', skillName: this.name, isMagic: this.isMagic };
@@ -391,6 +437,9 @@ class Enemy {
                     if (effect.atk) this.atk += effect.atk;
                     if (effect.def) this.def += effect.def;
                     if (effect.spd) this.spd += effect.spd;
+                    if (effect.atkReduction) {
+                        this.atk = Math.floor(this.atk * (1 - effect.atkReduction));
+                    }
                 }
             }
         });
@@ -443,8 +492,8 @@ class Enemy {
     getDamageReduction() {
         let reduction = 0;
         this.buffs.forEach(buff => {
-            if (buff.name === '肌无力' && buff.stacks > 0) {
-                reduction = Math.max(reduction, 0.5);
+            if (buff.name === '护盾' && buff.stacks > 0) {
+                reduction = Math.max(reduction, buff.stacks / this.maxHp);
             }
         });
         return reduction;

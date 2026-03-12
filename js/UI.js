@@ -162,6 +162,30 @@ class UI {
             });
         }
 
+        const debugFromCharacterBtn = document.getElementById('btn-debug-from-character');
+        if (debugFromCharacterBtn) {
+            debugFromCharacterBtn.addEventListener('click', () => {
+                audioManager.playClick();
+                this.hideCharacterPanel();
+                if (typeof VConsole !== 'undefined' && !window.vConsole) {
+                    try {
+                        window.vConsole = new VConsole();
+                    } catch (e) {
+                        console.warn('vConsole cannot be initialized due to storage restrictions');
+                    }
+                }
+                if (window.vConsole) {
+                    try {
+                        window.vConsole.show();
+                    } catch (e) {
+                        this.showDebugConsole();
+                    }
+                } else {
+                    this.showDebugConsole();
+                }
+            });
+        }
+
         const consoleInput = document.getElementById('console-input');
         if (consoleInput) {
             consoleInput.addEventListener('keypress', (e) => {
@@ -305,10 +329,10 @@ class UI {
         const manaDisplay = document.getElementById('mana-display');
 
         if (staminaDisplay && manaDisplay && character) {
-            const stamina = character.stamina !== undefined ? character.stamina : character.maxStamina || 100;
-            const maxStamina = character.maxStamina || 100;
-            const mana = character.mana !== undefined ? character.mana : character.maxMana || 50;
-            const maxMana = character.maxMana || 50;
+            const stamina = character.stamina !== undefined ? character.stamina : character.maxStamina;
+            const maxStamina = character.maxStamina !== undefined ? character.maxStamina : 100;
+            const mana = character.mana !== undefined ? character.mana : character.maxMana;
+            const maxMana = character.maxMana !== undefined ? character.maxMana : 50;
             
             staminaDisplay.textContent = `💪 ${stamina}/${maxStamina}`;
             manaDisplay.textContent = `💧 ${mana}/${maxMana}`;
@@ -396,11 +420,13 @@ class UI {
                 player.relics.forEach(relic => {
                     const relicItem = document.createElement('div');
                     relicItem.className = 'relic-item';
+                    const noteHtml = relic.note ? `<div class="tooltip-note" style="color:#888;font-style:italic;margin-top:5px;font-size:11px;">${relic.note}</div>` : '';
                     relicItem.innerHTML = `
                         <span class="relic-icon">${relic.icon}</span>
                         <div class="relic-tooltip">
                             <div class="tooltip-name">${relic.name}</div>
                             <div class="tooltip-desc">${relic.description}</div>
+                            ${noteHtml}
                         </div>
                     `;
                     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -571,7 +597,7 @@ class UI {
             } else if (log.type === 'skill') {
                 entry.textContent = `${log.character} 使用 ${log.skill}`;
                 if (log.result && log.result.damage) {
-                    entry.innerHTML += ` 攻击 ${log.target} 造成 <strong>${log.result.damage}</strong> 伤害`;
+                    entry.innerHTML += ` 攻击 ${log.target} 造成 <strong>${log.result.damage}</strong> 伤害${log.result.isCrit ? ' (暴击!)' : ''}`;
                     entry.classList.add('player-action');
                 } else if (log.result && log.result.heal) {
                     entry.innerHTML += ` 恢复 <strong>${log.result.heal}</strong> 生命`;
@@ -1327,6 +1353,9 @@ class UI {
         } else if (this.currentDebugTab === 'stats') {
             this.renderDebugStats(content);
             return;
+        } else if (this.currentDebugTab === 'floor') {
+            this.renderDebugFloor(content);
+            return;
         }
 
         items.forEach(item => {
@@ -1458,6 +1487,49 @@ class UI {
                 this.renderDebugStats(content);
             };
         });
+    }
+
+    renderDebugFloor(content) {
+        const currentFloor = this.game.currentFloor;
+        
+        const floorSection = document.createElement('div');
+        floorSection.style.cssText = 'padding:15px;';
+        floorSection.innerHTML = `
+            <div style="color:#ccc;font-size:14px;margin-bottom:15px;">当前层数: 第 ${currentFloor} 层</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:15px;">
+                <label style="color:#ccc;">转移到第 </label>
+                <input type="number" id="debug-floor-input" value="${currentFloor}" min="1" max="60" style="width:60px;padding:8px;text-align:center;background:#222;border:1px solid #444;color:#fff;border-radius:4px;">
+                <label style="color:#ccc;"> 层</label>
+            </div>
+            <button id="btn-transfer-floor" style="width:100%;padding:10px;background:#27ae60;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:14px;">转移层数</button>
+            <div style="margin-top:15px;color:#888;font-size:12px;">提示: 只能在非战斗状态下使用</div>
+        `;
+        content.appendChild(floorSection);
+
+        const transferBtn = document.getElementById('btn-transfer-floor');
+        if (transferBtn) {
+            transferBtn.addEventListener('click', () => {
+                const floorInput = document.getElementById('debug-floor-input');
+                const targetFloor = parseInt(floorInput.value);
+                
+                if (isNaN(targetFloor) || targetFloor < 1 || targetFloor > 60) {
+                    alert('请输入1-60之间的层数');
+                    return;
+                }
+                
+                if (this.game.state === 'battle') {
+                    alert('战斗中无法转移层数');
+                    return;
+                }
+                
+                audioManager.playClick();
+                this.game.currentFloor = targetFloor;
+                this.game.saveGame();
+                this.updateFloor(targetFloor);
+                this.hideDebugConsole();
+                this.game.showMapSelection();
+            });
+        }
     }
 
     showEncyclopedia() {

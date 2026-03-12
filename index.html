@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小资历大冒险</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -128,6 +129,7 @@
                     <button class="debug-tab" data-tab="pets">宠物</button>
                     <button class="debug-tab" data-tab="events">事件</button>
                     <button class="debug-tab" data-tab="stats">属性</button>
+                    <button class="debug-tab" data-tab="floor">层数</button>
                 </div>
                 <div id="debug-content"></div>
             </div>
@@ -176,6 +178,7 @@
                     <h3>宠物</h3>
                     <div id="pet-list"></div>
                 </div>
+                <button id="btn-debug-from-character" class="debug-btn" title="调试面板">🔧</button>
             </div>
         </div>
         <div id="skill-replace-panel" class="hidden">
@@ -203,6 +206,7 @@
             <div id="encyclopedia-content"></div>
         </div>
     </div>
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
     <script src="js/Data.js"></script>
     <script src="js/Audio.js"></script>
     <script src="js/Skill.js"></script>

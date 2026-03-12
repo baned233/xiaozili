@@ -59,8 +59,13 @@ class Character {
         return char;
     }
 
-    takeDamage(damage) {
-        const actualDamage = Math.max(1, damage - this.def);
+    takeDamage(damage, damageType = 'physical') {
+        let actualDamage;
+        if (damageType === 'true') {
+            actualDamage = damage;
+        } else {
+            actualDamage = Math.max(1, damage - this.def);
+        }
         this.hp = Math.max(0, this.hp - actualDamage);
         if (this.hp <= 0) {
             this.isDead = true;
@@ -165,6 +170,7 @@ class Character {
                     const enemies = battle.getAliveEnemies();
                     let totalDamage = 0;
                     let killedCount = 0;
+                    let anyCrit = false;
                     
                     if (skill.effect?.type === 'execute') {
                         enemies.forEach(enemy => {
@@ -174,26 +180,38 @@ class Character {
                                 killedCount++;
                             } else {
                                 let damage = this.calculateSkillDamage(skill.power);
+                                let isCrit = Math.random() * 100 < this.crit;
+                                if (isCrit) {
+                                    damage = Math.floor(damage * (this.critDmg / 100));
+                                    anyCrit = true;
+                                }
                                 const damageReduction = enemy.getDamageReduction ? enemy.getDamageReduction() : 0;
-                                if (damageReduction > 0) {
+                                if (damageReduction > 0 && !skill.isTrueDamage) {
                                     damage = Math.floor(damage * (1 - damageReduction));
                                 }
-                                const result = enemy.takeDamage(damage);
+                                const damageType = skill.isTrueDamage ? 'true' : 'physical';
+                                const result = enemy.takeDamage(damage, damageType);
                                 totalDamage += result;
                             }
                         });
-                        return { damage: totalDamage, killedCount: killedCount, type: 'attack' };
+                        return { damage: totalDamage, killedCount: killedCount, type: 'attack', isCrit: anyCrit };
                     } else {
                         enemies.forEach(enemy => {
                             let damage = this.calculateSkillDamage(skill.power);
+                            let isCrit = Math.random() * 100 < this.crit;
+                            if (isCrit) {
+                                damage = Math.floor(damage * (this.critDmg / 100));
+                                anyCrit = true;
+                            }
                             const damageReduction = enemy.getDamageReduction ? enemy.getDamageReduction() : 0;
-                            if (damageReduction > 0) {
+                            if (damageReduction > 0 && !skill.isTrueDamage) {
                                 damage = Math.floor(damage * (1 - damageReduction));
                             }
-                            const result = enemy.takeDamage(damage);
+                            const damageType = skill.isTrueDamage ? 'true' : 'physical';
+                            const result = enemy.takeDamage(damage, damageType);
                             totalDamage += result;
                         });
-                        return { damage: totalDamage, type: 'attack' };
+                        return { damage: totalDamage, type: 'attack', isCrit: anyCrit };
                     }
                 } else {
                     if (skill.effect?.type === 'currentHpDamage') {
@@ -201,12 +219,17 @@ class Character {
                         if (enemies.length > 0) {
                             const randomTarget = enemies[Math.floor(Math.random() * enemies.length)];
                             let percentDamage = Math.floor(randomTarget.hp * skill.effect.percent);
+                            let isCrit = Math.random() * 100 < this.crit;
+                            if (isCrit) {
+                                percentDamage = Math.floor(percentDamage * (this.critDmg / 100));
+                            }
                             const damageReduction = randomTarget.getDamageReduction ? randomTarget.getDamageReduction() : 0;
-                            if (damageReduction > 0) {
+                            if (damageReduction > 0 && !skill.isTrueDamage) {
                                 percentDamage = Math.floor(percentDamage * (1 - damageReduction));
                             }
-                            const actualDamage = randomTarget.takeDamage(percentDamage);
-                            return { damage: actualDamage, type: 'attack', target: randomTarget.name, percentDamage: true };
+                            const damageType = skill.isTrueDamage ? 'true' : 'physical';
+                            const actualDamage = randomTarget.takeDamage(percentDamage, damageType);
+                            return { damage: actualDamage, type: 'attack', target: randomTarget.name, percentDamage: true, isCrit };
                         }
                     }
                     
@@ -223,21 +246,31 @@ class Character {
                         const sacrificeCost = Math.floor(this.maxHp * skill.effect.costPercent);
                         this.hp -= sacrificeCost;
                         let percentDamage = Math.floor(target.maxHp * skill.effect.percent);
+                        let isCrit = Math.random() * 100 < this.crit;
+                        if (isCrit) {
+                            percentDamage = Math.floor(percentDamage * (this.critDmg / 100));
+                        }
                         const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;
-                        if (damageReduction > 0) {
+                        if (damageReduction > 0 && !skill.isTrueDamage) {
                             percentDamage = Math.floor(percentDamage * (1 - damageReduction));
                         }
-                        const result = target.takeDamage(percentDamage);
+                        const damageType = skill.isTrueDamage ? 'true' : 'physical';
+                        const result = target.takeDamage(percentDamage, damageType);
                         return { 
                             damage: result, 
                             type: 'attack', 
                             sacrifice: sacrificeCost,
-                            effect: 'sacrificeDamage' 
+                            effect: 'sacrificeDamage',
+                            isCrit 
                         };
                     }
                     
                     if (skill.effect?.type === 'counter') {
                         damage = battle.lastPlayerDamage || 1;
+                        let isCrit = Math.random() * 100 < this.crit;
+                        if (isCrit) {
+                            damage = Math.floor(damage * (this.critDmg / 100));
+                        }
                     }
                     
                     if (skill.effect === 'pierce') {
@@ -254,11 +287,17 @@ class Character {
                         return { damage: result1 + result2, type: 'attack', doubleStrike: true };
                     }
                     
+                    let isCrit = Math.random() * 100 < this.crit;
+                    if (isCrit) {
+                        damage = Math.floor(damage * (this.critDmg / 100));
+                    }
+                    
                     const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;
-                    if (damageReduction > 0) {
+                    if (damageReduction > 0 && !skill.isTrueDamage) {
                         damage = Math.floor(damage * (1 - damageReduction));
                     }
-                    const result = target.takeDamage(damage);
+                    const damageType = skill.isTrueDamage ? 'true' : 'physical';
+                    const result = target.takeDamage(damage, damageType);
                     
                     if (this.skills) {
                         this.skills.forEach(skill => {
@@ -313,7 +352,7 @@ class Character {
                         }
                     }
                     
-                    return { damage: result, type: 'attack' };
+                    return { damage: result, type: 'attack', isCrit };
                 }
             
             case 'heal':
@@ -593,9 +632,12 @@ class Character {
         return true;
     }
 
-    addRelic(relic) {
+    addRelic(relic, game = null) {
         relic.applyEffect(this);
         this.relics.push(relic);
+        if (game) {
+            game.ui.updatePlayerResources(this);
+        }
         return true;
     }
 
@@ -703,6 +745,9 @@ class Character {
                     if (effect.atk) this.atk += effect.atk;
                     if (effect.def) this.def += effect.def;
                     if (effect.spd) this.spd += effect.spd;
+                    if (effect.atkReduction) {
+                        this.atk = Math.floor(this.atk * (1 - effect.atkReduction));
+                    }
                 }
             }
         });
@@ -755,8 +800,8 @@ class Character {
     getDamageReduction() {
         let reduction = 0;
         this.buffs.forEach(buff => {
-            if (buff.name === '肌无力' && buff.stacks > 0) {
-                reduction = Math.max(reduction, 0.5);
+            if (buff.name === '护盾' && buff.stacks > 0) {
+                reduction = Math.max(reduction, buff.stacks / this.maxHp);
             }
         });
         return reduction;

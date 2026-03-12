@@ -15,6 +15,52 @@ class Game {
         this.potions = [];
         this.maxPotions = 3;
         this.usedEventIds = [];
+        this._memoryStorage = {};
+        this._storageAvailable = this._checkStorageAvailable();
+    }
+
+    _checkStorageAvailable() {
+        try {
+            const test = '__storage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    _saveToStorage(key, value) {
+        if (this._storageAvailable) {
+            try {
+                localStorage.setItem(key, value);
+            } catch (e) {
+                console.warn('Storage blocked, using memory storage');
+                this._memoryStorage[key] = value;
+            }
+        } else {
+            this._memoryStorage[key] = value;
+        }
+    }
+
+    _loadFromStorage(key) {
+        if (this._storageAvailable) {
+            try {
+                return localStorage.getItem(key);
+            } catch (e) {
+                return this._memoryStorage[key] || null;
+            }
+        }
+        return this._memoryStorage[key] || null;
+    }
+
+    _removeFromStorage(key) {
+        if (this._storageAvailable) {
+            try {
+                localStorage.removeItem(key);
+            } catch (e) {}
+        }
+        delete this._memoryStorage[key];
     }
 
     init() {
@@ -433,8 +479,8 @@ class Game {
         
         const player = this.playerTeam[0];
         if (player) {
-            if (player.baseSpd !== undefined) {
-                player.spd = player.baseSpd;
+            if (player.reapplyBuffs) {
+                player.reapplyBuffs();
             }
             if (player.skills) {
                 player.skills.forEach(skill => {
@@ -456,6 +502,7 @@ class Game {
                 player.restoreMana(10);
                 player.removeBuff('勇气', player.getBuffStacks('勇气'));
                 player.removeBuff('士气', player.getBuffStacks('士气'));
+                player.removeBuff('肌无力', player.getBuffStacks('肌无力'));
                 this.ui.updatePlayerResources(player);
             }
             this.playerTeam = this.playerTeam.filter(char => !char.isSummoned);
@@ -577,7 +624,7 @@ class Game {
                 this.ui.showSkillReplacePanel(player.skills, rewardData.item);
             }
         } else if (rewardData.type === 'relic') {
-            if (player.addRelic(rewardData.item)) {
+            if (player.addRelic(rewardData.item, this)) {
                 this.obtainedRelicIds.push(rewardData.item.id);
                 this.ui.updatePlayerResources(player);
                 this.ui.hideRewards();
@@ -821,7 +868,7 @@ class Game {
                 break;
             case 'relic':
                 const relic = Relic.getRandomRelic(this.obtainedRelicIds);
-                if (relic && player.addRelic(relic)) {
+                if (relic && player.addRelic(relic, this)) {
                     this.obtainedRelicIds.push(relic.id);
                     audioManager.playMagic();
                     this.ui.showDialog(`获得遗物: ${relic.name}！`, () => {
@@ -1078,7 +1125,7 @@ class Game {
             
             if (rewardType === 'relic') {
                 const relic = Relic.getRandomRelic(this.obtainedRelicIds);
-                if (relic && player && typeof player.addRelic === 'function' && player.addRelic(relic)) {
+                if (relic && player && typeof player.addRelic === 'function' && player.addRelic(relic, this)) {
                     this.obtainedRelicIds.push(relic.id);
                     resultText += ` 额外获得了遗物——${relic.name}！`;
                 }
@@ -1134,7 +1181,7 @@ class Game {
                         resultText = option.effect.message || '';
                     }
                     
-                    if (player && typeof player.addRelic === 'function' && player.addRelic(relic)) {
+                    if (player && typeof player.addRelic === 'function' && player.addRelic(relic, this)) {
                         this.obtainedRelicIds.push(relic.id);
                         const relicText = resultText ? ` ${resultText}` : `获得圣人遗物——${relic.name}！`;
                         resultText = relicText;
@@ -1197,11 +1244,11 @@ class Game {
             state: this.state,
             timestamp: Date.now()
         };
-        localStorage.setItem('dungeon_save', JSON.stringify(saveData));
+        this._saveToStorage('dungeon_save', JSON.stringify(saveData));
     }
 
     loadGame() {
-        const saveData = localStorage.getItem('dungeon_save');
+        const saveData = this._loadFromStorage('dungeon_save');
         if (!saveData) return false;
         
         try {
@@ -1308,7 +1355,7 @@ class Game {
     }
 
     hasSave() {
-        const saveData = localStorage.getItem('dungeon_save');
+        const saveData = this._loadFromStorage('dungeon_save');
         if (!saveData) return false;
         try {
             const data = JSON.parse(saveData);
@@ -1344,7 +1391,7 @@ class Game {
     }
 
     clearSave() {
-        localStorage.removeItem('dungeon_save');
+        this._removeFromStorage('dungeon_save');
     }
 
     addPotion(potionType) {
@@ -1458,7 +1505,7 @@ class Game {
             }
         } else if (type === 'relics') {
             const relic = new Relic(item);
-            if (player.addRelic(relic)) {
+            if (player.addRelic(relic, this)) {
                 this.obtainedRelicIds.push(relic.id);
                 this.ui.showDialog(`获得遗物: ${relic.name}！`, () => {});
             } else {

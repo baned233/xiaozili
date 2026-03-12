@@ -14,6 +14,7 @@ class Skill {
         this.costType = data.costType || 'stamina';
         this.cost = data.cost || 0;
         this.isMagic = data.isMagic || false;
+        this.isTrueDamage = data.isTrueDamage || false;
         this.targetAll = data.targetAll || false;
         this.passive = data.passive || false;
         this.stacks = data.stacks || 1;
@@ -177,7 +178,7 @@ const SKILL_POOL = [
     {
         id: 17,
         name: '嘶哈～！？',
-        description: '对敌方单位哈气，并对其造成该单位上回合对你造成的伤害',
+        description: '对敌方单位哈气，并对其造成该单位上回合对你造成的真实伤害',
         type: 'attack',
         rarity: 'rare',
         power: 0,
@@ -185,6 +186,7 @@ const SKILL_POOL = [
         icon: '😤',
         cost: 30,
         isMagic: false,
+        isTrueDamage: true,
         effect: { type: 'counter' }
     },
     {
@@ -379,13 +381,13 @@ const SKILL_POOL = [
     {
         id: 33,
         name: '手痒难耐',
-        description: '对敌方单位造成极大量物理伤害，“左拳伤害高，右拳高伤害”',
+        description: '造成极大量物理伤害，"左拳伤害高，右拳高伤害"',
         type: 'attack',
         rarity: 'legendary',
         power: '120+2*atk',
         level: 5,
         icon: '👊',
-        cost: 80,
+        cost: 70,
         isMagic: false
     },
     {
@@ -403,7 +405,7 @@ const SKILL_POOL = [
     {
         id: 35,
         name: '利刃',
-        description: '玩家攻击敌方单位时会给该单位增加3层流血效果',
+        description: '附带流血，玩家攻击敌方单位时会给该单位增加3层流血效果',
         type: 'passive',
         rarity: 'common',
         power: 0,
@@ -452,15 +454,15 @@ const SKILL_POOL = [
         power: '20+skillUseCount*15',
         level: 4,
         icon: '📢',
-        cost: 20,
-        isMagic: true,
+        cost: 15,
+        isMagic: false,
         effect: { type: 'escalatingDamage', baseDamage: 20, damageIncrease: 15 },
         noEndTurn: true
     },
     {
         id: 39,
         name: '曼巴OUT',
-        description: '我真得肘击你了，MAN!对目标造成其60%最大生命值的物理伤害',
+        description: '我真得肘击你了，MAN!对目标造成其60%最大生命值的物理伤害（消耗自身50%最大生命值）',
         type: 'attack',
         rarity: 'mythic',
         power: 0,
@@ -473,7 +475,7 @@ const SKILL_POOL = [
     {
         id: 40,
         name: '苦命鸳鸯',
-        description: '将自身与被选中目标的生命值，统一设置为双方当前生命值总和除以2的数值',
+        description: '平分生命值，将自身与被选中目标的生命值，统一设置为双方当前生命值总和除以2的数值',
         type: 'heal',
         rarity: 'mythic',
         power: 0,
@@ -486,7 +488,7 @@ const SKILL_POOL = [
     {
         id: 41,
         name: '盐津虾',
-        description: '对指定敌方单位施加1层束缚；若玩家同时拥有尔多隆技能，则改为对该敌方单位施加3层束缚',
+        description: '对敌人施加1层束缚；，若玩家同时拥有尔多隆技能，则改为对该敌方单位施加3层束缚',
         type: 'debuff',
         rarity: 'rare',
         power: 0,
@@ -499,7 +501,7 @@ const SKILL_POOL = [
     {
         id: 42,
         name: '尔多隆',
-        description: '对指定敌方单位施加1层肌无力；若玩家同时拥有盐津虾技能，则改为对该敌方单位施加3层肌无力',
+        description: '对敌人施加1层肌无力；，若玩家同时拥有盐津虾技能，则改为对该敌方单位施加3层肌无力',
         type: 'debuff',
         rarity: 'rare',
         power: 0,
@@ -515,7 +517,7 @@ const SKILL_POOL = [
         description: '造成物理伤害，玩家获得1层士气',
         type: 'attack',
         rarity: 'rare',
-        power: '10+2*atk',
+        power: '10+1.8*atk',
         level: 2,
         icon: '🏃',
         cost: 15,
@@ -525,7 +527,7 @@ const SKILL_POOL = [
     {
         id: 44,
         name: '啊！徒弟！',
-        description: '当场上任意友方单位死亡时，使其立即复活，并恢复至50%最大生命值。该效果一场战斗只能触发一次',
+        description: '复活吧！，当场上任意友方单位死亡时，使其立即复活，并恢复至50%最大生命值。该效果一场战斗只能触发一次',
         type: 'passive',
         rarity: 'epic',
         power: 0,
@@ -539,7 +541,7 @@ const SKILL_POOL = [
     {
         id: 45,
         name: '队友呢救一下啊',
-        description: '场上存在友方单位时，使用该技能后，玩家恢复等同于自身最大生命值20%的生命值',
+        description: '存在友方单位时，使用该技能后，玩家恢复等同于自身最大生命值20%的生命值',
         type: 'heal',
         rarity: 'common',
         power: 0,

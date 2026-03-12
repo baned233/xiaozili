@@ -3,6 +3,7 @@ class Relic {
         this.id = data.id;
         this.name = data.name;
         this.description = data.description;
+        this.note = data.note || '';
         this.type = data.type;
         this.effect = data.effect;
         this.icon = data.icon || '📿';
@@ -67,6 +68,18 @@ class Relic {
                 case 'critDmg':
                     character.critDmg += this.effect.value;
                     break;
+                case 'magicToPhysical':
+                    character.maxStamina += character.maxMana;
+                    character.stamina = Math.min(character.stamina, character.maxStamina);
+                    character.maxMana = 0;
+                    character.mana = 0;
+                    break;
+                case 'physicalToMagic':
+                    character.maxMana += character.maxStamina;
+                    character.mana = Math.min(character.mana, character.maxMana);
+                    character.maxStamina = 0;
+                    character.stamina = 0;
+                    break;
             }
         }
     }
@@ -97,5 +110,10 @@ const RELIC_POOL = [
     { id: 22, name: '变动的世界线', description: '获得时将角色所在的层数提升3层', type: 'passive', effect: { type: 'floorShift', value: -3 }, icon: '🌀' },
     { id: 23, name: '染血的沐浴露', description: '对BOSS大帝造成的伤害+20%', type: 'passive', effect: { type: 'bossDmgBoost', value: 20 }, icon: '🩸' },
     { id: 24, name: '不战而怯', description: '战斗时使用技能有10%概率失败', type: 'passive', effect: { type: 'skillFail', value: 10 }, icon: '💤' },
-    { id: 25, name: '霸王之卵', description: '每次战斗免疫敌方单位的第一次攻击，死亡后可复活一次', type: 'event', icon: '🥚', effect: { type: '霸王之卵' } }
+    { id: 25, name: '霸王之卵', description: '每次战斗免疫敌方单位的第一次攻击，死亡后可复活一次', type: 'event', icon: '🥚', effect: { type: '霸王之卵' } },
+    { id: 26, name: '连续施法', description: '每回合恢复5点法力值', type: 'passive', effect: { type: 'manaPerTurn', value: 5 }, icon: '🔮', note: '我的力量，无穷无尽' },
+    { id: 27, name: '鹿管', description: '每回合恢复5点体力值，有【开导】技能时改为每回合恢复10点体力值', type: 'passive', effect: { type: 'staminaPerTurn', value: 5 }, icon: '🦌', note: '如果你让我开导，我会让你知道什么叫做残忍' },
+    { id: 28, name: '魔法转物理', description: '获得等同于当前最大法力值的最大体力值加成，随后将自身最大法力值设置为0', type: 'passive', effect: { type: 'magicToPhysical' }, icon: '⚔️', note: '贴身肉搏才是法爷的浪漫' },
+    { id: 29, name: '物理转魔法', description: '获得等同于当前最大体力值的最大法力值加成，随后将自身最大体力值设置为0', type: 'passive', effect: { type: 'physicalToMagic' }, icon: '🔮', note: '只有傻子才会冲锋' },
+    { id: 30, name: '猫宁的围巾', description: '防御力+3，战斗中若猫宁存活则每回合恢复猫宁10点生命值', type: 'passive', effect: { type: 'def', value: 3 }, icon: '🧣', note: '十分温暖' }
 ];

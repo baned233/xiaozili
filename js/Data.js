@@ -311,9 +311,9 @@ const BUFF_DATA = {
         name: '肌无力',
         icon: '💪',
         type: 'negative',
-        description: '造成的伤害降低50%，每回合结束时移除一层，战斗结算后清零',
+        description: '自身造成的伤害降低50%，每回合结束时移除1层，战斗结算后清零',
         effect: (character, stacks) => {
-            return { damageReduction: 0.5 };
+            return { atkReduction: 0.5 };
         }
     },
     '凝滞': {
@@ -387,18 +387,20 @@ const BUFF_DATA = {
         name: '流血',
         icon: '🩸',
         type: 'negative',
-        description: '每回合开始时受到1点物理伤害每层，伤害结算后移除1层',
+        description: '每回合开始时受到等于当前层数的真实伤害，伤害结算后移除1层',
         effect: (character, stacks) => {
             return {};
         },
         onTurnStart: (battle, character, stacks) => {
-            const damage = stacks;
-            character.takeDamage(damage);
+            const currentStacks = character.getBuffStacks ? character.getBuffStacks('流血') : stacks;
+            const damage = currentStacks;
+            character.takeDamage(damage, 'true');
             battle.battleLog.push({
                 type: 'buffDamage',
                 buff: '流血',
                 target: character.name,
-                damage: damage
+                damage: damage,
+                damageType: 'true'
             });
             character.buffs.forEach(buff => {
                 if (buff.name === '流血') {
