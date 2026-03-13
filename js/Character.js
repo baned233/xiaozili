@@ -1,29 +1,58 @@
+/**
+ * ==================== 角色类 ====================
+ * 定义游戏中的角色（主要是玩家）
+ * 包括：属性（生命、攻击、防御等）、技能、宠物、遗物、buff等
+ * 就像角色的档案，记录角色的所有信息
+ */
+
 class Character {
+    // 构造函数 - 初始化角色属性
     constructor(data) {
-        this.id = data.id;
-        this.name = data.name;
-        this.job = data.job || '小资历';
-        this.level = data.level || 1;
-        this.maxHp = data.maxHp || 100;
-        this.hp = this.maxHp;
+        this.id = data.id;                    // 角色ID
+        this.name = data.name;                // 角色名字
+        this.job = data.job || '小资历';      // 职业
+        this.level = data.level || 1;        // 等级
+        
+        // 生命值相关
+        this.maxHp = data.maxHp || 100;       // 最大生命
+        this.hp = this.maxHp;                 // 当前生命
+        
+        // 体力相关（使用技能需要消耗体力）
         this.maxStamina = data.maxStamina || 100;
         this.stamina = this.maxStamina;
+        
+        // 法力相关（魔法技能需要消耗法力）
         this.maxMana = data.maxMana || 50;
         this.mana = this.maxMana;
-        this.atk = data.atk || 10;
-        this.def = data.def || 5;
-        this.spd = data.spd || 10;
-        this.crit = data.crit || 5;
-        this.critDmg = data.critDmg || 150;
+        
+        // 战斗属性
+        this.atk = data.atk || 10;            // 攻击力
+        this.def = data.def || 5;             // 防御力
+        this.spd = data.spd || 10;            // 速度（决定回合顺序）
+        this.crit = data.crit || 5;           // 暴击率（%）
+        this.critDmg = data.critDmg || 150;   // 暴击伤害（%）
+        this.magicPower = data.magicPower || 10;  // 法力强度（法术技能伤害）
+        this.shield = 0;                      // 护盾值（战斗中临时生效）
+        
+        // 拥有的技能列表
         this.skills = data.skills || [];
+        // 拥有的宠物列表
         this.pets = data.pets || [];
+        // 拥有的遗物列表
         this.relics = data.relics || [];
+        // 当前装备的武器
         this.weapon = data.weapon || null;
-        this.icon = data.icon || '👤';
-        this.image = data.image || null;
-        this.isDead = false;
-        this.defending = false;
-        this.buffs = [];
+        
+        // 显示图标
+        this.icon = data.icon || '👤';        // 小图标
+        this.image = data.image || null;      // 大图片
+        
+        // 状态标记
+        this.isDead = false;                  // 是否死亡
+        this.defending = false;               // 是否在防御
+        this.buffs = [];                      // 当前拥有的buff
+        
+        // 基础属性（用于计算遗物加成）
         this.baseAtk = this.atk;
         this.baseDef = this.def;
         this.baseSpd = this.spd;
@@ -66,6 +95,18 @@ class Character {
         } else {
             actualDamage = Math.max(1, damage - this.def);
         }
+        
+        // 护盾值优先被扣除
+        if (this.shield > 0) {
+            if (this.shield >= actualDamage) {
+                this.shield -= actualDamage;
+                return 0; // 护盾完全抵消了伤害
+            } else {
+                actualDamage -= this.shield;
+                this.shield = 0;
+            }
+        }
+        
         this.hp = Math.max(0, this.hp - actualDamage);
         if (this.hp <= 0) {
             this.isDead = true;
@@ -145,18 +186,22 @@ class Character {
         return { damage: actualDamage, isCrit };
     }
 
-    calculateSkillDamage(power) {
+    calculateSkillDamage(power, isMagic = false) {
+        // 法术技能使用法力强度，物理技能使用攻击力
+        const stat = isMagic ? this.magicPower : this.atk;
         if (typeof power === 'string') {
-            const atk = this.atk;
             if (power.includes('+')) {
                 const parts = power.split('+');
                 const base = parseInt(parts[0]);
-                const multiplierStr = parts[1].replace('*atk', '').replace('*攻击力', '');
+                const multiplierStr = parts[1].replace('*atk', '').replace('*攻击力', '').replace('*magicPower', '').replace('*法力强度', '');
                 const multiplier = parseFloat(multiplierStr);
-                return base + Math.floor(multiplier * atk);
+                return base + Math.floor(multiplier * stat);
             } else if (power.includes('*atk') || power.includes('*攻击力')) {
                 const multiplierStr = power.replace('*atk', '').replace('*攻击力', '');
-                return Math.floor(parseFloat(multiplierStr) * atk);
+                return Math.floor(parseFloat(multiplierStr) * stat);
+            } else if (power.includes('*magicPower') || power.includes('*法力强度')) {
+                const multiplierStr = power.replace('*magicPower', '').replace('*法力强度', '');
+                return Math.floor(parseFloat(multiplierStr) * stat);
             }
             return parseInt(power) || 0;
         }
@@ -179,7 +224,7 @@ class Character {
                                 enemy.hp = 0;
                                 killedCount++;
                             } else {
-                                let damage = this.calculateSkillDamage(skill.power);
+                                let damage = this.calculateSkillDamage(skill.power, skill.isMagic);
                                 let isCrit = Math.random() * 100 < this.crit;
                                 if (isCrit) {
                                     damage = Math.floor(damage * (this.critDmg / 100));
@@ -197,7 +242,7 @@ class Character {
                         return { damage: totalDamage, killedCount: killedCount, type: 'attack', isCrit: anyCrit };
                     } else {
                         enemies.forEach(enemy => {
-                            let damage = this.calculateSkillDamage(skill.power);
+                            let damage = this.calculateSkillDamage(skill.power, skill.isMagic);
                             let isCrit = Math.random() * 100 < this.crit;
                             if (isCrit) {
                                 damage = Math.floor(damage * (this.critDmg / 100));
@@ -233,7 +278,7 @@ class Character {
                         }
                     }
                     
-                    let damage = this.calculateSkillDamage(skill.power);
+                    let damage = this.calculateSkillDamage(skill.power, skill.isMagic);
                     
                     if (skill.effect?.type === 'escalatingDamage') {
                         this.skillUseCount = this.skillUseCount || {};
@@ -273,6 +318,43 @@ class Character {
                         }
                     }
                     
+                    // 处理肉蛋冲击 - 使用自身最大生命值的百分比
+                    if (skill.effect?.type === 'maxHpDamage') {
+                        damage = Math.floor(this.maxHp * 0.2) + 30;
+                    }
+                    
+                    // 处理疯狂乱抓 - 连续8次攻击
+                    if (skill.effect?.type === 'multiStrike') {
+                        const count = skill.effect.count || 8;
+                        let totalDamage = 0;
+                        const strikeResults = [];
+                        for (let i = 0; i < count; i++) {
+                            let strikeDamage = this.calculateSkillDamage(skill.power, skill.isMagic);
+                            let isCritStrike = Math.random() * 100 < this.crit;
+                            if (isCritStrike) {
+                                strikeDamage = Math.floor(strikeDamage * (this.critDmg / 100));
+                            }
+                            const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;
+                            if (damageReduction > 0 && !skill.isTrueDamage) {
+                                strikeDamage = Math.floor(strikeDamage * (1 - damageReduction));
+                            }
+                            const damageType = skill.isTrueDamage ? 'true' : 'physical';
+                            const strikeResult = target.takeDamage(strikeDamage, damageType);
+                            totalDamage += strikeResult;
+                            strikeResults.push({ damage: strikeResult, isCrit: isCritStrike });
+                            
+                            if (this.skills) {
+                                this.skills.forEach(s => {
+                                    if (s.passive && s.effect && s.effect.type === 'bleedOnHit') {
+                                        const stacks = s.stacks || 1;
+                                        target.addBuff('流血', stacks);
+                                    }
+                                });
+                            }
+                        }
+                        return { damage: totalDamage, type: 'attack', multiStrike: count, strikeResults };
+                    }
+                    
                     if (skill.effect === 'pierce') {
                         damage = Math.floor(damage * 1.5);
                     }
@@ -296,8 +378,31 @@ class Character {
                     if (damageReduction > 0 && !skill.isTrueDamage) {
                         damage = Math.floor(damage * (1 - damageReduction));
                     }
-                    const damageType = skill.isTrueDamage ? 'true' : 'physical';
+                    
+                    // 检查是否有八宝粥遗物，如果有且技能是"夺食"，则转为真实伤害
+                    let damageType = skill.isTrueDamage ? 'true' : 'physical';
+                    if (skill.name === '夺食' && this.relics && this.relics.some(r => r.name === '八宝粥')) {
+                        damageType = 'true';
+                    }
+                    
                     const result = target.takeDamage(damage, damageType);
+                    
+                    // 处理夺食技能的stealBuff效果 - 抢夺目标的一个正面buff
+                    if (skill.effect?.type === 'stealBuff' && target.buffs && target.buffs.length > 0) {
+                        const positiveBuffs = target.buffs.filter(buff => {
+                            const buffData = BUFF_DATA[buff.name];
+                            return buffData && buffData.type === 'positive';
+                        });
+                        
+                        if (positiveBuffs.length > 0) {
+                            // 随机选择一个正面buff
+                            const stolenBuff = positiveBuffs[Math.floor(Math.random() * positiveBuffs.length)];
+                            // 移除目标身上的buff
+                            target.removeBuff(stolenBuff.name, stolenBuff.stacks);
+                            // 将buff添加到使用者身上
+                            this.addBuff(stolenBuff.name, stolenBuff.stacks);
+                        }
+                    }
                     
                     if (this.skills) {
                         this.skills.forEach(skill => {
@@ -347,9 +452,16 @@ class Character {
                             target.isDead = true;
                             target.hp = 0;
                             this.maxHp += skill.effect.hpBonus;
-                            this.hp += skill.effect.hpBonus;
+                            this.hp = Math.min(this.maxHp, this.hp + skill.effect.hpBonus);
                             return { damage: result, type: 'attack', executed: true, drain: skill.effect.hpBonus };
                         }
+                    }
+                    
+                    // 处理盾击技能的护盾效果
+                    if (skill.effect?.type === 'shield') {
+                        const lostHp = this.maxHp - this.hp;
+                        const shieldValue = Math.floor(skill.effect.base + this.atk * skill.effect.multiplier);
+                        this.shield = (this.shield || 0) + shieldValue;
                     }
                     
                     return { damage: result, type: 'attack', isCrit };
@@ -366,8 +478,8 @@ class Character {
                     const sharedHp = Math.floor(totalHp / 2);
                     const oldSelfHp = this.hp;
                     const oldTargetHp = target.hp;
-                    this.hp = sharedHp;
-                    target.hp = sharedHp;
+                    this.hp = Math.min(this.maxHp, sharedHp);
+                    target.hp = Math.min(target.maxHp, sharedHp);
                     return { 
                         type: 'heal', 
                         effect: 'lifeShare', 

@@ -1,28 +1,37 @@
+/**
+ * ==================== 技能类 ====================
+ * 定义游戏中的所有技能
+ * 包括：技能名称、类型、伤害/治疗量、消耗、图标、稀有度等
+ * 技能分为：攻击、治疗、防御、增益、减益、召唤等类型
+ */
+
 class Skill {
+    // 构造函数 - 初始化技能属性
     constructor(data) {
-        this.id = data.id;
-        this.name = data.name;
-        this.description = data.description;
-        this.type = data.type;
-        this.rarity = data.rarity;
-        this.power = data.power || 0;
-        this.heal = data.heal || 0;
-        this.defense = data.defense || 0;
-        this.targetSelf = data.targetSelf || false;
-        this.icon = data.icon || '✨';
-        this.effect = data.effect || null;
-        this.costType = data.costType || 'stamina';
-        this.cost = data.cost || 0;
-        this.isMagic = data.isMagic || false;
-        this.isTrueDamage = data.isTrueDamage || false;
-        this.targetAll = data.targetAll || false;
-        this.passive = data.passive || false;
-        this.stacks = data.stacks || 1;
-        this.noEndTurn = data.noEndTurn || false;
+        this.id = data.id;                    // 技能ID
+        this.name = data.name;                // 技能名称
+        this.description = data.description;  // 技能描述
+        this.type = data.type;                // 技能类型（attack/heal/defense/buff/debuff/summon等）
+        this.rarity = data.rarity;            // 稀有度（common/rare/epic/legendary等）
+        this.power = data.power || 0;         // 伤害值
+        this.heal = data.heal || 0;           // 治疗值
+        this.defense = data.defense || 0;     // 防御值
+        this.targetSelf = data.targetSelf || false;  // 是否可以对自己使用
+        this.icon = data.icon || '✨';        // 技能图标
+        this.effect = data.effect || null;    // 特殊效果
+        this.costType = data.costType || 'stamina';  // 消耗类型（stamina体力/mana法力）
+        this.cost = data.cost || 0;           // 消耗数值
+        this.isMagic = data.isMagic || false; // 是否是魔法技能
+        this.isTrueDamage = data.isTrueDamage || false;  // 是否是真实伤害（无视防御）
+        this.targetAll = data.targetAll || false;  // 是否是群体技能
+        this.passive = data.passive || false;  // 是否是被动技能
+        this.stacks = data.stacks || 1;        // 叠加层数
+        this.noEndTurn = data.noEndTurn || false;  // 使用后是否结束回合
     }
 
+    // 判断这个技能是否需要选择目标
     needsTarget() {
-        if (this.targetAll) return false;
+        if (this.targetAll) return false;     // 群体技能不需要选目标
         if (this.type === 'fear' && this.effect?.type === 'fear') return false;
         if (this.type === 'execute') return false;
         return this.type === 'attack' || this.type === 'debuff' || this.type === 'mark' || this.type === 'banish' || this.type === 'buff' || this.type === 'heal' || (this.type === 'summon' && !this.targetSelf);
@@ -330,7 +339,7 @@ const SKILL_POOL = [
     {
         id: 29,
         name: '吞食',
-        description: '吞食选中的敌方单位，若目标血量低于10%最大生命值则将其斩杀并获得5点最大生命值',
+        description: '吞食选中的敌方单位，若目标血量低于10%最大生命值则将其斩杀并获得10点最大生命值',
         type: 'attack',
         rarity: 'uncommon',
         power: '1*atk',
@@ -338,7 +347,7 @@ const SKILL_POOL = [
         icon: '😋',
         cost: 30,
         isMagic: true,
-        effect: { type: 'drainExecute', hpBonus: 5, threshold: 0.1 }
+        effect: { type: 'drainExecute', hpBonus: 10, threshold: 0.1 }
     },
     {
         id: 30,
@@ -348,7 +357,7 @@ const SKILL_POOL = [
         rarity: 'rare',
         power: 0,
         level: 2,
-        icon: '👕',
+        icon: 'assets/images/tuoyi.png',
         cost: 30,
         isMagic: true,
         effect: { type: 'addBuffs', selfBuff: '勇气', stacks: 5, targetBuff: '勇气', targetStacks: 3 }
@@ -356,14 +365,15 @@ const SKILL_POOL = [
     {
         id: 31,
         name: '夺食',
-        description: '夺走敌方单位的一个正面buff，若该单位无正面buff则无事发生，并造成少量物理伤害',
+        description: '夺走敌方单位的一个正面buff，若该单位无正面buff则无事发生，并造成30+1*atk点物理伤害；拥有八宝粥时转为真实伤害',
         type: 'attack',
         rarity: 'rare',
-        power: 30,
+        power: '30+1*atk',
         level: 1,
         icon: '🍖',
         cost: 45,
         isMagic: false,
+        isTrueDamageWithRelic: '八宝粥',
         effect: { type: 'stealBuff' }
     },
     {
@@ -480,8 +490,8 @@ const SKILL_POOL = [
         rarity: 'mythic',
         power: 0,
         level: 5,
-        icon: '�鸳鸯',
-        cost: 80,
+        icon: '🪶',
+        cost: 100,
         isMagic: true,
         effect: { type: 'lifeShare' }
     },
@@ -551,5 +561,57 @@ const SKILL_POOL = [
         isMagic: true,
         targetSelf: true,
         effect: { type: 'healIfAllyExists', percent: 0.2 }
+    },
+    {
+        id: 46,
+        name: '肉蛋冲击',
+        description: '用肚皮撞击敌人，造成30+20%自身最大生命值的伤害',
+        type: 'attack',
+        rarity: 'rare',
+        power: '30+0.2*maxHp',
+        level: 2,
+        icon: '🤜',
+        cost: 20,
+        isMagic: false,
+        effect: { type: 'maxHpDamage' }
+    },
+    {
+        id: 47,
+        name: '疯狂乱抓',
+        description: '连续攻击，对目标敌人连续发动8次本技能的独立攻击',
+        type: 'attack',
+        rarity: 'rare',
+        power: '10+0.5*atk',
+        level: 2,
+        icon: '🪓',
+        cost: 30,
+        isMagic: false,
+        effect: { type: 'multiStrike', count: 8 }
+    },
+    {
+        id: 48,
+        name: '小李飞刀',
+        description: '群体攻击，对敌方所有人造成伤害',
+        type: 'attack',
+        rarity: 'common',
+        power: '25+0.8*atk',
+        level: 1,
+        icon: '🗡️',
+        cost: 10,
+        isMagic: false,
+        targetAll: true
+    },
+    {
+        id: 49,
+        name: '盾击',
+        description: '攻防兼备，在攻击的同时给使用者提供atk*0.5的护盾值',
+        type: 'attack',
+        rarity: 'common',
+        power: '30+0.8*atk',
+        level: 1,
+        icon: '🛡️',
+        cost: 5,
+        isMagic: false,
+        effect: { type: 'shield', base: 0, multiplier: 0.5 }
     }
 ];

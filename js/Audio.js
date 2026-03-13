@@ -1,40 +1,54 @@
+/**
+ * ==================== 音频管理器 ====================
+ * 负责游戏中所有声音的播放
+ * 包括：背景音乐、战斗音效、UI点击声、胜利/失败音乐等
+ * 使用Web Audio API来播放声音
+ */
+
 class AudioManager {
+    // 构造函数 - 初始化音频相关变量
     constructor() {
-        this.audioContext = null;
-        this.bgMusicNode = null;
-        this.bgMusicGain = null;
-        this.isMusicPlaying = false;
-        this.musicVolume = 0.3;
-        this.sfxVolume = 0.5;
-        this.currentBgSource = null;
-        this.bossBgSource = null;
-        this.isBossBattle = false;
-        this.bgmAudio = null;
-        this.bossBgmAudio = null;
+        this.audioContext = null;        // Web Audio API的上下文
+        this.bgMusicNode = null;        // 背景音乐节点
+        this.bgMusicGain = null;        // 背景音乐音量控制
+        this.isMusicPlaying = false;    // 背景音乐是否正在播放
+        this.musicVolume = 0.3;         // 背景音乐音量（0-1）
+        this.sfxVolume = 0.5;           // 音效音量（0-1）
+        this.currentBgSource = null;    // 当前背景音乐
+        this.bossBgSource = null;      // BOSS战背景音乐
+        this.isBossBattle = false;      // 是否正在播放BOSS音乐
+        this.bgmAudio = null;           // 普通背景音乐Audio对象
+        this.bossBgmAudio = null;       // BOSS背景音乐Audio对象
     }
 
+    // ==================== 初始化音频系统 ====================
     init() {
         try {
+            // 创建AudioContext（浏览器兼容处理）
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         } catch (e) {
             console.log('Web Audio API not supported');
         }
         
+        // 创建背景音乐Audio对象
         this.bgmAudio = new Audio('assets/sounds/BGM.mp3');
-        this.bgmAudio.loop = true;
+        this.bgmAudio.loop = true;      // 循环播放
         this.bgmAudio.volume = this.musicVolume;
         
+        // 创建BOSS战音乐Audio对象
         this.bossBgmAudio = new Audio('assets/sounds/BOSS.mp3');
         this.bossBgmAudio.loop = true;
         this.bossBgmAudio.volume = this.musicVolume;
     }
 
+    // 恢复AudioContext（浏览器可能会暂停它）
     resumeContext() {
         if (this.audioContext && this.audioContext.state === 'suspended') {
             this.audioContext.resume();
         }
     }
 
+    // ==================== 开始播放背景音乐 ====================
     startBgMusic() {
         if (this.isMusicPlaying) return;
         this.resumeContext();

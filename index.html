@@ -1,128 +1,228 @@
 <!DOCTYPE html>
+<!-- 
+    游戏主页面 - 小资历神奇大冒险
+    这是整个游戏的入口页面，包含了所有的游戏界面元素
+-->
 <html lang="zh-CN">
 <head>
+    <!-- 设置页面编码为UTF-8，支持中文显示 -->
     <meta charset="UTF-8">
+    <!-- 让网页在手机上也能正常显示 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 网页标题 -->
     <title>小资历大冒险</title>
+    <!-- 网页图标（一个小游戏手柄表情） -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+    <!-- 引入游戏的样式文件 -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- 游戏主容器 - 所有的游戏内容都放在这个盒子里 -->
     <div id="game-container">
+        
+        <!-- ==================== 主菜单界面 ==================== -->
+        <!-- 游戏开始前显示的菜单画面 -->
         <div class="main-menu-bg">
+            <!-- 装饰性的背景粒子效果 -->
             <div class="bg-particles"></div>
+            <!-- 两团发光效果，让背景更好看 -->
             <div class="bg-glow bg-glow-1"></div>
             <div class="bg-glow bg-glow-2"></div>
         </div>
+        
+        <!-- 主菜单按钮区域 -->
         <div id="main-menu">
+            <!-- 标题区域 -->
             <div class="menu-header">
+                <!-- 标题装饰线 -->
                 <div class="title-decoration"></div>
+                <!-- 游戏主标题 -->
                 <h1 id="game-title">深渊爬塔</h1>
+                <!-- 副标题 -->
                 <p class="subtitle">小资历大冒险</p>
+                <!-- 标题发光效果 -->
                 <div class="title-glow"></div>
             </div>
+            
+            <!-- 菜单按钮集合 -->
             <div class="menu-buttons">
+                <!-- 开始游戏按钮 - 点击后进入游戏 -->
                 <button id="btn-start" class="menu-btn btn-primary">
                     <span class="btn-icon">⚔️</span>
                     <span class="btn-text">开始游戏</span>
                     <span class="btn-glow"></span>
                 </button>
+                <!-- 继续游戏按钮 - 如果有存档可以点击 -->
                 <button id="btn-continue" class="menu-btn btn-secondary hidden">
                     <span class="btn-icon">📜</span>
                     <span class="btn-text">继续游戏</span>
                 </button>
+                <!-- 图鉴按钮 - 查看游戏中收集的内容 -->
                 <button id="btn-encyclopedia" class="menu-btn btn-secondary">
                     <span class="btn-icon">📖</span>
                     <span class="btn-text">图鉴</span>
                 </button>
+                <!-- 设置按钮 - 调整音效等 -->
                 <button id="btn-settings" class="menu-btn btn-secondary">
                     <span class="btn-icon">⚙️</span>
                     <span class="btn-text">设置</span>
                 </button>
+                <!-- 退出按钮 -->
                 <button id="btn-exit" class="menu-btn btn-danger">
                     <span class="btn-icon">🚪</span>
                     <span class="btn-text">退出</span>
                 </button>
             </div>
+            
+            <!-- 底部版本信息 -->
             <div class="menu-footer">
                 <p class="version">v1.0.0</p>
             </div>
         </div>
+        
+        <!-- ==================== 游戏主界面 ==================== -->
+        <!-- 游戏开始后显示的主要画面 -->
         <div id="game-screen" class="hidden">
+            
+            <!-- 顶部状态栏 - 显示角色基本信息 -->
             <div id="top-bar">
+                <!-- 当前层数 -->
                 <span id="floor-display">层数: 1</span>
+                <!-- 金币数量 -->
                 <span id="gold-display">金币: 0</span>
+                <!-- 体力值 -->
                 <span id="stamina-display">💪 100/100</span>
+                <!-- 法力值 -->
                 <span id="mana-display">💧 60/60</span>
+                <!-- 生命值血条 -->
                 <div id="hp-bar-container">
                     <div id="hp-bar-fill"></div>
                 </div>
+                <!-- 药水栏 - 存放背包里的药水 -->
                 <div id="potion-bar"></div>
+                <!-- 角色头像 -->
                 <div id="player-portrait"></div>
+                <!-- 点击查看角色属性的提示 -->
                 <div id="player-info-label">角色属性</div>
+                <!-- 调试模式输入框（隐藏功能） -->
                 <div id="console-input-container">
                     <input type="text" id="console-input" placeholder="输入密码" maxlength="10">
                 </div>
             </div>
+            
+            <!-- ==================== 地图选择界面 ==================== -->
+            <!-- 每层开始时选择下一步做什么 -->
             <div id="map-panel" class="hidden">
                 <h3>选择前进方向</h3>
+                <!-- 路径选项按钮会通过JS动态生成 -->
                 <div id="path-options"></div>
             </div>
+            
+            <!-- ==================== 战斗界面 ==================== -->
+            <!-- 玩家与敌人战斗的地方 -->
             <div id="battle-area" class="hidden">
+                <!-- 取消目标选择按钮 - 选错敌人时使用 -->
                 <button id="btn-cancel-target" class="action-btn cancel-btn hidden">取消选择</button>
+                <!-- 玩家和召唤物显示区域 -->
                 <div id="player-side"></div>
+                <!-- 敌人显示区域 -->
                 <div id="enemy-side"></div>
             </div>
+            
+            <!-- ==================== 技能选择界面 ==================== -->
+            <!-- 战斗时选择使用哪个技能 -->
             <div id="skill-panel" class="hidden">
                 <h3>选择技能</h3>
+                <!-- 技能按钮会通过JS动态生成 -->
                 <div id="skill-options"></div>
             </div>
+            
+            <!-- ==================== 商店界面 ==================== -->
+            <!-- 购买道具的地方 -->
             <div id="shop-panel" class="hidden">
                 <h3>商店</h3>
+                <!-- 商品列表会通过JS动态生成 -->
                 <div id="shop-items"></div>
+                <!-- 离开商店按钮 -->
                 <button id="btn-leave-shop" class="action-btn">离开商店</button>
             </div>
+            
+            <!-- ==================== 安全屋界面 ==================== -->
+            <!-- 休息恢复或强化属性的地方 -->
             <div id="rest-panel" class="hidden">
                 <h3>安全屋</h3>
+                <!-- 描述文字 -->
                 <p id="rest-desc">在这里休息可以恢复生命值</p>
+                <!-- 选项按钮 -->
                 <div id="rest-options">
                     <button id="btn-rest" class="action-btn">休息 (恢复30%生命)</button>
                     <button id="btn-enhance" class="action-btn">强化 (随机提升属性)</button>
                     <button id="btn-leave-rest" class="action-btn">离开</button>
                 </div>
             </div>
+            
+            <!-- ==================== 事件界面 ==================== -->
+            <!-- 随机事件触发时显示 -->
             <div id="event-panel" class="hidden">
                 <h3 id="event-title">特殊事件</h3>
+                <!-- 事件图片（如有） -->
                 <img id="event-image" src="" alt="" style="max-width: 200px; display: none; margin: 10px auto; border-radius: 8px;">
+                <!-- 事件描述文字 -->
                 <p id="event-desc"></p>
+                <!-- 事件选项按钮 -->
                 <div id="event-options"></div>
             </div>
+            
+            <!-- ==================== 对话框 ==================== -->
+            <!-- 显示获得物品、提示信息等 -->
             <div id="dialog-panel" class="hidden">
+                <!-- 对话内容 -->
                 <div id="dialog-text"></div>
+                <!-- 继续按钮 -->
                 <button id="btn-dialog-continue" class="action-btn">继续</button>
             </div>
+            
+            <!-- ==================== 奖励选择界面 ==================== -->
+            <!-- 战斗胜利后选择奖励 -->
             <div id="reward-panel" class="hidden">
                 <h3>选择奖励</h3>
+                <!-- 奖励选项 -->
                 <div id="reward-options"></div>
             </div>
+            
+            <!-- ==================== 游戏结束界面 ==================== -->
+            <!-- 玩家死亡时显示 -->
             <div id="game-over" class="hidden">
                 <h2>游戏结束</h2>
+                <!-- 死亡信息（到达第几层） -->
                 <p id="death-message"></p>
+                <!-- 重新开始按钮 -->
                 <button id="btn-restart" class="menu-btn">重新开始</button>
             </div>
+            
+            <!-- ==================== 胜利界面 ==================== -->
+            <!-- 通关时显示 -->
             <div id="victory" class="hidden">
                 <h2>恭喜通关！</h2>
                 <p>你成功爬上了60层塔！</p>
+                <!-- 再玩一次按钮 -->
                 <button id="btn-victory-restart" class="menu-btn">再玩一次</button>
             </div>
+            
+            <!-- ==================== 调试控制台 ==================== -->
+            <!-- 开发者调试功能（输入密码114514打开） -->
             <div id="debug-console" class="hidden">
+                <!-- 标题栏 -->
                 <div class="debug-header">
                     <span>调试控制台</span>
+                    <!-- 关闭按钮 -->
                     <button id="btn-close-console" class="close-btn">×</button>
                 </div>
+                <!-- 搜索框 -->
                 <div class="debug-search-container">
                     <input type="text" id="debug-search" placeholder="搜索技能/遗物/宠物...">
                 </div>
+                <!-- 功能标签页 -->
                 <div class="debug-tabs">
                     <button class="debug-tab active" data-tab="skills">技能</button>
                     <button class="debug-tab" data-tab="relics">遗物</button>
@@ -131,35 +231,53 @@
                     <button class="debug-tab" data-tab="stats">属性</button>
                     <button class="debug-tab" data-tab="floor">层数</button>
                 </div>
+                <!-- 调试内容显示区域 -->
                 <div id="debug-content"></div>
             </div>
         </div>
+        
+        <!-- ==================== 设置界面 ==================== -->
+        <!-- 音量、背景音乐等设置 -->
         <div id="settings-panel" class="hidden">
             <h2>设置</h2>
+            <!-- 音效音量滑块 -->
             <label>
                 音效音量: <input type="range" id="sfx-volume" min="0" max="100" value="50">
             </label>
+            <!-- 音乐音量滑块 -->
             <label>
                 音乐音量: <input type="range" id="music-volume" min="0" max="100" value="30">
             </label>
+            <!-- 背景音乐开关 -->
             <label>
                 <input type="checkbox" id="music-toggle" checked> 背景音乐
             </label>
+            <!-- 返回按钮 -->
             <button id="btn-close-settings" class="menu-btn">返回</button>
         </div>
+        
+        <!-- ==================== 角色属性面板 ==================== -->
+        <!-- 点击头像后显示的详细信息 -->
         <div id="character-panel" class="hidden">
+            <!-- 面板头部 -->
             <div class="panel-header">
                 <h2>角色属性</h2>
+                <!-- 关闭按钮 -->
                 <button id="btn-close-character" class="close-btn">×</button>
             </div>
+            <!-- 面板内容 -->
             <div class="panel-content">
+                <!-- 角色基本信息 -->
                 <div class="character-base-info">
+                    <!-- 大头像 -->
                     <div id="character-portrait-large"></div>
+                    <!-- 名字和等级 -->
                     <div class="character-name-level">
                         <div id="character-name-display"></div>
                         <div id="character-level-display"></div>
                     </div>
                 </div>
+                <!-- 属性数值 -->
                 <div class="character-attributes">
                     <div class="attr-row"><span>生命:</span> <span id="attr-hp"></span></div>
                     <div class="attr-row"><span>攻击力:</span> <span id="attr-atk"></span></div>
@@ -169,52 +287,87 @@
                     <div class="attr-row"><span>暴击伤害:</span> <span id="attr-critdmg"></span></div>
                     <div class="attr-row"><span>体力:</span> <span id="attr-stamina"></span></div>
                     <div class="attr-row"><span>法力:</span> <span id="attr-mana"></span></div>
+                    <div class="attr-row"><span>法强:</span> <span id="attr-magicPower"></span></div>
                 </div>
+                <!-- 遗物列表 -->
                 <div class="relics-section">
                     <h3>遗物</h3>
                     <div id="relics-list"></div>
                 </div>
+                <!-- 宠物列表 -->
                 <div class="pet-section">
                     <h3>宠物</h3>
                     <div id="pet-list"></div>
                 </div>
             </div>
         </div>
+        
+        <!-- ==================== 技能替换界面 ==================== -->
+        <!-- 学习新技能时选择替换哪个旧技能 -->
         <div id="skill-replace-panel" class="hidden">
             <h3>选择要替换的技能</h3>
+            <!-- 技能选项 -->
             <div id="replace-skill-options"></div>
         </div>
+        
+        <!-- ==================== 战斗日志面板 ==================== -->
+        <!-- 显示战斗过程的记录 -->
         <div id="battle-log-panel" class="hidden">
+            <!-- 日志头部 -->
             <div class="battle-log-header">
                 <span>战斗日志</span>
+                <!-- 收起/展开按钮 -->
                 <button id="btn-toggle-battle-log" class="log-toggle-btn">▼</button>
             </div>
+            <!-- 日志内容 -->
             <div id="battle-log-content"></div>
         </div>
+        
+        <!-- ==================== 图鉴面板 ==================== -->
+        <!-- 查看已收集的技能、遗物、宠物、敌人 -->
         <div id="encyclopedia-panel" class="hidden">
+            <!-- 面板头部 -->
             <div class="panel-header">
                 <h2>图鉴</h2>
+                <!-- 关闭按钮 -->
                 <button id="btn-close-encyclopedia" class="close-btn">×</button>
             </div>
+            <!-- 分类标签 -->
             <div class="debug-tabs">
                 <button class="encyc-tab active" data-tab="skills">技能</button>
                 <button class="encyc-tab" data-tab="relics">遗物</button>
                 <button class="encyc-tab" data-tab="pets">宠物</button>
                 <button class="encyc-tab" data-tab="enemies">敌人</button>
             </div>
+            <!-- 图鉴内容 -->
             <div id="encyclopedia-content"></div>
         </div>
+        
     </div>
+    
+    <!-- ==================== 引入JavaScript文件 ==================== -->
+    <!-- 这些文件的顺序很重要，不能随便改！ -->
+    <!-- 数据文件 - 包含所有的游戏数据配置 -->
     <script src="js/Data.js"></script>
+    <!-- 音频管理 - 处理游戏音效和音乐 -->
     <script src="js/Audio.js"></script>
+    <!-- 技能系统 - 定义各种技能 -->
     <script src="js/Skill.js"></script>
+    <!-- 遗物系统 - 定义各种遗物 -->
     <script src="js/Relic.js"></script>
+    <!-- 宠物系统 - 定义各种宠物 -->
     <script src="js/Pet.js"></script>
+    <!-- 角色系统 - 定义玩家角色 -->
     <script src="js/Character.js"></script>
+    <!-- 敌人系统 - 定义各种敌人 -->
     <script src="js/Enemy.js"></script>
+    <!-- 战斗系统 - 处理战斗逻辑 -->
     <script src="js/Battle.js"></script>
+    <!-- 用户界面 - 处理所有显示内容 -->
     <script src="js/UI.js"></script>
+    <!-- 游戏主逻辑 - 整合所有系统 -->
     <script src="js/Game.js"></script>
+    <!-- 游戏入口 - 启动游戏 -->
     <script src="js/main.js"></script>
 </body>
 </html>

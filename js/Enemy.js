@@ -1,3 +1,8 @@
+/**
+ * ==================== 敌人技能类 ====================
+ * 定义敌人的技能，与玩家技能类似但更简单
+ */
+
 class EnemySkill {
     constructor(data) {
         this.id = data.id;
@@ -52,7 +57,7 @@ class EnemySkill {
                     };
                 }
                 const result = target.takeDamage(damage);
-                return { damage: result, type: 'attack', skillName: this.name, isMagic: this.isMagic };
+                return { damage: result, type: 'attack', skillName: this.name, isMagic: this.isMagic, target };
             }
             
             case 'heal': {
@@ -77,7 +82,7 @@ class EnemySkill {
                     debuffDamage = Math.floor(debuffDamage * (1 - damageReduction));
                 }
                 const debuffResult = target.takeDamage(debuffDamage);
-                return { damage: debuffResult, type: 'debuff', skillName: this.name };
+                return { damage: debuffResult, type: 'debuff', skillName: this.name, target };
             }
             
             default:
@@ -295,7 +300,7 @@ class Enemy {
         }
         
         const actualDamage = target.takeDamage(damage);
-        return { damage: actualDamage, isCrit };
+        return { damage: actualDamage, isCrit, target };
     }
 
     getIcon() {
@@ -330,7 +335,7 @@ class Enemy {
                     };
                 }
                 const result = target.takeDamage(damage);
-                return { damage: result, type: 'attack', skillName: this.name, isMagic: this.isMagic };
+                return { damage: result, type: 'attack', skillName: this.name, isMagic: this.isMagic, target };
             }
             
             case 'heal': {
@@ -355,7 +360,7 @@ class Enemy {
                     debuffDamage = Math.floor(debuffDamage * (1 - damageReduction));
                 }
                 const debuffResult = target.takeDamage(debuffDamage);
-                return { damage: debuffResult, type: 'debuff', skillName: this.name };
+                return { damage: debuffResult, type: 'debuff', skillName: this.name, target };
             }
             
             default:

@@ -1,8 +1,1 @@
-
-Tracking Prevention blocked access to storage for <URL>.
-Tracking Prevention blocked access to storage for <URL>.
-Tracking Prevention blocked access to storage for <URL>.
-Tracking Prevention blocked access to storage for <URL>.
-Tracking Prevention blocked access to storage for <URL>.
-Tracking Prevention blocked access to storage for <URL>.
-每次进网页都有这个，删掉游戏中的btn-debug-from-character来解决这个问题
+将assets中的xuanxiang.png更新为main-menu中选项的背景图，要求：设计好看，没有违和感

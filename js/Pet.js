@@ -1,25 +1,44 @@
+/**
+ * ==================== 宠物类 ====================
+ * 定义游戏中的宠物
+ * 宠物分为两种类型：
+ * - 参战型(battle)：作为额外战斗单位自动战斗
+ * - Buff型(buff)：提供被动加成，不直接参战
+ * 还有特殊的参战型(special)，在战斗中可以释放特殊技能
+ */
+
 class Pet {
+    // 构造函数 - 初始化宠物属性
     constructor(data) {
-        this.id = data.id;
-        this.name = data.name;
-        this.type = data.type;
-        this.description = data.description;
-        this.icon = data.icon;
-        this.rarity = data.rarity || 'rare';
+        this.id = data.id;                    // 宠物ID
+        this.name = data.name;                // 宠物名称
+        this.type = data.type;                // 宠物类型
+        this.description = data.description;  // 宠物描述
+        this.icon = data.icon;                 // 宠物图标
+        this.rarity = data.rarity || 'rare';  // 稀有度
+        
+        // 属性加成
         this.stats = data.stats || { atk: 0, def: 0, hp: 0 };
-        this.maxHp = data.stats?.hp || 200;
-        this.hp = this.maxHp;
-        this.skill = data.skill || null;
+        this.maxHp = data.stats?.hp || 200;   // 最大生命
+        this.hp = this.maxHp;                 // 当前生命
+        this.skill = data.skill || null;      // 战斗技能
+        
+        // 战斗类型：buff（加成）或 battle/special（参战）
         this.battleType = data.battleType || 'buff';
-        this.specialAbility = data.specialAbility || null;
-        this.isDead = false;
-        this.abilityUsedThisTurn = false;
+        this.specialAbility = data.specialAbility || null;  // 特殊能力
+        
+        // 状态
+        this.isDead = false;                  // 是否死亡
+        this.abilityUsedThisTurn = false;     // 本回合是否已使用特殊能力
     }
 
+    // ==================== 创建宠物 ====================
     static createPet(petData) {
         return new Pet(petData);
     }
 
+    // ==================== 获取特殊宠物 ====================
+    // 特殊宠物是剧情/事件获得的强力宠物
     static getSpecialPet(type) {
         const specialPets = {
             'yueremu': {
@@ -269,21 +288,6 @@ class Pet {
         this.abilityUsedThisTurn = true;
     }
 }
-
-const PET_POOL = [
-    { id: 1, name: '小灰猫', type: 'cat', description: '可爱的小猫', icon: '🐱', rarity: 'common', stats: { atk: 2, def: 1, hp: 10 }, battleType: 'buff' },
-    { id: 2, name: '小黑猫', type: 'cat', description: '神秘的黑猫', icon: '🐈‍⬛', rarity: 'common', stats: { atk: 3, def: 0, hp: 8 }, battleType: 'buff' },
-    { id: 3, name: '小白猫', type: 'cat', description: '神圣的白猫', icon: '🐈', rarity: 'rare', stats: { atk: 2, def: 2, hp: 15 }, battleType: 'buff' },
-    { id: 4, name: '火焰猫', type: 'cat', description: '操控火焰的猫', icon: '😺', rarity: 'epic', stats: { atk: 8, def: 2, hp: 20 }, battleType: 'buff' },
-    { id: 5, name: '雷电猫', type: 'cat', description: '操控雷电的猫', icon: '😸', rarity: 'epic', stats: { atk: 10, def: 0, hp: 15 }, battleType: 'buff' },
-    { id: 6, name: '冰霜猫', type: 'cat', description: '操控冰霜的猫', icon: '😻', rarity: 'rare', stats: { atk: 5, def: 5, hp: 25 }, battleType: 'buff' },
-    { id: 7, name: '战斗猫', type: 'cat', description: '擅长战斗的猫', icon: '😼', rarity: 'rare', stats: { atk: 7, def: 3, hp: 20 }, battleType: 'buff' },
-    { id: 8, name: '真灵猫姬', type: 'cat', description: '觉醒的真灵猫姬', icon: '🐱', rarity: 'legendary', stats: { atk: 15, def: 10, hp: 50 }, battleType: 'battle', skill: { name: '灵猫冲击', power: 30 } },
-    { id: 9, name: '小骨猫', type: 'undead', description: '骷髅猫', icon: '💀', rarity: 'rare', stats: { atk: 6, def: 4, hp: 25 }, battleType: 'buff' },
-    { id: 10, name: '幽灵猫', type: 'spirit', description: '幽灵状态的猫', icon: '👻', rarity: 'epic', stats: { atk: 12, def: 0, hp: 10 }, battleType: 'buff' },
-    { id: 11, name: '龙之子', type: 'dragon', description: '拥有龙之血脉', icon: '🐲', rarity: 'legendary', stats: { atk: 20, def: 15, hp: 80 }, battleType: 'battle', skill: { name: '龙息', power: 50 } },
-    { id: 12, name: '天使猫', type: 'angel', description: '神圣的天使猫', icon: '😇', rarity: 'legendary', stats: { atk: 10, def: 20, hp: 100 }, battleType: 'buff' }
-];
 
 const SPECIAL_PETS = {
     'yueremu': { id: 100, name: '鱼儿木', icon: 'assets/images/yuermu.png', description: '半鱼半植物的生物，每回合可以治愈角色当前层数点血，攻击力5，防御力10，生命值150' },

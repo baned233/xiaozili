@@ -1,52 +1,98 @@
+/**
+ * ==================== 用户界面控制器 ====================
+ * 这个文件负责游戏中所有可见内容的显示和交互
+ * 包括：菜单、地图、战斗、技能、商店、对话框等所有界面
+ * 就像游戏的外表，把游戏逻辑呈现给玩家
+ */
+
 class UI {
+    // 构造函数 - 接收游戏主控制器作为参数
     constructor(game) {
         this.game = game;
-        this.initElements();
-        this.bindEvents();
-        this.initDraggableBattleLog();
+        this.initElements();      // 初始化HTML元素引用
+        this.bindEvents();        // 绑定点击事件
+        this.initDraggableBattleLog();  // 初始化可拖拽的战斗日志
     }
 
+    // ==================== 初始化HTML元素 ====================
+    // 把HTML中的元素获取过来，方便后续使用
     initElements() {
+        // 主菜单相关
         this.mainMenu = document.getElementById('main-menu');
         this.gameScreen = document.getElementById('game-screen');
-        this.floorDisplay = document.getElementById('floor-display');
-        this.goldDisplay = document.getElementById('gold-display');
-        this.playerPortrait = document.getElementById('player-portrait');
-        this.potionBar = document.getElementById('potion-bar');
-        this.hpBarFill = document.getElementById('hp-bar-fill');
+        
+        // 顶部状态栏
+        this.floorDisplay = document.getElementById('floor-display');     // 层数显示
+        this.goldDisplay = document.getElementById('gold-display');       // 金币显示
+        this.playerPortrait = document.getElementById('player-portrait'); // 玩家头像
+        this.potionBar = document.getElementById('potion-bar');          // 药水栏
+        this.hpBarFill = document.getElementById('hp-bar-fill');          // 血条
+        
+        // 地图面板
         this.mapPanel = document.getElementById('map-panel');
         this.pathOptions = document.getElementById('path-options');
-        this.playerSide = document.getElementById('player-side');
-        this.enemySide = document.getElementById('enemy-side');
+        
+        // 战斗区域
+        this.playerSide = document.getElementById('player-side');        // 玩家这边
+        this.enemySide = document.getElementById('enemy-side');          // 敌人那边
+        this.battleArea = document.getElementById('battle-area');        // 战斗区域
+        
+        // 技能面板
         this.skillPanel = document.getElementById('skill-panel');
         this.skillOptions = document.getElementById('skill-options');
+        
+        // 商店
         this.shopPanel = document.getElementById('shop-panel');
         this.shopItems = document.getElementById('shop-items');
+        
+        // 安全屋
         this.restPanel = document.getElementById('rest-panel');
+        
+        // 事件
         this.eventPanel = document.getElementById('event-panel');
         this.eventTitle = document.getElementById('event-title');
         this.eventDesc = document.getElementById('event-desc');
         this.eventOptionsEl = document.getElementById('event-options');
+        
+        // 对话框
         this.dialogPanel = document.getElementById('dialog-panel');
         this.dialogText = document.getElementById('dialog-text');
+        
+        // 奖励选择
         this.rewardPanel = document.getElementById('reward-panel');
         this.rewardOptions = document.getElementById('reward-options');
+        
+        // 游戏结束/胜利
         this.gameOver = document.getElementById('game-over');
         this.victory = document.getElementById('victory');
+        
+        // 设置面板
         this.settingsPanel = document.getElementById('settings-panel');
-        this.battleArea = document.getElementById('battle-area');
+        
+        // 角色面板
         this.characterPanel = document.getElementById('character-panel');
+        
+        // 技能替换面板
         this.skillReplacePanel = document.getElementById('skill-replace-panel');
+        
+        // 战斗日志
         this.battleLogPanel = document.getElementById('battle-log-panel');
+        
+        // 调试控制台
         this.debugConsole = document.getElementById('debug-console');
+        
     }
 
+    // ==================== 绑定点击事件 ====================
+    // 给按钮等元素添加点击事件，点击后执行相应的游戏操作
     bindEvents() {
+        // 开始游戏按钮
         document.getElementById('btn-start').addEventListener('click', () => {
             audioManager.playClick();
             this.game.start();
         });
         
+        // 继续游戏按钮
         const continueBtn = document.getElementById('btn-continue');
         if (continueBtn) {
             continueBtn.addEventListener('click', () => {
@@ -55,6 +101,7 @@ class UI {
             });
         }
         
+        // 设置按钮
         document.getElementById('btn-settings').addEventListener('click', () => {
             audioManager.playClick();
             this.showSettings();
@@ -320,9 +367,19 @@ class UI {
     updateHpBar(character) {
         if (this.hpBarFill && character) {
             const hpPercent = character.getHpPercent ? character.getHpPercent() : Math.floor((character.hp / character.maxHp) * 100);
+            
+            // 计算护盾值占当前生命值的百分比
+            const shield = character.shield || 0;
+            const shieldPercent = shield > 0 ? Math.floor((shield / character.maxHp) * 100) : 0;
+            
+            // 设置血条宽度（只显示生命值部分，护盾通过叠加层显示）
             this.hpBarFill.style.width = `${hpPercent}%`;
             
-            if (hpPercent <= 25) {
+            // 设置血条背景，如果有护盾则添加银白色覆盖层
+            if (shield > 0) {
+                // 护盾使用银白色渐变覆盖在血条上
+                this.hpBarFill.style.background = `linear-gradient(90deg, #c0c0c0 0%, #a0a0a0 ${shieldPercent}%, #2ecc71 ${shieldPercent}%, #27ae60 100%)`;
+            } else if (hpPercent <= 25) {
                 this.hpBarFill.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
             } else if (hpPercent <= 50) {
                 this.hpBarFill.style.background = 'linear-gradient(90deg, #f1c40f, #f39c12)';
@@ -387,6 +444,7 @@ class UI {
         document.getElementById('attr-critdmg').textContent = `${player.critDmg}%`;
         document.getElementById('attr-stamina').textContent = `${player.stamina}/${player.maxStamina}`;
         document.getElementById('attr-mana').textContent = `${player.mana}/${player.maxMana}`;
+        document.getElementById('attr-magicPower').textContent = player.magicPower || 10;
         
         const relicsList = document.getElementById('relics-list');
         if (relicsList) {
@@ -437,8 +495,10 @@ class UI {
         if (petList) {
             petList.innerHTML = '';
             
-            if (player.pets && player.pets.length > 0) {
-                player.pets.forEach(pet => {
+            const alivePets = player.pets ? player.pets.filter(pet => !pet.isDead) : [];
+            
+            if (alivePets.length > 0) {
+                alivePets.forEach(pet => {
                     const petItem = document.createElement('div');
                     petItem.className = 'pet-item';
                     const petDesc = pet.specialAbility ? pet.specialAbility.description : pet.description || '';
@@ -626,12 +686,30 @@ class UI {
         logContent.scrollTop = logContent.scrollHeight;
     }
 
+    // ==================== 显示地图选择面板 ====================
+    // 每层开始时显示3个路径供玩家选择
     showMapPanel(paths, floor = 1) {
-        this.mapPanel.classList.remove('hidden');
-        this.battleArea.classList.add('hidden');
-        this.skillPanel.classList.add('hidden');
-        this.pathOptions.innerHTML = '';
+        this.mapPanel.classList.remove('hidden');       // 显示地图面板
+        this.battleArea.classList.add('hidden');        // 隐藏战斗区域
+        this.skillPanel.classList.add('hidden');         // 隐藏技能面板
+        this.pathOptions.innerHTML = '';                // 清空之前的路径选项
         
+        // 设置背景图片 - 1-15层使用qianjin1.png
+        let bgImage = this.mapPanel.querySelector('.map-bg-image');
+        if (!bgImage) {
+            bgImage = document.createElement('img');
+            bgImage.className = 'map-bg-image';
+            this.mapPanel.insertBefore(bgImage, this.mapPanel.firstChild);
+        }
+        
+        if (floor >= 1 && floor <= 15) {
+            bgImage.src = 'assets/images/qianjin1.png';
+            bgImage.style.display = 'block';
+        } else {
+            bgImage.style.display = 'none';
+        }
+        
+        // 根据层数添加不同的样式类（改变背景色调）
         this.mapPanel.classList.remove('map-dungeon', 'map-abyss', 'map-spirit');
         if (floor >= 21) {
             this.mapPanel.classList.add('map-spirit');
@@ -665,9 +743,27 @@ class UI {
         this.mapPanel.classList.add('hidden');
     }
 
+    // ==================== 显示战斗区域 ====================
+    // 开始战斗时显示战斗界面
     showBattleArea() {
-        this.mapPanel.classList.add('hidden');
-        this.battleArea.classList.remove('hidden');
+        this.mapPanel.classList.add('hidden');           // 隐藏地图
+        this.battleArea.classList.remove('hidden');       // 显示战斗区域
+        
+        // 设置战斗背景图片 - 1-15层使用zhandou1.png
+        let bgImage = this.battleArea.querySelector('.battle-bg-image');
+        if (!bgImage) {
+            bgImage = document.createElement('img');
+            bgImage.className = 'battle-bg-image';
+            this.battleArea.insertBefore(bgImage, this.battleArea.firstChild);
+        }
+        
+        const floor = this.game.currentFloor;
+        if (floor >= 1 && floor <= 15) {
+            bgImage.src = 'assets/images/zhandou1.png';
+            bgImage.style.display = 'block';
+        } else {
+            bgImage.style.display = 'none';
+        }
     }
 
     hideBattleArea() {
@@ -756,8 +852,14 @@ class UI {
                 <span class="attr-atk">⚔️${char.atk}</span>
                 <span class="attr-def">🛡️${char.def}</span>
                 <span class="attr-spd">⚡${char.spd}</span>
+                <span class="attr-magicPower">✨${char.magicPower || 10}</span>
             </div>
         `;
+        
+        const shield = char.shield || 0;
+        const shieldPercent = shield > 0 ? Math.floor((shield / char.hp) * 100) : 0;
+        const shieldOverlayHtml = shield > 0 ? `<div class="shield-overlay" style="width: ${shieldPercent}%"></div>` : '';
+        const shieldTextHtml = shield > 0 ? `<span class="status-shield-text"> 🛡️${shield}</span>` : '';
         
         card.innerHTML = `
             <div class="character-icon battle-entity">${iconHtml}</div>
@@ -766,8 +868,9 @@ class UI {
                 <div class="status-name">${char.name}</div>
                 <div class="status-hp-bar">
                     <div class="status-hp-fill ${hpClass}" style="width: ${hpPercent}%"></div>
+                    ${shieldOverlayHtml}
                 </div>
-                <div class="status-hp-text">HP: ${char.hp}/${char.maxHp}</div>
+                <div class="status-hp-text">HP: ${char.hp}/${char.maxHp}${shieldTextHtml}</div>
                 ${attrsHtml}
             </div>
         `;
@@ -804,6 +907,11 @@ class UI {
             buffsHtml += `</div>`;
         }
         
+        const enemyShield = enemy.shield || 0;
+        const enemyShieldPercent = enemyShield > 0 ? Math.floor((enemyShield / enemy.hp) * 100) : 0;
+        const enemyShieldOverlayHtml = enemyShield > 0 ? `<div class="shield-overlay" style="width: ${enemyShieldPercent}%"></div>` : '';
+        const enemyShieldTextHtml = enemyShield > 0 ? `<span class="status-shield-text"> 🛡️${enemyShield}</span>` : '';
+        
         card.innerHTML = `
             <div class="enemy-icon battle-entity">${enemyIcon}</div>
             ${buffsHtml}
@@ -811,8 +919,9 @@ class UI {
                 <div class="status-name">${enemy.name}</div>
                 <div class="status-hp-bar">
                     <div class="status-hp-fill ${hpClass}" style="width: ${hpPercent}%"></div>
+                    ${enemyShieldOverlayHtml}
                 </div>
-                <div class="status-hp-text">HP: ${enemy.hp}/${enemy.maxHp}</div>
+                <div class="status-hp-text">HP: ${enemy.hp}/${enemy.maxHp}${enemyShieldTextHtml}</div>
                 <div class="status-attrs">
                     <span class="attr-atk">⚔️${enemy.atk}</span>
                     <span class="attr-def">🛡️${enemy.def}</span>
@@ -938,6 +1047,28 @@ class UI {
             
             const shortDesc = skill.description.split('，')[0].split(',')[0];
             
+            // 计算技能的实际伤害/治疗值
+            let damageText = '';
+            if (skill.power || skill.effect?.type === 'maxHpDamage') {
+                let calculatedDamage;
+                let formulaText = skill.power || '30+0.2*maxHp';
+                if (skill.effect?.type === 'maxHpDamage') {
+                    // 肉蛋冲击：30+20%自身最大生命值
+                    calculatedDamage = Math.floor(character.maxHp * 0.2) + 30;
+                    formulaText = '30+0.2*maxHp';
+                } else {
+                    calculatedDamage = character.calculateSkillDamage(skill.power, skill.isMagic);
+                }
+                damageText = `伤害: ${calculatedDamage} (公式: ${formulaText})`;
+            }
+            
+            // 添加护盾值显示
+            if (skill.effect?.type === 'shield') {
+                const shieldValue = Math.floor(character.atk * 0.5);
+                const shieldFormula = skill.effect?.multiplier ? `${skill.effect.multiplier}*atk` : '0.5*atk';
+                damageText = damageText ? damageText + ` | 护盾: ${shieldValue} (公式: ${shieldFormula})` : `护盾: ${shieldValue} (公式: ${shieldFormula})`;
+            }
+            
             const skillIconHtml = skill.icon && skill.icon.endsWith('.png')
                 ? `<img src="${skill.icon}" alt="${skill.name}" style="width:28px;height:28px;object-fit:contain;">`
                 : `<span class="skill-icon">${skill.icon}</span>`;
@@ -953,7 +1084,7 @@ class UI {
                     <div class="tooltip-name">${skill.name}</div>
                     <div class="tooltip-type">${skill.type === 'attack' ? '攻击技能' : skill.type === 'heal' ? '治疗技能' : skill.type === 'defense' ? '防御技能' : skill.type === 'buff' ? '增益技能' : skill.type === 'summon' ? '召唤技能' : skill.type === 'debuff' ? '减益技能' : skill.type === 'fear' ? '恐惧技能' : skill.type === 'mark' ? '标记技能' : skill.type === 'banish' ? '放逐技能' : skill.type === 'passive' ? '被动技能' : '被动技能'}</div>
                     <div class="tooltip-desc">${skill.description}</div>
-                    <div class="tooltip-effect">${skill.power ? `伤害: ${skill.power}` : ''}${skill.heal ? `治疗: ${skill.heal}` : ''}${skill.defense ? `防御: ${skill.defense}` : ''}</div>
+                    <div class="tooltip-effect">${damageText}${skill.heal ? `治疗: ${skill.heal}` : ''}${skill.defense ? `防御: ${skill.defense}` : ''}</div>
                     <div class="tooltip-cost">消耗: ${costIcon} ${cost} ${costType === 'mana' ? '法力' : '体力'}</div>
                 </div>
             `;
@@ -1014,9 +1145,54 @@ class UI {
         }
     }
 
-    showDialog(text, callback) {
-        this.dialogPanel.classList.remove('hidden');
-        this.dialogText.textContent = text;
+    // ==================== 显示对话框 ====================
+    // 用于显示获得物品、提示信息等
+    // 参数：text显示文字，callback点击继续后的回调，options额外选项（如图标、描述）
+    showDialog(text, callback, options = {}) {
+        this.dialogPanel.classList.remove('hidden');  // 显示对话框
+        
+        let dialogContent = text;
+        // 如果有图标选项，显示图标和悬浮提示
+        // 确保options存在且icon存在
+        if (options && options.icon) {
+            // 判断是图片还是emoji
+            const iconImg = options.icon.endsWith('.png') 
+                ? `<img src="${options.icon}" alt="" style="width:48px;height:48px;object-fit:contain;margin-right:10px;">`
+                : `<span style="font-size:36px;margin-right:10px;">${options.icon}</span>`;
+            
+            // 悬浮提示框内容
+            const tooltipHtml = options.description 
+                ? `<div class="dialog-tooltip" style="display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.95);border:1px solid #ffd700;border-radius:8px;padding:10px;z-index:1000;white-space:normal;width:220px;text-align:left;margin-bottom:10px;">
+                    <div style="color:#ffd700;font-weight:bold;margin-bottom:5px;">${options.name || ''}</div>
+                    <div style="color:#ccc;font-size:12px;">${options.description}</div>
+                   </div>`
+                : '';
+            
+            // 组合图标和文字
+            dialogContent = `<div style="display:flex;align-items:center;justify-content:center;position:relative;">
+                ${iconImg}
+                <span>${text}</span>
+                ${tooltipHtml}
+            </div>`;
+        }
+        
+        this.dialogText.innerHTML = dialogContent;
+        
+        // 如果有描述，添加鼠标悬停显示提示的功能
+        // 确保options存在
+        if (options && options.icon && options.description) {
+            const iconContainer = this.dialogText.querySelector('div');
+            if (iconContainer) {
+                iconContainer.addEventListener('mouseenter', function() {
+                    const tooltip = this.querySelector('.dialog-tooltip');
+                    if (tooltip) tooltip.style.display = 'block';
+                });
+                iconContainer.addEventListener('mouseleave', function() {
+                    const tooltip = this.querySelector('.dialog-tooltip');
+                    if (tooltip) tooltip.style.display = 'none';
+                });
+            }
+        }
         
         const continueBtn = document.getElementById('btn-dialog-continue');
         if (continueBtn) {
@@ -1339,8 +1515,11 @@ class UI {
             div.className = 'debug-item';
             
             if (this.currentDebugTab === 'events') {
+                const eventIconHtml = item.icon && item.icon.endsWith('.png')
+                    ? `<img src="${item.icon}" alt="${item.name}" style="width: 40px; height: 40px; object-fit: contain;">`
+                    : `<span class="debug-item-icon">${item.icon}</span>`;
                 div.innerHTML = `
-                    <span class="debug-item-icon">${item.icon}</span>
+                    ${eventIconHtml}
                     <div class="debug-item-info">
                         <div class="debug-item-name">${item.name}</div>
                         <div class="debug-item-desc">${item.desc}</div>
@@ -1562,8 +1741,11 @@ getRarityCN(rarity) {
         SKILL_POOL.forEach(skill => {
             const card = document.createElement('div');
             card.className = `encyc-card ${skill.rarity}`;
+            const skillIconHtml = skill.icon && skill.icon.endsWith('.png')
+                ? `<img src="${skill.icon}" alt="${skill.name}" style="width: 40px; height: 40px; object-fit: contain;">`
+                : `<div class="encyc-card-icon">${skill.icon}</div>`;
             card.innerHTML = `
-                <div class="encyc-card-icon">${skill.icon}</div>
+                ${skillIconHtml}
                 <div class="encyc-card-name">${skill.name}</div>
                 <div class="encyc-rarity-cn ${skill.rarity}">${this.getRarityCN(skill.rarity)}</div>
             `;

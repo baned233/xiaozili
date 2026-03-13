@@ -1,24 +1,35 @@
+/**
+ * ==================== 游戏主逻辑类 ====================
+ * 这是游戏的核心类，负责管理整个游戏的流程
+ * 包括：开始游戏、层数推进、战斗管理、商店、事件、奖励等
+ * 就像游戏的大脑，控制着所有的游戏逻辑
+ */
+
 class Game {
+    // 构造函数 - 初始化游戏的基本数据
     constructor() {
-        this.currentFloor = 1;
-        this.gold = 0;
-        this.playerTeam = [];
-        this.battle = null;
-        this.ui = null;
-        this.state = 'menu';
-        this.shopItems = [];
-        this.currentPaths = [];
-        this.karma = 0;
-        this.pendingRewards = [];
-        this.obtainedSkillIds = [];
-        this.obtainedRelicIds = [];
-        this.potions = [];
-        this.maxPotions = 3;
-        this.usedEventIds = [];
-        this._memoryStorage = {};
-        this._storageAvailable = false;
+        this.currentFloor = 1;         // 当前层数，从第1层开始
+        this.gold = 0;                // 玩家拥有的金币
+        this.playerTeam = [];         // 玩家队伍（目前只有主角一个人）
+        this.battle = null;           // 当前战斗对象
+        this.ui = null;               // UI界面控制器
+        this.state = 'menu';          // 游戏状态：menu(菜单)、map(地图)、battle(战斗)、shop(商店)、rest(安全屋)、event(事件)
+        this.shopItems = [];          // 商店里卖的东西
+        this.currentPaths = [];       // 当前层的路径选择
+        this.karma = 0;               // 善缘值（做好事积累）
+        this.pendingRewards = [];      // 待领取的奖励
+        this.obtainedSkillIds = [];    // 已经获得的技能ID列表
+        this.obtainedRelicIds = [];    // 已经获得的遗物ID列表
+        this.potions = [];             // 背包里的药水
+        this.maxPotions = 3;           // 药水栏最多放3个
+        this.usedEventIds = [];        // 已经触发过的事件ID
+        this.betelNutCount = 0;        // 槟榔上瘾后没吃槟榔的层数计数
+        this._memoryStorage = {};     // 内存存储（备用）
+        this._storageAvailable = false; // 是否可以使用localStorage
     }
 
+    // ==================== 存档相关方法 ====================
+    // 保存数据到浏览器本地存储
     _saveToStorage(key, value) {
         if (this._storageAvailable) {
             try {
@@ -32,6 +43,7 @@ class Game {
         }
     }
 
+    // 从浏览器本地存储读取数据
     _loadFromStorage(key) {
         if (this._storageAvailable) {
             try {
@@ -43,6 +55,7 @@ class Game {
         return this._memoryStorage[key] || null;
     }
 
+    // 删除本地存储的数据
     _removeFromStorage(key) {
         if (this._storageAvailable) {
             try {
@@ -52,32 +65,37 @@ class Game {
         delete this._memoryStorage[key];
     }
 
+    // ==================== 游戏初始化 ====================
+    // 初始化游戏，创建UI控制器，显示主菜单
     init() {
-        audioManager.init();
-        this.ui = new UI(this);
-        this.showMainMenu();
+        audioManager.init();                    // 初始化音频系统
+        this.ui = new UI(this);                // 创建UI控制器
+        this.showMainMenu();                   // 显示主菜单
     }
 
+    // ==================== 开始新游戏 ====================
+    // 从第1层重新开始游戏
     start() {
-        this.currentFloor = 1;
-        this.gold = 100;
-        this.karma = 0;
-        this.playerTeam = [Character.createJiaXuan()];
-        this.obtainedSkillIds = [11];
-        this.obtainedRelicIds = [];
-        this.potions = [];
-        this.usedEventIds = [];
-        this.state = 'map';
+        this.currentFloor = 1;                 // 重置到第1层
+        this.gold = 100;                      // 初始金币100
+        this.karma = 0;                        // 重置善缘值
+        this.playerTeam = [Character.createJiaXuan()];  // 创建主角
+        this.obtainedSkillIds = [11];          // 初始技能ID
+        this.obtainedRelicIds = [];            // 清空遗物
+        this.potions = [];                     // 清空药水
+        this.usedEventIds = [];                // 清空已用事件
+        this.betelNutCount = 0;                // 重置槟榔计数
+        this.state = 'map';                    // 设置状态为地图选择
         
-        this.clearSave();
+        this.clearSave();                      // 清除存档
         
-        this.ui.showGameScreen();
-        this.ui.updatePlayerPortrait(this.playerTeam[0]);
-        this.ui.updatePotionBar(this.potions);
-        this.showMapSelection();
+        this.ui.showGameScreen();              // 显示游戏画面
+        this.ui.updatePlayerPortrait(this.playerTeam[0]);  // 更新主角头像
+        this.ui.updatePotionBar(this.potions); // 更新药水栏
+        this.showMapSelection();               // 显示地图选择
         
-        audioManager.startBgMusic();
-        this.saveGame();
+        audioManager.startBgMusic();           // 开始播放背景音乐
+        this.saveGame();                       // 保存游戏
     }
 
     restart() {
@@ -86,81 +104,94 @@ class Game {
         this.start();
     }
 
+    // ==================== 显示地图选择界面 ====================
+    // 每一层开始时，让玩家选择下一步做什么
     showMapSelection() {
-        this.state = 'map';
-        this.ui.updateFloor(this.currentFloor);
-        this.ui.updateGold(this.gold);
-        this.ui.setBackgroundClass(this.currentFloor);
-        this.ui.updatePlayerResources(this.playerTeam[0]);
+        this.state = 'map';                                // 设置游戏状态为地图
+        this.ui.updateFloor(this.currentFloor);           // 更新显示当前层数
+        this.ui.updateGold(this.gold);                     // 更新显示金币
+        this.ui.setBackgroundClass(this.currentFloor);     // 根据层数设置背景
+        this.ui.updatePlayerResources(this.playerTeam[0]); // 更新玩家资源（血量、体力等）
         
+        // 生成3个可选路径
         this.currentPaths = this.generatePaths();
+        // 显示地图面板
         this.ui.showMapPanel(this.currentPaths, this.currentFloor);
     }
 
+    // ==================== 生成随机路径 ====================
+    // 根据当前层数生成3个随机路径选项
+    // 可能的路径：战斗、精英战、商店、安全屋、事件、BOSS
     generatePaths() {
         const paths = [];
         
+        // 每15层是BOSS关卡
         if (this.currentFloor % 15 === 0) {
             const bossPath = PATH_TYPES['boss'];
             return [{ type: 'boss', name: 'BOSS战', icon: bossPath.icon, desc: FLOOR_DATA[this.currentFloor].bossName }];
         }
         
-        const usedTypes = new Set();
+        const usedTypes = new Set();  // 记录已经选择了哪些类型的路径，避免重复
         
+        // 随机生成3个路径
         for (let i = 0; i < 3; i++) {
             let pathType;
-            const roll = Math.random();
+            const roll = Math.random();  // 0-1之间的随机数
             
+            // 根据概率决定路径类型
             if (roll < 0.35 && !usedTypes.has('battle')) {
-                pathType = 'battle';
+                pathType = 'battle';           // 35%概率普通战斗
             } else if (roll < 0.45 && !usedTypes.has('elite') && this.currentFloor % 5 === 0) {
-                pathType = 'elite';
+                pathType = 'elite';            // 每5层可能出现精英战
             } else if (roll < 0.50 && !usedTypes.has('shop')) {
-                pathType = 'shop';
+                pathType = 'shop';             // 10%概率商店
             } else if (roll < 0.65 && !usedTypes.has('rest')) {
-                pathType = 'rest';
+                pathType = 'rest';             // 15%概率安全屋
             } else if (roll < 0.90 && !usedTypes.has('event')) {
-                pathType = 'event';
+                pathType = 'event';            // 25%概率随机事件
             } else {
-                pathType = 'battle';
+                pathType = 'battle';           // 默认战斗
             }
             
-            usedTypes.add(pathType);
+            usedTypes.add(pathType);  // 记录已使用的类型
             
-            const pathInfo = PATH_TYPES[pathType];
+            const pathInfo = PATH_TYPES[pathType];  // 获取路径信息
             paths.push({
                 type: pathType,
-                name: pathInfo.name,
-                icon: pathInfo.icon,
-                desc: pathInfo.desc
+                name: pathInfo.name,           // 路径名称
+                icon: pathInfo.icon,           // 路径图标
+                desc: pathInfo.desc            // 路径描述
             });
         }
         
         return paths;
     }
 
+    // ==================== 玩家选择路径后 ====================
+    // 玩家点击某个路径后触发
     selectPath(index) {
         const path = this.currentPaths[index];
         if (!path) {
             return;
         }
         
-        audioManager.playClick();
-        this.ui.hideMapPanel();
+        audioManager.playClick();       // 播放点击音效
+        this.ui.hideMapPanel();         // 隐藏地图面板
         
+        // 根据路径类型执行不同操作
         switch (path.type) {
             case 'battle':
             case 'elite':
-                this.startBattle(path.type === 'elite');
+                this.startBattle(path.type === 'elite');  // 开始战斗
                 break;
             case 'boss':
-                this.startBattle(false, true);
+                this.startBattle(false, true);             // BOSS战
                 break;
             case 'shop':
-                this.openShop();
+                this.openShop();            // 打开商店
                 break;
             case 'rest':
-                this.openRest();
+                this.openRest();            // 打开安全屋
                 break;
             case 'event':
                 this.triggerEvent();
@@ -168,49 +199,60 @@ class Game {
         }
     }
 
-    startBattle(isElite = false, isBoss = false) {
-        this.state = 'battle';
-        this.battle = new Battle(this);
+    // ==================== 开始战斗 ====================
+    // 玩家选择战斗路径后调用此方法
+    // 参数：isElite是否为精英怪，isBoss是否为BOSS，customEnemy自定义敌人，winReward胜利奖励
+    startBattle(isElite = false, isBoss = false, customEnemy = null, winReward = null) {
+        this.state = 'battle';                // 设置游戏状态为战斗
+        this.battle = new Battle(this);      // 创建新的战斗对象
         
         const player = this.playerTeam[0];
         if (player) {
-            player.baseSpd = player.baseSpd || player.spd;
+            player.baseSpd = player.baseSpd || player.spd;  // 保存基础速度
         }
         
-        const battleResult = this.battle.startBattle(this.playerTeam, this.currentFloor, isElite, isBoss);
+        // 初始化战斗，返回战斗结果
+        const battleResult = this.battle.startBattle(this.playerTeam, this.currentFloor, isElite, isBoss, customEnemy, winReward);
         
-        this.ui.setBackgroundClass(this.currentFloor);
-        this.ui.showBattleArea();
-        this.ui.showBattleLog();
+        this.ui.setBackgroundClass(this.currentFloor);  // 设置战斗背景
+        this.ui.showBattleArea();                // 显示战斗区域
+        this.ui.showBattleLog();                  // 显示战斗日志
         
+        // 如果是BOSS战，播放BOSS音乐并显示BOSS对话
         if (isBoss || FLOOR_DATA[this.currentFloor].isBoss) {
-            audioManager.playBossMusic();
-            const bossData = BOSS_DIALOGS[this.currentFloor];
+            audioManager.playBossMusic();         // 播放BOSS战音乐
+            const bossData = BOSS_DIALOGS[this.currentFloor];  // 获取BOSS对话
             if (bossData) {
+                // 显示BOSS登场对话
                 this.ui.showDialog(`${bossData.name}: "${bossData.enter}"`, () => {
-                    this.enterBattle();
+                    this.enterBattle();           // 对话结束后开始战斗
                 });
                 return;
             }
         }
         
-        this.enterBattle();
+        this.enterBattle();                      // 直接开始战斗
     }
 
+    // ==================== 进入战斗流程 ====================
     enterBattle() {
-        this.updateBattleUI();
+        this.updateBattleUI();                    // 更新战斗界面
         
+        // 根据是谁的回合显示不同内容
         if (this.battle.isPlayerTurn()) {
-            this.updateSkillPanel();
+            this.updateSkillPanel();               // 显示技能面板
         } else {
+            // 敌人回合，稍后执行
             setTimeout(() => this.processEnemyTurn(), 500);
         }
     }
 
+    // ==================== 更新战斗界面 ====================
     updateBattleUI() {
-        this.ui.hideCancelTargetSelect();
-        this.ui.updateBattleArea(this.battle);
-        this.ui.updateBattleLog(this.battle.battleLog);
+        this.ui.hideCancelTargetSelect();         // 隐藏取消按钮
+        this.ui.updateBattleArea(this.battle);    // 更新战斗区域显示
+        this.ui.updateBattleLog(this.battle.battleLog);  // 更新战斗日志
+        this.ui.updatePlayerResources(this.playerTeam[0]);  // 更新玩家资源（HP、护盾等）
     }
 
     updateSkillPanel() {
@@ -310,7 +352,16 @@ class Game {
                 const target = result.target;
                 if (target) {
                     const isPlayerSide = target === this.playerTeam[0];
-                    this.ui.showDamageEffect(target, skillResult, isPlayerSide, this.battle.selectedSkill);
+                    if (skillResult.multiStrike && skillResult.strikeResults) {
+                        skillResult.strikeResults.forEach((strike, index) => {
+                            setTimeout(() => {
+                                const strikeResult = { damage: strike.damage, isCrit: strike.isCrit };
+                                this.ui.showDamageEffect(target, strikeResult, isPlayerSide, this.battle.selectedSkill);
+                            }, index * 200);
+                        });
+                    } else {
+                        this.ui.showDamageEffect(target, skillResult, isPlayerSide, this.battle.selectedSkill);
+                    }
                 }
             }
         }
@@ -460,17 +511,24 @@ class Game {
         }, 300);
     }
     
+    // ==================== 战斗结束处理 ====================
+    // 战斗结束后调用，处理胜负逻辑和奖励
     handleBattleEnd(battleEnd) {
-        this.ui.hideSkillPanel();
-        this.ui.hideBattleArea();
-        this.ui.hideBattleLog();
-        this.ui.hideCancelTargetSelect();
+        this.ui.hideSkillPanel();           // 隐藏技能面板
+        this.ui.hideBattleArea();           // 隐藏战斗区域
+        this.ui.hideBattleLog();            // 隐藏战斗日志
+        this.ui.hideCancelTargetSelect();   // 隐藏取消按钮
         
         const player = this.playerTeam[0];
         if (player) {
+            // 清除战斗中获得的护盾值
+            player.shield = 0;
+            
+            // 重新应用永久增益
             if (player.reapplyBuffs) {
                 player.reapplyBuffs();
             }
+            // 重置某些技能的 사용计数
             if (player.skills) {
                 player.skills.forEach(skill => {
                     if (skill.name === '开导') {
@@ -479,31 +537,72 @@ class Game {
                     }
                 });
             }
+            
+            // 移除死亡的宠物
+            if (player.pets && player.pets.length > 0) {
+                const deadPets = player.pets.filter(pet => pet.isDead);
+                if (deadPets.length > 0) {
+                    player.pets = player.pets.filter(pet => !pet.isDead);
+                }
+            }
         }
         
+        // 如果是BOSS战，停止BOSS音乐
         if (battleEnd.isBoss || (this.battle && this.battle.isBoss)) {
             audioManager.stopBossMusic();
         }
         
+        // 根据战斗结果处理
         if (battleEnd.result === 'win') {
+            // 战斗胜利
             if (player) {
+                // 恢复少量体力和法力
                 player.restoreStamina(10);
                 player.restoreMana(10);
+                // 移除临时增益buff
                 player.removeBuff('勇气', player.getBuffStacks('勇气'));
                 player.removeBuff('士气', player.getBuffStacks('士气'));
                 player.removeBuff('肌无力', player.getBuffStacks('肌无力'));
                 this.ui.updatePlayerResources(player);
             }
+            // 清除召唤物（它们在战斗结束后消失）
             this.playerTeam = this.playerTeam.filter(char => !char.isSummoned);
-            audioManager.playVictory();
+            audioManager.playVictory();  // 播放胜利音效
+            // 处理胜利奖励
             this.handleVictory(battleEnd.rewards || [], battleEnd.isElite, battleEnd.isBoss);
         } else if (battleEnd.result === 'lose') {
-            audioManager.playDefeat();
-            this.ui.showGameOver();
+            // 战斗失败
+            audioManager.playDefeat();   // 播放失败音效
+            this.ui.showGameOver();       // 显示游戏结束界面
         }
     }
 
+    // ==================== 处理战斗胜利 ====================
+    // 计算并发放战斗奖励
     handleVictory(rewards, isElite = false, isBoss = false) {
+        // 检查是否有自定义战斗胜利奖励（阻止卖槟榔事件）
+        if (this.battle && this.battle.winReward && this.battle.winReward.relic) {
+            const relicData = this.battle.winReward.relic;
+            const relic = new Relic(relicData);
+            const player = this.playerTeam[0];
+            if (player.addRelic(relic, this)) {
+                this.obtainedRelicIds.push(relic.id);
+                this.ui.showDialog(`战斗胜利！额外获得遗物——${relic.name}！`, () => {
+                    this.handleVictoryContinue(rewards, isElite, isBoss);
+                }, {
+                    icon: relic.icon,
+                    name: relic.name,
+                    description: relic.description
+                });
+                return;
+            }
+        }
+        
+        this.handleVictoryContinue(rewards, isElite, isBoss);
+    }
+    
+    handleVictoryContinue(rewards, isElite = false, isBoss = false) {
+        // 金币奖励：基础15 + 层数×3，精英×2，BOSS×3
         let goldGain = 15 + this.currentFloor * 3;
         if (isElite) goldGain *= 2;
         if (isBoss) goldGain *= 3;
@@ -619,6 +718,10 @@ class Game {
                 this.ui.hideRewards();
                 this.ui.showDialog(`获得圣人遗物: ${rewardData.item.name}！`, () => {
                     this.nextFloor();
+                }, {
+                    icon: rewardData.item.icon,
+                    name: rewardData.item.name,
+                    description: rewardData.item.description
                 });
             }
         } else if (rewardData.type === 'attribute') {
@@ -643,36 +746,78 @@ class Game {
         this.nextFloor();
     }
 
+    // ==================== 进入下一层 ====================
+    // 完成任务后进入下一层
     nextFloor() {
-        this.currentFloor++;
+        this.currentFloor++;  // 层数+1
         
+        // 战斗结束后，每个存活的角色恢复10%最大生命值
         this.playerTeam.forEach(char => {
             if (!char.isDead) {
                 char.hp = Math.min(char.hp + Math.floor(char.maxHp * 0.1), char.maxHp);
             }
         });
         
+        // 检查槟榔上瘾相关逻辑
+        const player = this.playerTeam[0];
+        if (player) {
+            const hasBetelNutAddiction = player.buffs && player.buffs.some(b => b.name === '槟榔上瘾');
+            if (hasBetelNutAddiction) {
+                this.betelNutCount++;
+                // 连续5层没吃槟榔，获得戒断反应BUFF
+                if (this.betelNutCount >= 5) {
+                    player.addBuff('戒断反应', 1);
+                    audioManager.playDebuff();
+                }
+            }
+            
+            // 检查是否有戒断反应BUFF
+            const hasWithdrawal = player.buffs && player.buffs.some(b => b.name === '戒断反应');
+            // 移除戒断反应BUFF（如果买了槟榔会在购买逻辑中处理）
+        }
+        
+        // 检查是否通关（60层）
         if (this.currentFloor > 60) {
-            audioManager.playVictory();
-            this.ui.showVictory();
-            this.clearSave();
+            audioManager.playVictory();    // 播放胜利音乐
+            this.ui.showVictory();         // 显示胜利界面
+            this.clearSave();              // 清除存档
             return;
         }
         
+        // 显示下一层的地图选择
         this.showMapSelection();
-        this.saveGame();
+        this.saveGame();                   // 保存进度
     }
 
+    // ==================== 打开商店 ====================
     openShop() {
         this.state = 'shop';
-        this.shopItems = this.generateShopItems();
-        this.ui.showShop(this.shopItems, this.gold);
+        this.shopItems = this.generateShopItems();  // 生成商店商品
+        this.ui.showShop(this.shopItems, this.gold);  // 显示商店界面
     }
 
+    // ==================== 生成商店商品 ====================
     generateShopItems() {
         const items = [];
-        const itemCount = 4 + Math.floor(this.currentFloor / 10);
+        const itemCount = 4 + Math.floor(this.currentFloor / 10);  // 层数越高商品越多
         const usedItems = new Set();
+        
+        // 检查玩家是否有槟榔上瘾BUFF，如果有则固定添加槟榔
+        const player = this.playerTeam[0];
+        const hasBetelNutAddiction = player && player.buffs && player.buffs.some(b => b.name === '槟榔上瘾');
+        
+        if (hasBetelNutAddiction) {
+            const betelNutItem = SHOP_ITEMS.find(item => item.id === 'betel_nut');
+            if (betelNutItem) {
+                const priceMultiplier = 1 + (this.currentFloor - 1) * 0.05;
+                items.push({
+                    ...betelNutItem,
+                    price: Math.floor(betelNutItem.price * priceMultiplier),
+                    sold: false
+                });
+                usedItems.add('betel_nut');
+            }
+        }
         
         while (items.length < itemCount) {
             const item = SHOP_ITEMS[Math.floor(Math.random() * SHOP_ITEMS.length)];
@@ -702,6 +847,24 @@ class Game {
         audioManager.playClick();
         
         const player = this.playerTeam[0];
+        
+        // 检查是否是槟榔，如果是则重置计数并移除戒断反应
+        if (item.id === 'betel_nut') {
+            this.betelNutCount = 0;  // 重置槟榔计数
+            // 移除戒断反应BUFF
+            if (player.buffs && player.buffs.some(b => b.name === '戒断反应')) {
+                player.removeBuff('戒断反应', 999);  // 移除所有层数
+            }
+            // 槟榔直接使用，不存入药水栏
+            player.heal(item.effect.value);
+            audioManager.playHeal();
+            this.ui.updatePlayerResources(player);
+            this.ui.showDialog(`嚼了口槟榔，恢复了 ${item.effect.value} 点生命！`, () => {
+                this.ui.updateGold(this.gold);
+                this.ui.showShop(this.shopItems, this.gold);
+            });
+            return;
+        }
         
         switch (item.effect.type) {
             case 'heal':
@@ -863,6 +1026,10 @@ class Game {
                     this.ui.showDialog(`获得遗物: ${relic.name}！`, () => {
                         this.ui.updateGold(this.gold);
                         this.ui.showShop(this.shopItems, this.gold);
+                    }, {
+                        icon: relic.icon,
+                        name: relic.name,
+                        description: relic.description
                     });
                 } else if (!relic) {
                     this.gold += Math.floor(item.price * 0.5);
@@ -952,6 +1119,36 @@ class Game {
         audioManager.playClick();
         
         let resultText = '';
+        let rewardInfo = null;
+        
+        // 处理夺食事件的自定义检查
+        if (option.effect.customCheck) {
+            const checkResult = option.effect.check(this);
+            resultText = checkResult.message;
+            if (checkResult.relic) {
+                rewardInfo = {
+                    icon: checkResult.relic.icon,
+                    name: checkResult.relic.name,
+                    description: checkResult.relic.description
+                };
+            }
+        }
+        
+        // 处理槟榔上瘾buff
+        if (option.effect.customBuff) {
+            player.addBuff(option.effect.buff, 1);
+            this.betelNutCount = 0;  // 初始化槟榔计数
+            resultText = option.effect.message;
+            audioManager.playBuff();
+        }
+        
+        // 处理阻止卖槟榔事件（触发战斗）
+        if (option.effect.customBattle) {
+            resultText = option.effect.message;
+            this.ui.hideEvent();
+            this.startBattle(false, false, option.effect.enemy, option.effect.winReward);
+            return;
+        }
         
         if (option.effect.cost && this.gold < option.effect.cost) {
             this.ui.hideEvent();
@@ -1087,6 +1284,11 @@ class Game {
                     }
                     player.pets.push(pet);
                     resultText = option.effect.message || `获得了奇遇宠物——${pet.name}！`;
+                    rewardInfo = {
+                        icon: pet.icon,
+                        name: pet.name,
+                        description: pet.description
+                    };
                     audioManager.playMagic();
                 }
             }
@@ -1174,6 +1376,11 @@ class Game {
                         this.obtainedRelicIds.push(relic.id);
                         const relicText = resultText ? ` ${resultText}` : `获得圣人遗物——${relic.name}！`;
                         resultText = relicText;
+                        rewardInfo = {
+                            icon: relic.icon,
+                            name: relic.name,
+                            description: relic.description
+                        };
                         audioManager.playMagic();
                     }
                 }
@@ -1199,7 +1406,8 @@ class Game {
         this.ui.updateGold(this.gold);
         this.ui.updatePlayerResources(player);
         
-        if (['cliff', 'rescue', 'crossroad'].includes(event.id)) {
+        // 这些事件触发后不能重复出现
+        if (['cliff', 'rescue', 'crossroad', 'food_steal', 'betel_nut_seller'].includes(event.id)) {
             this.usedEventIds.push(event.id);
         }
         
@@ -1213,7 +1421,7 @@ class Game {
         this.ui.hideEvent();
         this.ui.showDialog(resultText || '什么也没发生...', () => {
             this.nextFloor();
-        });
+        }, rewardInfo);
     }
 
     showMainMenu() {
@@ -1487,7 +1695,11 @@ class Game {
             if (player.skills.length < 6) {
                 player.skills.push(skill);
                 this.obtainedSkillIds.push(skill.id);
-                this.ui.showDialog(`获得技能: ${skill.name}！`, () => {});
+                this.ui.showDialog(`获得技能: ${skill.name}！`, () => {}, {
+                    icon: skill.icon,
+                    name: skill.name,
+                    description: skill.description
+                });
             } else {
                 this.pendingSkillToLearn = skill;
                 this.ui.showSkillReplacePanel(player.skills, skill);
@@ -1496,7 +1708,11 @@ class Game {
             const relic = new Relic(item);
             if (player.addRelic(relic, this)) {
                 this.obtainedRelicIds.push(relic.id);
-                this.ui.showDialog(`获得遗物: ${relic.name}！`, () => {});
+                this.ui.showDialog(`获得遗物: ${relic.name}！`, () => {}, {
+                    icon: relic.icon,
+                    name: relic.name,
+                    description: relic.description
+                });
             } else {
                 this.ui.showDialog('遗物栏已满！', () => {});
             }
@@ -1511,7 +1727,11 @@ class Game {
                     return;
                 }
                 player.pets.push(pet);
-                this.ui.showDialog(`获得宠物: ${pet.name}！`, () => {});
+                this.ui.showDialog(`获得宠物: ${pet.name}！`, () => {}, {
+                    icon: pet.icon,
+                    name: pet.name,
+                    description: pet.description
+                });
             }
         }
         this.saveGame();

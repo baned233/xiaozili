@@ -1,31 +1,60 @@
+/**
+ * ==================== 战斗系统类 ====================
+ * 负责处理战斗中的所有逻辑
+ * 包括：回合管理、技能使用、伤害计算、胜负判定、掉落奖励等
+ * 就像战斗的裁判，决定每一步会发生什么
+ */
+
 class Battle {
+    // 构造函数 - 初始化战斗数据
     constructor(game) {
-        this.game = game;
-        this.playerTeam = [];
-        this.enemies = [];
-        this.turnOrder = [];
-        this.currentTurnIndex = 0;
-        this.round = 1;
-        this.currentActor = null;
-        this.currentActorType = null;
-        this.battleState = 'playerSelect';
-        this.selectedSkill = null;
-        this.selectedTarget = null;
-        this.battleLog = [];
-        this.rewards = [];
-        this.isElite = false;
-        this.isBoss = false;
-        this.skipEnemyTurn = false;
-        this.lastPlayerDamage = 0;
+        this.game = game;              // 游戏主控制器
+        this.playerTeam = [];         // 玩家队伍（包括召唤物）
+        this.enemies = [];            // 敌人列表
+        this.turnOrder = [];          // 回合顺序（按速度排序）
+        this.currentTurnIndex = 0;    // 当前回合索引
+        this.round = 1;               // 当前回合数
+        this.currentActor = null;     // 当前行动的角色
+        this.currentActorType = null; // 当前行动的角色类型（player/enemy）
+        this.battleState = 'playerSelect';  // 战斗状态
+        this.selectedSkill = null;     // 玩家选择的技能
+        this.selectedTarget = null;    // 玩家选择的目标
+        this.battleLog = [];          // 战斗日志
+        this.rewards = [];            // 战斗胜利后的奖励
+        this.isElite = false;         // 是否是精英怪
+        this.isBoss = false;          // 是否是BOSS
+        this.skipEnemyTurn = false;   // 是否跳过敌人回合
+        this.lastPlayerDamage = 0;     // 玩家上次造成的伤害
     }
 
-    startBattle(playerTeam, floor, isElite = false, isBoss = false) {
+    // ==================== 开始战斗 ====================
+    // 初始化战斗，创建敌人，处理召唤物
+    // 参数：customEnemy自定义敌人对象，winReward胜利奖励遗物
+    startBattle(playerTeam, floor, isElite = false, isBoss = false, customEnemy = null, winReward = null) {
         this.playerTeam = playerTeam;
         this.enemies = [];
         this.isElite = isElite;
         this.isBoss = isBoss || FLOOR_DATA[floor].isBoss;
+        this.winReward = winReward;  // 战斗胜利后的奖励
+        
+        // 如果有自定义敌人，使用自定义敌人
+        if (customEnemy) {
+            const enemy = new Enemy({
+                name: customEnemy.name,
+                type: customEnemy.type || 'common',
+                hp: customEnemy.hp || 50,
+                maxHp: customEnemy.hp || 50,
+                atk: customEnemy.atk || 10,
+                def: customEnemy.def || 0,
+                spd: customEnemy.spd || 10,
+                level: 1,
+                skills: []
+            });
+            this.enemies.push(enemy);
+        }
         
         const player = playerTeam[0];
+        // 处理宠物参战 - 特殊的战斗型宠物会加入战斗
         if (player.pets && player.pets.length > 0) {
             player.pets.forEach(pet => {
                 if (!pet.isDead && pet.battleType === 'special') {
@@ -33,6 +62,7 @@ class Battle {
                     if (!alreadyInTeam) {
                         pet.isSummoned = true;
                         this.playerTeam.push(pet);
+                        // 如果是模仿型宠物，复制玩家技能
                         if (pet.specialAbility && pet.specialAbility.type === 'mimic') {
                             pet.mimickedSkill = null;
                             if (player.skills && player.skills.length > 0) {
@@ -268,7 +298,7 @@ class Battle {
             this.battleState = 'selectTarget';
             return { success: true, state: 'selectTarget' };
         } else {
-            this.selectedTarget = this.currentActor;
+            this.selectedTarget = skill.targetAll ? null : this.currentActor;
             return this.executePlayerAction();
         }
     }

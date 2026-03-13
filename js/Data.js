@@ -1,3 +1,12 @@
+/**
+ * ==================== 游戏数据配置文件 ====================
+ * 这个文件包含游戏中所有的静态数据
+ * 包括：武器数据、层数数据、敌人数据、技能池、遗物池、宠物池、商店物品、随机事件等
+ * 就像游戏的数据库，存储了所有游戏内容
+ */
+
+// ==================== 武器数据 ====================
+// 武器类型及其属性加成
 const WEAPONS = {
     sword: { name: '剑', icon: '⚔️', atkBonus: 10, critBonus: 5 },
     bow: { name: '弓', icon: '🏹', atkBonus: 8, critBonus: 10, range: true },
@@ -7,6 +16,8 @@ const WEAPONS = {
     shield: { name: '盾', icon: '🛡️', atkBonus: 5, defBonus: 10 }
 };
 
+// ==================== 层数数据 ====================
+// 每层的名称、敌人等级、是否是BOSS等
 const FLOOR_DATA = {
     1: { name: '宿舍大门', enemyLevel: 1, bgClass: 'floor-bg-1' },
     2: { name: '宿舍走廊', enemyLevel: 1, bgClass: 'floor-bg-1' },
@@ -120,10 +131,53 @@ const SHOP_ITEMS = [
     { id: 'mana_boost', name: '魔法水晶', icon: '💎', price: 90, effect: { type: 'maxMana', value: 10 }, desc: '永久+10最大法力' },
     { id: 'crit_boost', name: '幸运符', icon: '🍀', price: 70, effect: { type: 'crit', value: 5 }, desc: '永久+5%暴击率' },
     { id: 'skill_scroll', name: '技能卷轴', icon: '📜', price: 100, effect: { type: 'skill' }, desc: '随机获得一个技能' },
-    { id: 'relic_box', name: '遗物盒子', icon: '📦', price: 150, effect: { type: 'relic' }, desc: '随机获得一个遗物' }
+    { id: 'relic_box', name: '遗物盒子', icon: '📦', price: 150, effect: { type: 'relic' }, desc: '随机获得一个遗物' },
+    { id: 'betel_nut', name: '槟榔', icon: '🌴', price: 20, effect: { type: 'heal', value: 30 }, desc: '恢复30点生命' }
 ];
 
 const RANDOM_EVENTS = [
+    {
+        id: 'food_steal',
+        name: '夺食',
+        icon: '🐕',
+        desc: '一只狗跑来和你抢夺八宝粥...',
+        options: [
+            { text: '让它吃', effect: { message: '狗子吃饱了。扬长而去。' } },
+            { text: '抢过八宝粥', effect: { 
+                message: '如果角色有"夺食"技能，获得遗物八宝粥，否则-20生命', 
+                customCheck: true,
+                check: (game) => {
+                    const player = game.playerTeam[0];
+                    const hasDuoshi = player.skills && player.skills.some(s => s.name === '夺食');
+                    if (hasDuoshi) {
+                        const relic = new Relic({ id: 31, name: '八宝粥', description: '生命值+100，技能：夺食攻击伤害类型转换为真实伤害', type: 'event', effect: { type: 'hp', value: 100 }, icon: '🥣', note: '"我们这种人就像是野狗一般"' });
+                        if (player.addRelic(relic, game)) {
+                            game.obtainedRelicIds.push(relic.id);
+                            return { message: '你成功抢夺到了八宝粥！', relic: relic };
+                        }
+                    }
+                    player.takeDamage(20);
+                    return { message: '由于你不会技能：夺食，你没有争抢过这只狗，只能看着它扬长而去，生命值-20' };
+                }
+            } }
+        ]
+    },
+    {
+        id: 'betel_nut_seller',
+        name: '？！槟榔！？',
+        icon: '🌴',
+        desc: '一个户外直播的人正在推销槟榔"这个和成天下这个大果啊，劲儿道足，口味正，大伙都得买来尝尝啊。"',
+        options: [
+            { text: '买一包', effect: { buff: '槟榔上瘾', message: 'woc，槟榔上瘾了！', customBuff: true } },
+            { text: '离开', effect: { message: '我不吃槟榔...' } },
+            { text: '阻止他卖槟榔', effect: { 
+                message: '谁允许你在这里卖槟榔的？', 
+                customBattle: true,
+                enemy: { name: '槟榔头', type: 'common', hp: 80, atk: 15, def: 5, spd: 12 },
+                winReward: { relic: { id: 32, name: '和成天下', description: '最大体力-10，攻击力+20', type: 'event', effect: { type: 'stamina', value: -10, atk: 20 }, icon: '🌴', note: '"白生生的精品大果！"' } }
+            } }
+        ]
+    },
     {
         id: 'cliff',
         name: '悬崖绝境',
@@ -202,8 +256,8 @@ const RANDOM_EVENTS = [
         icon: '🚪',
         desc: '寝室503中总传来奇怪的声音，是否进入查看？',
         options: [
-            { text: '进入503', effect: { relic: 'two_surname_servant' } },
-            { text: '放弃进入', effect: { relic: 'world_line' } }
+            { text: '进入503', effect: { relic: 'two_surname_servant', message: '被503中的成员邀请加入！最大生命值降低10点！' } },
+            { text: '放弃进入', effect: { relic: 'world_line', message: '获得了变动的世界线！角色上升3层！' } }
         ]
     },
     {
@@ -222,8 +276,8 @@ const RANDOM_EVENTS = [
         icon: '🚿',
         desc: '已经停水停电的浴室，里面似乎传来一些动静。',
         options: [
-            { text: '进入搜索', effect: { relic: 'bloody_soap' } },
-            { text: '放弃进入', effect: { relic: 'coward' } }
+            { text: '进入搜索', effect: { relic: 'bloody_soap', message: '在黑暗中摸索半天，摸到了一个东西！' } },
+            { text: '放弃进入', effect: { relic: 'coward', message: '你的勇气受到了大帝的鄙夷！' } }
         ]
     }
 ];
@@ -409,6 +463,47 @@ const BUFF_DATA = {
             });
             character.buffs = character.buffs.filter(b => b.name !== '流血' || b.stacks > 0);
             return damage;
+        }
+    },
+    '槟榔上瘾': {
+        name: '槟榔上瘾',
+        icon: '🌴',
+        type: 'positive',
+        description: '持有者攻击力+40，每回合损失5点生命值（若5回合不在商店购买槟榔，则获得负面BUFF：戒断反应）',
+        effect: (character, stacks) => {
+            return { atk: 40 };
+        },
+        onTurnStart: (battle, character, stacks) => {
+            const damage = 5;
+            character.takeDamage(damage);
+            battle.battleLog.push({
+                type: 'buffDamage',
+                buff: '槟榔上瘾',
+                target: character.name,
+                damage: damage
+            });
+            return damage;
+        }
+    },
+    '戒断反应': {
+        name: '戒断反应',
+        icon: '😣',
+        type: 'negative',
+        description: '持有者每回合损失10点体力值',
+        effect: (character, stacks) => {
+            return {};
+        },
+        onTurnStart: (battle, character, stacks) => {
+            const staminaLoss = 10;
+            character.stamina = Math.max(0, character.stamina - staminaLoss);
+            battle.battleLog.push({
+                type: 'buffDamage',
+                buff: '戒断反应',
+                target: character.name,
+                damage: staminaLoss,
+                isStamina: true
+            });
+            return staminaLoss;
         }
     }
 };
