@@ -1015,6 +1015,26 @@ class UI {
         }
     }
 
+    showAttackAnimation(attacker, isPlayer) {
+        const cardId = isPlayer ? `char-${attacker.id}` : `enemy-${attacker.id}`;
+        const card = document.getElementById(cardId);
+        
+        if (!card) return;
+        
+        card.classList.add('attacking');
+        
+        const entity = card.querySelector('.battle-entity');
+        if (entity) {
+            const direction = isPlayer ? 'attackUp' : 'attackDown';
+            entity.style.animation = `${direction} 0.3s ease-out`;
+            setTimeout(() => {
+                entity.style.animation = '';
+            }, 300);
+        }
+        
+        setTimeout(() => card.classList.remove('attacking'), 300);
+    }
+
     showSkillPanel() {
         this.skillPanel.classList.remove('hidden');
         this.updateSkillButtons();
@@ -1225,9 +1245,12 @@ class UI {
             if (reward.type === 'skill') {
                 const skill = reward.item;
                 const shortDesc = skill.description.split('，')[0].split(',')[0];
+                const skillIconHtml = skill.icon && skill.icon.endsWith('.png')
+                    ? `<img src="${skill.icon}" alt="${skill.name}" style="width:clamp(28px,4vw,36px);height:clamp(28px,4vw,36px);object-fit:contain;">`
+                    : `<span class="reward-icon">${skill.icon}</span>`;
                 option.classList.add(Skill.getRarityColor(skill.rarity));
                 option.innerHTML = `
-                    <div class="reward-icon">${skill.icon}</div>
+                    <div class="reward-icon">${skillIconHtml}</div>
                     <div class="reward-name">${skill.name}</div>
                     <div class="reward-desc">${shortDesc}</div>
                     <div class="skill-tooltip" style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); z-index: 1000; white-space: normal; width: 200px;">
@@ -1282,7 +1305,7 @@ class UI {
         
         const skipDiv = document.createElement('div');
         skipDiv.className = 'reward-skip';
-        skipDiv.textContent = '跳过奖励 (+10金币)';
+        skipDiv.textContent = '随机属性 (+少量)';
         skipDiv.addEventListener('click', () => {
             audioManager.playClick();
             this.rewardPanel.classList.add('hidden');

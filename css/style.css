@@ -616,9 +616,10 @@ body {
     border-radius: 8px;
     padding: 10px;
     min-width: 150px;
-    z-index: 200;
+    z-index: 1000;
     display: none;
     text-align: center;
+    isolation: isolate;
 }
 
 .relic-item:hover .relic-tooltip {
@@ -633,6 +634,57 @@ body {
 }
 
 .relic-tooltip .tooltip-desc {
+    color: #aaa;
+    font-size: clamp(9px, 1.2vw, 11px);
+}
+
+.pet-item {
+    padding: 8px 12px;
+    background: #1a1a2a;
+    border: 2px solid #5a5a8a;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.pet-item:hover {
+    border-color: #ffd700;
+    transform: translateY(-2px);
+}
+
+.pet-item .pet-icon {
+    font-size: clamp(18px, 2.5vw, 22px);
+}
+
+.pet-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a2a;
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+    padding: 10px;
+    min-width: 150px;
+    z-index: 1000;
+    display: none;
+    text-align: center;
+    isolation: isolate;
+}
+
+.pet-item:hover .pet-tooltip {
+    display: block !important;
+}
+
+.pet-tooltip .tooltip-name {
+    color: #ffd700;
+    font-size: clamp(11px, 1.4vw, 13px);
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.pet-tooltip .tooltip-desc {
     color: #aaa;
     font-size: clamp(9px, 1.2vw, 11px);
 }
@@ -1387,6 +1439,8 @@ body {
     background-repeat: no-repeat;
     border-top: 2px solid #3a3a5a;
     flex-shrink: 0;
+    position: relative;
+    z-index: 100;
 }
 
 #skill-panel h3 {
@@ -1677,7 +1731,7 @@ body {
     padding: clamp(15px, 2vw, 25px);
     width: min(650px, 90vw);
     max-height: 85vh;
-    overflow: auto;
+    overflow: visible;
     text-align: center;
     z-index: 100;
     box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
@@ -1694,6 +1748,7 @@ body {
     gap: 12px;
     justify-content: center;
     flex-wrap: wrap;
+    overflow: visible;
 }
 
 .reward-option {
@@ -1704,6 +1759,8 @@ body {
     cursor: pointer;
     transition: all 0.3s;
     min-width: clamp(120px, 18vw, 160px);
+    position: relative;
+    overflow: visible;
 }
 
 .reward-option:hover {
@@ -2076,21 +2133,26 @@ body {
     animation: damageFlash 0.4s ease-out, shake 0.4s ease-out;
 }
 
-@keyframes attackRight {
-    0% { transform: translateX(0); }
-    50% { transform: translateX(30px); }
-    100% { transform: translateX(0); }
+@keyframes attackUp {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-30px); }
+    100% { transform: translateY(0); }
 }
 
-@keyframes attackLeft {
-    0% { transform: translateX(0); }
-    50% { transform: translateX(-30px); }
-    100% { transform: translateX(0); }
+@keyframes attackDown {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(30px); }
+    100% { transform: translateY(0); }
 }
 
 @keyframes damageFlash {
     0%, 100% { filter: brightness(1); }
     50% { filter: brightness(2) saturate(0); }
+}
+
+@keyframes damageFlashRed {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.2) sepia(0.8) saturate(5) hue-rotate(0deg); }
 }
 
 @keyframes healGlow {
@@ -2099,14 +2161,18 @@ body {
 }
 
 .character-card.attacking {
-    animation: attackRight 0.4s ease-out;
+    animation: attackUp 0.3s ease-out;
 }
 
 .enemy-card.attacking {
-    animation: attackLeft 0.4s ease-out;
+    animation: attackDown 0.3s ease-out;
 }
 
-.character-card.damaged, .enemy-card.damaged {
+.character-card.damaged {
+    animation: damageFlashRed 0.4s ease-out, shake 0.4s ease-out;
+}
+
+.enemy-card.damaged {
     animation: damageFlash 0.4s ease-out, shake 0.4s ease-out;
 }
 

@@ -114,15 +114,31 @@ class AudioManager {
         setTimeout(() => this.playTone(150, 0.05, 'square', 0.3), 50);
     }
 
+    // ==================== 播放音效文件 ====================
+    playSoundFile(filename) {
+        const audio = new Audio(`assets/sounds/${filename}`);
+        audio.volume = this.sfxVolume;
+        audio.play().catch(e => {
+            console.log(`Sound ${filename} play failed`);
+        });
+    }
+
     playHit() {
-        this.playTone(100, 0.15, 'square', 0.5);
-        setTimeout(() => this.playTone(80, 0.1, 'sawtooth', 0.3), 30);
+        this.playSoundFile('hit.mp3');
     }
 
     playCrit() {
         this.playTone(400, 0.1, 'square', 0.4);
         setTimeout(() => this.playTone(600, 0.1, 'square', 0.3), 50);
         setTimeout(() => this.playTone(800, 0.15, 'sine', 0.2), 100);
+    }
+
+    playMonsterAttack() {
+        const audio = new Audio('assets/sounds/monster1.mp3');
+        audio.volume = Math.min(this.sfxVolume * 1.5, 1);
+        audio.play().catch(e => {
+            console.log('Sound monster1.mp3 play failed');
+        });
     }
 
     playHeal() {
@@ -173,14 +189,11 @@ class AudioManager {
     }
 
     playSlash() {
-        this.playTone(250, 0.08, 'sawtooth', 0.35);
-        setTimeout(() => this.playTone(180, 0.06, 'square', 0.25), 40);
+        this.playSoundFile('sword1.mp3');
     }
 
     playMagicAttack() {
-        this.playTone(400, 0.1, 'sine', 0.3);
-        setTimeout(() => this.playTone(600, 0.1, 'sine', 0.25), 50);
-        setTimeout(() => this.playTone(800, 0.15, 'sine', 0.2), 100);
+        this.playSoundFile('magic1.mp3');
     }
 
     playHealSkill() {

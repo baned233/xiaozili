@@ -33,8 +33,11 @@ class Pet {
     }
 
     // ==================== 创建宠物 ====================
-    static createPet(petData) {
-        return new Pet(petData);
+    static createPet(petData, floor = 0) {
+        const pet = new Pet(petData);
+        pet.maxHp = (petData.maxHp || 200) + floor * 5;
+        pet.hp = pet.maxHp;
+        return pet;
     }
 
     // ==================== 获取特殊宠物 ====================
@@ -151,22 +154,35 @@ class Pet {
         
         switch (ability.type) {
             case 'heal': {
-                const player = battle.getAlivePlayers()[0];
-                if (player) {
-                    let healValue;
-                    if (ability.useFloor && battle.game && battle.game.currentFloor) {
-                        healValue = battle.game.currentFloor;
-                    } else {
-                        healValue = ability.value || 1;
-                    }
+                let healValue;
+                if (ability.useFloor && battle.game && battle.game.currentFloor) {
+                    healValue = battle.game.currentFloor;
+                } else {
+                    healValue = ability.value || 1;
+                }
+                
+                // 治疗所有友方单位（包括玩家和宠物）
+                const playerTeam = battle.getAlivePlayers();
+                playerTeam.forEach(player => {
                     player.heal(healValue);
-                    battle.battleLog.push({
-                        type: 'petAbility',
-                        pet: this.name,
-                        ability: 'heal',
-                        value: healValue
+                });
+                
+                // 治疗所有存活的宠物
+                const player = battle.playerTeam[0];
+                if (player && player.pets) {
+                    player.pets.forEach(pet => {
+                        if (!pet.isDead) {
+                            pet.heal(healValue);
+                        }
                     });
                 }
+                
+                battle.battleLog.push({
+                    type: 'petAbility',
+                    pet: this.name,
+                    ability: 'heal',
+                    value: healValue
+                });
                 break;
             }
 

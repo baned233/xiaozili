@@ -267,6 +267,8 @@ class Game {
         const skill = skills[skillIndex];
         
         if (!skill) return;
+        
+        this.currentSelectedSkill = skill;
 
         const character = this.battle.getPlayerCharacter();
         if (!skill.canUse(character)) {
@@ -321,9 +323,17 @@ class Game {
             const skill = this.battle.selectedSkill;
             
             if (skillResult.type === 'attack') {
-                if (skill && skill.isMagic) {
+                const skillName = this.currentSelectedSkill?.name;
+                console.log('skillName:', skillName);
+                const hitSkills = ['走A', '手痒难耐', '开导', '夺食', '盾击'];
+                if (hitSkills.includes(skillName)) {
+                    console.log('Playing hit.mp3');
+                    audioManager.playHit();
+                } else if (this.currentSelectedSkill && this.currentSelectedSkill.isMagic) {
+                    console.log('Playing magic1.mp3');
                     audioManager.playMagicAttack();
                 } else {
+                    console.log('Playing sword1.mp3');
                     audioManager.playSlash();
                 }
                 if (skillResult.isCrit || skillResult.doubleStrike) {
@@ -343,28 +353,34 @@ class Game {
         }
         
         this.ui.updatePlayerResources(this.playerTeam[0]);
-        this.updateBattleUI();
         
-        if (skillResult) {
-            if (skillResult.type === 'heal' && skillResult.heal) {
-                this.ui.showDamageEffect(this.playerTeam[0], skillResult, false, null, true);
-            } else if (skillResult.damage !== undefined) {
-                const target = result.target;
-                if (target) {
-                    const isPlayerSide = target === this.playerTeam[0];
-                    if (skillResult.multiStrike && skillResult.strikeResults) {
-                        skillResult.strikeResults.forEach((strike, index) => {
-                            setTimeout(() => {
-                                const strikeResult = { damage: strike.damage, isCrit: strike.isCrit };
-                                this.ui.showDamageEffect(target, strikeResult, isPlayerSide, this.battle.selectedSkill);
-                            }, index * 200);
-                        });
-                    } else {
-                        this.ui.showDamageEffect(target, skillResult, isPlayerSide, this.battle.selectedSkill);
+        if (skillResult && skillResult.type === 'attack') {
+            const attacker = this.playerTeam[0];
+            this.ui.showAttackAnimation(attacker, true);
+        }
+        
+        setTimeout(() => {
+            if (skillResult) {
+                if (skillResult.type === 'heal' && skillResult.heal) {
+                    this.ui.showDamageEffect(this.playerTeam[0], skillResult, false, null, true);
+                } else if (skillResult.damage !== undefined) {
+                    const target = result.target;
+                    if (target) {
+                        const isPlayerSide = target === this.playerTeam[0];
+                        if (skillResult.multiStrike && skillResult.strikeResults) {
+                            skillResult.strikeResults.forEach((strike, index) => {
+                                setTimeout(() => {
+                                    const strikeResult = { damage: strike.damage, isCrit: strike.isCrit };
+                                    this.ui.showDamageEffect(target, strikeResult, isPlayerSide, this.battle.selectedSkill);
+                                }, index * 200);
+                            });
+                        } else {
+                            this.ui.showDamageEffect(target, skillResult, isPlayerSide, this.battle.selectedSkill);
+                        }
                     }
                 }
             }
-        }
+        }, 100);
         
         if (result.battleEnd) {
             setTimeout(() => this.handleBattleEnd(result.battleEnd), 300);
@@ -392,8 +408,6 @@ class Game {
             this.updateSkillPanel();
             return;
         }
-        
-        this.updateBattleUI();
         
         if (skillResult && (skillResult.type === 'buff' || skillResult.type === 'debuff')) {
             this.updateBattleUI();
@@ -487,12 +501,31 @@ class Game {
         this.updateBattleUI();
         this.ui.updatePlayerResources(this.playerTeam[0]);
         
+        const currentEnemy = this.battle.currentActor;
+        
         const result = this.battle.executeEnemyAction();
         
-        if (result && result.damage) {
-            audioManager.playHit();
-            const isPlayerTarget = result.target && (result.target.isSummoned || !result.target.isSummoned);
-            this.ui.showDamageEffect(result.target, result, true);
+        let damageResult = null;
+        let target = null;
+        
+        if (result?.result) {
+            if (result.result.damage !== undefined) {
+                damageResult = result.result;
+                target = result.target;
+            }
+        }
+        
+        if (!damageResult && result?.damage !== undefined) {
+            damageResult = result;
+            target = result.target;
+        }
+        
+        if (damageResult && target) {
+            audioManager.playMonsterAttack();
+            if (currentEnemy) {
+                this.ui.showAttackAnimation(currentEnemy, false);
+            }
+            this.ui.showDamageEffect(target, damageResult, true);
         }
         
         setTimeout(() => {
@@ -740,16 +773,45 @@ class Game {
     }
 
     skipReward() {
-        this.gold += 10;
-        this.ui.updateGold(this.gold);
+        const player = this.playerTeam[0];
+        const boost = this.getRandomAttributeBoost();
+        
+        if (boost.stat === 'maxHp') {
+            player.maxHp += boost.value;
+            player.hp += boost.value;
+        } else {
+            player[boost.stat] += boost.value;
+        }
+        
+        audioManager.playBuff();
+        this.ui.updatePlayerResources(player);
         this.ui.hideRewards();
-        this.nextFloor();
+        this.ui.showDialog(`${boost.name} +${boost.value}！`, () => {
+            this.nextFloor();
+        });
+    }
+
+    // ==================== 更新宠物最大生命值 ====================
+    updatePetsMaxHp() {
+        const player = this.playerTeam[0];
+        if (!player || !player.pets) return;
+        
+        player.pets.forEach(pet => {
+            const baseHp = pet.stats?.hp || pet.maxHp || 200;
+            const newMaxHp = baseHp + this.currentFloor * 5;
+            const hpRatio = pet.hp / pet.maxHp;
+            pet.maxHp = newMaxHp;
+            pet.hp = Math.floor(newMaxHp * hpRatio);
+        });
     }
 
     // ==================== 进入下一层 ====================
     // 完成任务后进入下一层
     nextFloor() {
         this.currentFloor++;  // 层数+1
+        
+        // 更新宠物生命值
+        this.updatePetsMaxHp();
         
         // 战斗结束后，每个存活的角色恢复10%最大生命值
         this.playerTeam.forEach(char => {
@@ -1277,7 +1339,7 @@ class Game {
             if (player.pets && player.pets.length >= 2) {
                 resultText = '宠物栏已满，无法再获得新宠物！';
             } else {
-                const pet = Pet.createPet(Pet.getSpecialPet(petType));
+                const pet = Pet.createPet(Pet.getSpecialPet(petType), this.currentFloor);
                 if (pet) {
                     if (!player.pets) {
                         player.pets = [];
@@ -1537,9 +1599,12 @@ class Game {
                     player.pets = player.pets.map(petData => {
                         const specialPet = Pet.getSpecialPet(petData.type);
                         if (specialPet) {
-                            return new Pet(specialPet);
+                            return Pet.createPet(specialPet, this.currentFloor);
                         }
-                        return new Pet(petData);
+                        const pet = new Pet(petData);
+                        pet.maxHp = (petData.maxHp || 200) + this.currentFloor * 5;
+                        pet.hp = Math.min(petData.hp || pet.maxHp, pet.maxHp);
+                        return pet;
                     });
                 }
                 

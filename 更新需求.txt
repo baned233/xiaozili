@@ -1,1 +1,4 @@
-将assets中的xuanxiang.png更新为main-menu中选项的背景图，要求：设计好看，没有违和感
+1.把所有物理技能的释放音效改为改为assets中的hit.mp3
+2.把怪物攻击的音效改为assets中的monster1.mp3
+3.把所有魔法技能的释放音效改为改为assets中的magic1.mp3
+4.把技能挥砍、小李飞刀的音效改为assets中的sword1.mp3

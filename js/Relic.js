@@ -26,6 +26,9 @@ class Relic {
         // 从遗物池中排除已拥有的
         let pool = RELIC_POOL.filter(r => !excludeIds.includes(r.id));
         
+        // 排除事件类型遗物（只能通过事件获得）
+        pool = pool.filter(r => r.type !== 'event');
+        
         // 如果不允许独占遗物，排除它们
         if (!allowExclusive) {
             pool = pool.filter(r => !this.EXCLUSIVE_RELIC_IDS.includes(r.id));
