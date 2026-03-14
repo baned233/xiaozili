@@ -87,7 +87,7 @@ class EnemySkill {
                     return { type: 'debuff', skillName: this.name, target, buffName: this.buffName };
                 }
                 let debuffDamage = this.power;
-                const damageReduction = target.getDamageReduction();
+                const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;
                 if (damageReduction > 0) {
                     debuffDamage = Math.floor(debuffDamage * (1 - damageReduction));
                 }
