@@ -1,4 +1,1 @@
-1.把所有物理技能的释放音效改为改为assets中的hit.mp3
-2.把怪物攻击的音效改为assets中的monster1.mp3
-3.把所有魔法技能的释放音效改为改为assets中的magic1.mp3
-4.把技能挥砍、小李飞刀的音效改为assets中的sword1.mp3
+使用ui-ux-pro-max这个skill来给E盘中的project11文件夹里面的不同稀有度的技能更新不同的技能框，稀有度越高的技能技能框越酷炫，并且技能框颜色要对标技能稀有度颜色

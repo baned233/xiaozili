@@ -151,6 +151,26 @@ class Character {
     }
 
     attack(target, weapon = null) {
+        const speedDiff = target.spd - this.spd;
+        let dodged = false;
+        if (speedDiff > 0 && Math.random() * 100 < speedDiff) {
+            dodged = true;
+        }
+        
+        if (dodged) {
+            if (this.skills) {
+                this.skills.forEach(skill => {
+                    if (skill.passive && skill.effect) {
+                        if (skill.effect.type === 'bleedOnHit') {
+                            const stacks = skill.stacks || 1;
+                            target.addBuff('流血', stacks);
+                        }
+                    }
+                });
+            }
+            return { damage: 0, isCrit: false, dodged: true };
+        }
+        
         let damage = this.atk;
         if (weapon) {
             damage += weapon.atkBonus || 0;

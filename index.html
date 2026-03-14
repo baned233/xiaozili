@@ -37,7 +37,7 @@
                 <!-- 标题装饰线 -->
                 <div class="title-decoration"></div>
                 <!-- 游戏主标题 -->
-                <h1 id="game-title">深渊爬塔</h1>
+                <h1 id="game-title">终末之诗</h1>
                 <!-- 副标题 -->
                 <p class="subtitle">小资历大冒险</p>
                 <!-- 标题发光效果 -->
@@ -66,6 +66,11 @@
                 <button id="btn-settings" class="menu-btn btn-secondary">
                     <span class="btn-icon">⚙️</span>
                     <span class="btn-text">设置</span>
+                </button>
+                <!-- 更新日志按钮 -->
+                <button id="btn-changelog" class="menu-btn btn-secondary">
+                    <span class="btn-icon">📋</span>
+                    <span class="btn-text">更新日志</span>
                 </button>
                 <!-- 退出按钮 -->
                 <button id="btn-exit" class="menu-btn btn-danger">
@@ -256,6 +261,13 @@
             <button id="btn-close-settings" class="menu-btn">返回</button>
         </div>
         
+        <!-- ==================== 更新日志界面 ==================== -->
+        <div id="changelog-panel" class="hidden">
+            <h2>更新日志</h2>
+            <div id="changelog-content"></div>
+            <button id="btn-close-changelog" class="menu-btn">返回</button>
+        </div>
+        
         <!-- ==================== 角色属性面板 ==================== -->
         <!-- 点击头像后显示的详细信息 -->
         <div id="character-panel" class="hidden">
@@ -345,8 +357,9 @@
         
     </div>
     
+    <!-- 更新日志内容 -->
+    <script src="js/Changelog.js"></script>
     <!-- ==================== 引入JavaScript文件 ==================== -->
-    <!-- 这些文件的顺序很重要，不能随便改！ -->
     <!-- 数据文件 - 包含所有的游戏数据配置 -->
     <script src="js/Data.js"></script>
     <!-- 音频管理 - 处理游戏音效和音乐 -->

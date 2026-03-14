@@ -277,6 +277,16 @@ class Enemy {
     }
 
     attack(target) {
+        const speedDiff = target.spd - this.spd;
+        let dodged = false;
+        if (speedDiff > 0 && Math.random() * 100 < speedDiff) {
+            dodged = true;
+        }
+        
+        if (dodged) {
+            return { damage: 0, isCrit: false, target, dodged: true };
+        }
+        
         let damage = this.atk;
         let isCrit = Math.random() * 100 < this.crit;
         if (isCrit) {

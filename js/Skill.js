@@ -31,9 +31,10 @@ class Skill {
 
     // 判断这个技能是否需要选择目标
     needsTarget() {
-        if (this.targetAll) return false;     // 群体技能不需要选目标
+        if (this.targetAll) return false;
         if (this.type === 'fear' && this.effect?.type === 'fear') return false;
         if (this.type === 'execute') return false;
+        if (this.type === 'heal' && this.targetSelf) return false;
         return this.type === 'attack' || this.type === 'debuff' || this.type === 'mark' || this.type === 'banish' || this.type === 'buff' || this.type === 'heal' || (this.type === 'summon' && !this.targetSelf);
     }
 
@@ -98,6 +99,7 @@ class Skill {
     static getRarityColor(rarity) {
         switch(rarity) {
             case 'common': return 'skill-rarity-common';
+            case 'uncommon': return 'skill-rarity-uncommon';
             case 'rare': return 'skill-rarity-rare';
             case 'epic': return 'skill-rarity-epic';
             case 'legendary': return 'skill-rarity-legendary';
@@ -230,7 +232,7 @@ const SKILL_POOL = [
     {
         id: 20,
         name: '伏击',
-        description: '每回合一次，若敌方攻击伤害小于你的速度，则无视该次伤害并反伤',
+        description: '回合开始时，对所有速度小于你的敌方单位造成角色速度×1点真实伤害',
         type: 'passive',
         rarity: 'legendary',
         power: 0,
@@ -239,7 +241,7 @@ const SKILL_POOL = [
         cost: 0,
         isMagic: false,
         passive: true,
-        effect: { type: 'counterAttack', condition: 'speed' }
+        effect: { type: 'ambush', damageMultiplier: 1 }
     },
     {
         id: 21,
@@ -444,7 +446,7 @@ const SKILL_POOL = [
     {
         id: 37,
         name: '哭泣',
-        description: '这是泪水织成的毛衣，该单位获得护盾值=50+0.8×自身已损失生命值',
+        description: '这是泪水织成的毛衣，该单位获得护盾值=20+0.8×自身已损失生命值',
         type: 'heal',
         rarity: 'uncommon',
         power: 0,
@@ -453,7 +455,7 @@ const SKILL_POOL = [
         cost: 30,
         isMagic: true,
         targetSelf: true,
-        effect: { type: 'shield', base: 50, multiplier: 0.8 }
+        effect: { type: 'shield', base: 20, multiplier: 0.8 }
     },
     {
         id: 38,
@@ -607,10 +609,10 @@ const SKILL_POOL = [
         description: '攻防兼备，在攻击的同时给使用者提供atk*0.5的护盾值',
         type: 'attack',
         rarity: 'common',
-        power: '30+0.8*atk',
+        power: '30+0.5*atk',
         level: 1,
         icon: '🛡️',
-        cost: 5,
+        cost: 20,
         isMagic: false,
         effect: { type: 'shield', base: 0, multiplier: 0.5 }
     }

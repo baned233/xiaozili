@@ -128,9 +128,7 @@ class AudioManager {
     }
 
     playCrit() {
-        this.playTone(400, 0.1, 'square', 0.4);
-        setTimeout(() => this.playTone(600, 0.1, 'square', 0.3), 50);
-        setTimeout(() => this.playTone(800, 0.15, 'sine', 0.2), 100);
+        this.playSoundFile('baoji.mp3');
     }
 
     playMonsterAttack() {

@@ -252,6 +252,28 @@ class Battle {
                         }
                     });
                 }
+                
+                if (c.skills && !c.isSummoned) {
+                    c.skills.forEach(skill => {
+                        if (skill.passive && skill.effect?.type === 'ambush') {
+                            const enemies = this.getAliveEnemies();
+                            let hitCount = 0;
+                            enemies.forEach(enemy => {
+                                if (enemy.spd < c.spd) {
+                                    const damage = Math.floor(c.spd * skill.effect.damageMultiplier);
+                                    const actualDamage = enemy.takeDamage(damage, 'true');
+                                    hitCount++;
+                                    this.battleLog.push({
+                                        type: 'passiveTrigger',
+                                        skill: skill.name,
+                                        target: enemy.name,
+                                        message: `${c.name}的${skill.name}对${enemy.name}造成${actualDamage}点真实伤害！`
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
             }
             if (c.specialAbility && typeof c.executeSpecialAbility === 'function') {
                 c.abilityUsedThisTurn = false;
@@ -462,6 +484,38 @@ class Battle {
                 });
             } else {
                 result = enemy.attack(target);
+                if (result.dodged) {
+                    this.battleLog.push({
+                        type: 'enemyAttack',
+                        enemy: enemy.name,
+                        target: target.name,
+                        damage: 0,
+                        isCrit: false,
+                        dodged: true
+                    });
+                } else {
+                    this.battleLog.push({
+                        type: 'enemyAttack',
+                        enemy: enemy.name,
+                        target: target.name,
+                        damage: result.damage,
+                        isCrit: result.isCrit
+                    });
+                }
+            }
+        } else {
+            result = enemy.attack(target);
+            
+            if (result.dodged) {
+                this.battleLog.push({
+                    type: 'enemyAttack',
+                    enemy: enemy.name,
+                    target: target.name,
+                    damage: 0,
+                    isCrit: false,
+                    dodged: true
+                });
+            } else {
                 this.battleLog.push({
                     type: 'enemyAttack',
                     enemy: enemy.name,
@@ -470,16 +524,6 @@ class Battle {
                     isCrit: result.isCrit
                 });
             }
-        } else {
-            result = enemy.attack(target);
-            
-            this.battleLog.push({
-                type: 'enemyAttack',
-                enemy: enemy.name,
-                target: target.name,
-                damage: result.damage,
-                isCrit: result.isCrit
-            });
         }
 
         if (!target.isSummoned) {

@@ -324,16 +324,12 @@ class Game {
             
             if (skillResult.type === 'attack') {
                 const skillName = this.currentSelectedSkill?.name;
-                console.log('skillName:', skillName);
                 const hitSkills = ['走A', '手痒难耐', '开导', '夺食', '盾击'];
                 if (hitSkills.includes(skillName)) {
-                    console.log('Playing hit.mp3');
                     audioManager.playHit();
                 } else if (this.currentSelectedSkill && this.currentSelectedSkill.isMagic) {
-                    console.log('Playing magic1.mp3');
                     audioManager.playMagicAttack();
                 } else {
-                    console.log('Playing sword1.mp3');
                     audioManager.playSlash();
                 }
                 if (skillResult.isCrit || skillResult.doubleStrike) {

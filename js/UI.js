@@ -107,6 +107,17 @@ class UI {
             this.showSettings();
         });
         
+        // 更新日志按钮
+        document.getElementById('btn-changelog').addEventListener('click', () => {
+            audioManager.playClick();
+            this.showChangelog();
+        });
+        
+        document.getElementById('btn-close-changelog').addEventListener('click', () => {
+            audioManager.playClick();
+            this.hideChangelog();
+        });
+        
         document.getElementById('btn-encyclopedia').addEventListener('click', () => {
             audioManager.playClick();
             this.showEncyclopedia();
@@ -619,8 +630,13 @@ class UI {
             }
             
             if (log.type === 'enemyAttack') {
-                entry.innerHTML = `${log.enemy} 攻击 ${log.target} 造成 <strong>${log.damage}</strong> 伤害${log.isCrit ? ' (暴击!)' : ''}`;
-                entry.classList.add('enemy-action');
+                if (log.dodged) {
+                    entry.innerHTML = `${log.enemy} 攻击 ${log.target} <strong>闪避!</strong>`;
+                    entry.classList.add('player-action');
+                } else {
+                    entry.innerHTML = `${log.enemy} 攻击 ${log.target} 造成 <strong>${log.damage}</strong> 伤害${log.isCrit ? ' (暴击!)' : ''}`;
+                    entry.classList.add('enemy-action');
+                }
             } else if (log.type === 'enemySkill') {
                 entry.textContent = `${log.enemy} 使用 ${log.skill} 攻击 ${log.target}`;
                 if (log.result && log.result.damage) {
@@ -637,6 +653,9 @@ class UI {
                     entry.classList.add('player-action');
                 } else if (log.result && log.result.heal) {
                     entry.innerHTML += ` 恢复 <strong>${log.result.heal}</strong> 生命`;
+                    entry.classList.add('player-action');
+                } else if (log.result && log.result.shield) {
+                    entry.innerHTML += ` 获得 <strong>${log.result.shield}</strong> 护盾`;
                     entry.classList.add('player-action');
                 } else if (log.result && log.result.summonName) {
                     entry.innerHTML += ` 召唤了 <strong>${log.result.summonName}</strong>`;
@@ -705,6 +724,9 @@ class UI {
         if (floor >= 1 && floor <= 15) {
             bgImage.src = 'assets/images/qianjin1.png';
             bgImage.style.display = 'block';
+        } else if (floor >= 16 && floor <= 30) {
+            bgImage.src = 'assets/images/qianjin2.png';
+            bgImage.style.display = 'block';
         } else {
             bgImage.style.display = 'none';
         }
@@ -760,6 +782,9 @@ class UI {
         const floor = this.game.currentFloor;
         if (floor >= 1 && floor <= 15) {
             bgImage.src = 'assets/images/zhandou1.png';
+            bgImage.style.display = 'block';
+        } else if (floor >= 16 && floor <= 30) {
+            bgImage.src = 'assets/images/zhandou2.png';
             bgImage.style.display = 'block';
         } else {
             bgImage.style.display = 'none';
@@ -958,6 +983,28 @@ class UI {
         
         if (!card) return;
         
+        if (result && result.dodged) {
+            const dodgeText = document.createElement('div');
+            dodgeText.className = 'damage-text dodge';
+            dodgeText.textContent = '闪避!';
+            
+            const rect = card.getBoundingClientRect();
+            const container = document.getElementById('game-container');
+            const containerRect = container.getBoundingClientRect();
+            
+            dodgeText.style.left = `${rect.left - containerRect.left + rect.width / 2}px`;
+            dodgeText.style.top = `${rect.top - containerRect.top}px`;
+            
+            container.appendChild(dodgeText);
+            
+            card.classList.add('dodged');
+            setTimeout(() => {
+                card.classList.remove('dodged');
+                dodgeText.remove();
+            }, 600);
+            return;
+        }
+        
         if (isHeal && result && result.heal) {
             const healText = document.createElement('div');
             healText.className = 'damage-text heal';
@@ -1071,21 +1118,28 @@ class UI {
             let damageText = '';
             if (skill.power || skill.effect?.type === 'maxHpDamage') {
                 let calculatedDamage;
-                let formulaText = skill.power || '30+0.2*maxHp';
+                let formulaText = String(skill.power || '30+0.2*maxHp');
                 if (skill.effect?.type === 'maxHpDamage') {
                     // 肉蛋冲击：30+20%自身最大生命值
                     calculatedDamage = Math.floor(character.maxHp * 0.2) + 30;
                     formulaText = '30+0.2*maxHp';
                 } else {
                     calculatedDamage = character.calculateSkillDamage(skill.power, skill.isMagic);
+                    // 魔法技能使用法强(matk)，物理技能使用攻击力(atk)
+                    if (skill.isMagic) {
+                        formulaText = formulaText.replace(/\batk\b/g, 'matk').replace(/\b攻击力\b/g, '法强');
+                    }
                 }
                 damageText = `伤害: ${calculatedDamage} (公式: ${formulaText})`;
             }
             
             // 添加护盾值显示
             if (skill.effect?.type === 'shield') {
-                const shieldValue = Math.floor(character.atk * 0.5);
-                const shieldFormula = skill.effect?.multiplier ? `${skill.effect.multiplier}*atk` : '0.5*atk';
+                const base = skill.effect?.base || 0;
+                const multiplier = skill.effect?.multiplier || 0;
+                const lostHp = character.maxHp - character.hp;
+                const shieldValue = Math.floor(base + lostHp * multiplier);
+                const shieldFormula = `${base} + ${multiplier} × 自身已损失生命值`;
                 damageText = damageText ? damageText + ` | 护盾: ${shieldValue} (公式: ${shieldFormula})` : `护盾: ${shieldValue} (公式: ${shieldFormula})`;
             }
             
@@ -1417,6 +1471,19 @@ class UI {
 
     hideSettings() {
         this.settingsPanel.classList.add('hidden');
+    }
+
+    showChangelog() {
+        const panel = document.getElementById('changelog-panel');
+        const content = document.getElementById('changelog-content');
+        const changelogText = window.CHANGELOG_TEXT || '暂无更新日志';
+        content.innerHTML = changelogText.replace(/\n/g, '<br>');
+        panel.classList.remove('hidden');
+    }
+
+    hideChangelog() {
+        const panel = document.getElementById('changelog-panel');
+        panel.classList.add('hidden');
     }
 
     setBackgroundClass(floor) {

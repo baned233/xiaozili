@@ -131,7 +131,7 @@ const RELIC_POOL = [
     { id: 14, name: '希沃白板之笔', description: '法力强度+12 防御力+5', type: 'passive', effect: { type: 'magicPower', value: 12, def: 5 }, icon: '🖊' },
     { id: 15, name: '超市里的马', description: '防御力+12 生命+20', type: 'passive', effect: { type: 'def', value: 12 }, icon: '🐎' },
     { id: 16, name: '红牛', description: '最大体力+25', type: 'passive', effect: { type: 'stamina', value: 25 }, icon: '🐂' },
-    { id: 17, name: '鬼脑', description: '最大法力+20', type: 'passive', effect: { type: 'mana', value: 15 }, icon: '🧠' },
+    { id: 17, name: '鬼脑', description: '最大法力+20', type: 'passive', effect: { type: 'mana', value: 20 }, icon: '🧠' },
     { id: 18, name: '脉动', description: '最大体力+20 速度+3', type: 'passive', effect: { type: 'stamina', value: 20, speed: 3 }, icon: '🧃' },
     { id: 19, name: '好寺庙（模型）', description: '最大法力+20 暴击率+3%', type: 'passive', effect: { type: 'mana', value: 20 }, icon: '🏠' },
     { id: 20, name: '能量护符', description: '最大体力+15 最大法力+10', type: 'passive', effect: { type: 'stamina', value: 15 }, icon: '⚡' },
