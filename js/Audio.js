@@ -8,17 +8,23 @@
 class AudioManager {
     // 构造函数 - 初始化音频相关变量
     constructor() {
-        this.audioContext = null;        // Web Audio API的上下文
-        this.bgMusicNode = null;        // 背景音乐节点
-        this.bgMusicGain = null;        // 背景音乐音量控制
-        this.isMusicPlaying = false;    // 背景音乐是否正在播放
-        this.musicVolume = 0.3;         // 背景音乐音量（0-1）
-        this.sfxVolume = 0.5;           // 音效音量（0-1）
-        this.currentBgSource = null;    // 当前背景音乐
-        this.bossBgSource = null;      // BOSS战背景音乐
-        this.isBossBattle = false;      // 是否正在播放BOSS音乐
-        this.bgmAudio = null;           // 普通背景音乐Audio对象
-        this.bossBgmAudio = null;       // BOSS背景音乐Audio对象
+        this.audioContext = null;
+        this.bgMusicNode = null;
+        this.bgMusicGain = null;
+        this.isMusicPlaying = false;
+        this.musicVolume = 0.3;
+        this.sfxVolume = 0.5;
+        this.currentBgSource = null;
+        this.bossBgSource = null;
+        this.isBossBattle = false;
+        this.bgmAudio = null;
+        this.bossBgmAudio = null;
+        
+        // 音效Audio对象池（用于移动端）
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        this.soundPool = [];
+        this.maxPoolSize = this.isMobile ? 3 : 10;
+        this.poolIndex = 0;
     }
 
     // ==================== 初始化音频系统 ====================
@@ -32,13 +38,21 @@ class AudioManager {
         
         // 创建背景音乐Audio对象
         this.bgmAudio = new Audio('assets/sounds/BGM.mp3');
-        this.bgmAudio.loop = true;      // 循环播放
+        this.bgmAudio.loop = true;
         this.bgmAudio.volume = this.musicVolume;
+        this.bgmAudio.preload = 'auto';
         
         // 创建BOSS战音乐Audio对象
         this.bossBgmAudio = new Audio('assets/sounds/BOSS.mp3');
         this.bossBgmAudio.loop = true;
         this.bossBgmAudio.volume = this.musicVolume;
+        this.bossBgmAudio.preload = 'auto';
+        
+        // 移动端：确保BGM有更高优先级
+        if (this.isMobile) {
+            this.bgmAudio.load();
+            this.bossBgmAudio.load();
+        }
     }
 
     // 恢复AudioContext（浏览器可能会暂停它）
@@ -64,6 +78,17 @@ class AudioManager {
                 console.log('BGM play failed, using fallback');
                 this.playBgLoop();
             });
+        }
+    }
+    
+    // 移动端：音效播放后恢复BGM
+    resumeBgMusicIfNeeded() {
+        if (!this.isMobile || !this.isMusicPlaying) return;
+        
+        const bgm = this.isBossBattle ? this.bossBgmAudio : this.bgmAudio;
+        
+        if (bgm.paused) {
+            bgm.play().catch(e => {});
         }
     }
 
@@ -116,10 +141,49 @@ class AudioManager {
 
     // ==================== 播放音效文件 ====================
     playSoundFile(filename) {
-        const audio = new Audio(`assets/sounds/${filename}`);
-        audio.volume = this.sfxVolume;
+        if (this.isMobile) {
+            this.playSoundFromPool(`assets/sounds/${filename}`);
+        } else {
+            const audio = new Audio(`assets/sounds/${filename}`);
+            audio.volume = this.sfxVolume;
+            audio.play().catch(e => {
+                console.log(`Sound ${filename} play failed`);
+            });
+        }
+    }
+    
+    // 从对象池播放音效（移动端优化）
+    playSoundFromPool(src, customVolume) {
+        let audio = null;
+        
+        for (let i = 0; i < this.soundPool.length; i++) {
+            const pooledAudio = this.soundPool[i];
+            if (pooledAudio.paused || pooledAudio.ended || pooledAudio.readyState < 2) {
+                audio = pooledAudio;
+                break;
+            }
+        }
+        
+        if (!audio && this.soundPool.length < this.maxPoolSize) {
+            audio = new Audio();
+            this.soundPool.push(audio);
+        }
+        
+        if (!audio) {
+            audio = this.soundPool[this.poolIndex];
+            this.poolIndex = (this.poolIndex + 1) % this.maxPoolSize;
+        }
+        
+        audio.src = src;
+        audio.volume = customVolume !== undefined ? customVolume : this.sfxVolume;
+        
+        audio.onended = () => {
+            this.resumeBgMusicIfNeeded();
+        };
+        
         audio.play().catch(e => {
-            console.log(`Sound ${filename} play failed`);
+            console.log(`Sound ${src} play failed`);
+            this.resumeBgMusicIfNeeded();
         });
     }
 
@@ -132,11 +196,15 @@ class AudioManager {
     }
 
     playMonsterAttack() {
-        const audio = new Audio('assets/sounds/monster1.mp3');
-        audio.volume = Math.min(this.sfxVolume * 1.5, 1);
-        audio.play().catch(e => {
-            console.log('Sound monster1.mp3 play failed');
-        });
+        if (this.isMobile) {
+            this.playSoundFromPool('assets/sounds/monster1.mp3', Math.min(this.sfxVolume * 1.5, 1));
+        } else {
+            const audio = new Audio('assets/sounds/monster1.mp3');
+            audio.volume = Math.min(this.sfxVolume * 1.5, 1);
+            audio.play().catch(e => {
+                console.log('Sound monster1.mp3 play failed');
+            });
+        }
     }
 
     playHeal() {
