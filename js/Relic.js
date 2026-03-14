@@ -141,10 +141,11 @@ const RELIC_POOL = [
     { id: 24, name: '不战而怯', description: '战斗时使用技能有10%概率失败', type: 'passive', effect: { type: 'skillFail', value: 10 }, icon: '💤' },
     { id: 25, name: '霸王之卵', description: '每次战斗免疫敌方单位的第一次攻击，死亡后可复活一次', type: 'event', icon: '🥚', effect: { type: '霸王之卵' } },
     { id: 26, name: '连续施法', description: '每回合恢复5点法力值', type: 'passive', effect: { type: 'manaPerTurn', value: 5 }, icon: '🔮', note: '我的力量，无穷无尽' },
-    { id: 27, name: '鹿管', description: '每回合恢复5点体力值，有【开导】技能时改为每回合恢复10点体力值', type: 'passive', effect: { type: 'staminaPerTurn', value: 5 }, icon: '🦌', note: '如果你让我开导，我会让你知道什么叫做残忍' },
+    { id: 27, name: '炼狱导管', description: '每次使用技能时回复5点法力值，若使用的技能为【开导】，则转为回复10点法力值', type: 'passive', effect: { type: 'manaOnSkillUse', value: 5 }, icon: '🦌', note: '如果你让我开导，我会让你知道什么叫做残忍' },
     { id: 28, name: '魔法转物理', description: '获得等同于当前最大法力值的最大体力值加成，随后将自身最大法力值设置为0', type: 'passive', effect: { type: 'magicToPhysical' }, icon: '⚔️', note: '贴身肉搏才是法爷的浪漫' },
     { id: 29, name: '物理转魔法', description: '获得等同于当前最大体力值的最大法力值加成，随后将自身最大体力值设置为0', type: 'passive', effect: { type: 'physicalToMagic' }, icon: '🔮', note: '只有傻子才会冲锋' },
     { id: 30, name: '猫宁的围巾', description: '防御力+3，战斗中若猫宁存活则每回合恢复猫宁10点生命值', type: 'passive', effect: { type: 'def', value: 3 }, icon: '🧣', note: '十分温暖' },
     { id: 31, name: '八宝粥', description: '生命值+100，技能：夺食攻击伤害类型转换为真实伤害', type: 'event', effect: { type: 'hp', value: 100 }, icon: '🥣', note: '"我们这种人就像是野狗一般"' },
-    { id: 32, name: '和成天下', description: '最大体力-10，攻击力+20', type: 'event', effect: { type: 'stamina', value: -10, atk: 20 }, icon: '🌴', note: '"白生生的精品大果！"' }
+    { id: 32, name: '和成天下', description: '最大体力-10，攻击力+20', type: 'event', effect: { type: 'stamina', value: -10, atk: 20 }, icon: '🌴', note: '"白生生的精品大果！"' },
+    { id: 33, name: '杀人书', description: '拥有该遗物时，玩家每杀死一个单位都会获得法力强度+1', type: 'passive', effect: { type: 'killBoostMagicPower', value: 1 }, icon: '📖', note: '"偷窃....灵魂！"' }
 ];

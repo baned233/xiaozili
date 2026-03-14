@@ -689,6 +689,12 @@ class UI {
                     entry.innerHTML = `${log.pet} 偷取 ${log.target} 的 ${log.skill} 造成 <strong>${log.damage}</strong> 伤害`;
                 }
                 entry.classList.add('player-action');
+            } else if (log.type === 'petAttack') {
+                entry.innerHTML = `${log.character} 对 ${log.target} 造成了 <strong>${log.damage}</strong> 点法术伤害`;
+                entry.classList.add('player-action');
+            } else if (log.type === 'relicEffect') {
+                entry.textContent = log.message;
+                entry.classList.add('player-action');
             } else if (log.type === 'buffDamage') {
                 entry.innerHTML = `${log.buff} 对 ${log.target} 造成 <strong>${log.damage}</strong> 伤害`;
                 entry.classList.add('player-action');
@@ -904,9 +910,10 @@ class UI {
     }
 
     createEnemyCard(enemy, battle) {
-        const card = document.createElement('div');
-        card.className = `enemy-card enemy-type-${enemy.type} ${enemy.isDead ? 'dead' : ''}`;
-        card.id = `enemy-${enemy.id}`;
+        var card = document.createElement('div');
+        var deadClass = enemy.isDead ? 'dead' : '';
+        card.className = 'enemy-card enemy-type-' + enemy.type + ' ' + deadClass;
+        card.id = 'enemy-' + enemy.id;
         
         if (battle.battleState === 'selectTarget' && battle.isPlayerTurn() && !enemy.isDead) {
             card.classList.add('targetable');
@@ -937,6 +944,14 @@ class UI {
         const enemyShieldOverlayHtml = enemyShield > 0 ? `<div class="shield-overlay" style="width: ${enemyShieldPercent}%"></div>` : '';
         const enemyShieldTextHtml = enemyShield > 0 ? `<span class="status-shield-text"> 🛡️${enemyShield}</span>` : '';
         
+        let enemySkillsHtml = '';
+        if (enemy.skills && enemy.skills.length > 0) {
+            const skillNames = enemy.skills.map(s => s.name).join(', ');
+            enemySkillsHtml = `<div class="enemy-tooltip-skills"><strong>技能:</strong> ${skillNames}</div>`;
+        }
+        
+        const enemyTypeName = enemy.type === 'boss' ? 'BOSS' : (enemy.type === 'elite' ? '精英怪' : '普通怪');
+        
         card.innerHTML = `
             <div class="enemy-icon battle-entity">${enemyIcon}</div>
             ${buffsHtml}
@@ -953,12 +968,49 @@ class UI {
                     <span class="attr-spd">⚡${enemy.spd}</span>
                 </div>
             </div>
+            <div class="enemy-tooltip hidden">
+                <div class="enemy-tooltip-title">${enemy.name}</div>
+                <div class="enemy-tooltip-type">${enemyTypeName}</div>
+                <div class="enemy-tooltip-stats">
+                    <div>❤️ 生命: ${enemy.hp}/${enemy.maxHp}</div>
+                    <div>⚔️ 攻击: ${enemy.atk}</div>
+                    <div>🛡️ 防御: ${enemy.def}</div>
+                    <div>⚡ 速度: ${enemy.spd}</div>
+                    <div>💥 暴击: ${enemy.crit}%</div>
+                </div>
+                ${enemySkillsHtml}
+            </div>
         `;
+        
+        var isSelectingTarget = battle.battleState === 'selectTarget' && battle.isPlayerTurn() && !enemy.isDead;
+        
+        if (!isSelectingTarget) {
+            card.addEventListener('mouseenter', function() {
+                var tooltip = this.querySelector('.enemy-tooltip');
+                if (tooltip) tooltip.classList.remove('hidden');
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                var tooltip = this.querySelector('.enemy-tooltip');
+                if (tooltip) tooltip.classList.add('hidden');
+            });
+        }
         
         return card;
     }
 
     getEnemyIcon(enemy) {
+        if (enemy.icon && enemy.icon.endsWith('.png')) {
+            let sizeStyle;
+            if (enemy.type === 'boss' || enemy.name === '宿管') {
+                sizeStyle = 'width: clamp(60px, 10vw, 110px); height: clamp(60px, 10vw, 110px);';
+            } else if (enemy.type === 'elite' || enemy.name === '骨翼魔') {
+                sizeStyle = 'width: clamp(50px, 8vw, 90px); height: clamp(50px, 8vw, 90px);';
+            } else {
+                sizeStyle = 'width: clamp(45px, 7vw, 70px); height: clamp(45px, 7vw, 70px);';
+            }
+            return `<img src="${enemy.icon}" alt="${enemy.name}" style="${sizeStyle} object-fit: contain; max-width: 100%;">`;
+        }
         if (enemy.type === 'boss') {
             return `<div style="font-size:28px">👹</div>`;
         } else if (enemy.type === 'elite') {
@@ -1886,39 +1938,31 @@ getRarityCN(rarity) {
     renderEncyclopediaEnemies(content) {
         content.className = 'encyc-grid';
         const enemies = [
-            { name: '老鼠', icon: '🐀', type: 'common', desc: '宿舍常见生物' },
-            { name: '蟑螂', icon: '🪲', type: 'common', desc: '生命力顽强' },
-            { name: '臭虫', icon: '🐛', type: 'common', desc: '令人厌恶' },
-            { name: '跳蚤', icon: '🦟', type: 'common', desc: '吸血害虫' },
-            { name: '衣蛾', icon: '🦋', type: 'common', desc: '衣服杀手' },
-            { name: '螨虫', icon: '🐜', type: 'common', desc: '微小生物' },
-            { name: '虱子', icon: '🐝', type: 'common', desc: '寄生生物' },
-            { name: '蚊子', icon: '🪰', type: 'common', desc: '嗡嗡作响' },
-            { name: '学霸', icon: '👓', type: 'elite', desc: '成绩优异' },
-            { name: '纪检', icon: '👮', type: 'elite', desc: '检查纪律' },
-            { name: '学生会', icon: '🎫', type: 'elite', desc: '管理学生' },
-            { name: '导员', icon: '📋', type: 'elite', desc: '辅导员' },
-            { name: '实验员', icon: '🥼', type: 'elite', desc: '科研人员' },
-            { name: '酒吧经理', icon: '🎰', type: 'elite', desc: '娱乐场所管理者' },
-            { name: '宿舍管理员', icon: '🔑', type: 'boss', desc: '第15层Boss' },
-            { name: '176实验体', icon: '🧪', type: 'boss', desc: '第30层Boss' },
-            { name: '磨砂迪加老板', icon: '💼', type: 'boss', desc: '第45层Boss' },
-            { name: '教导主任', icon: '📏', type: 'boss', desc: '第60层Boss' }
+            { name: '噬影虫', icon: 'assets/images/chong.png', type: 'common', desc: '学院内常见怪物，个体弱小但经常成群出现，攻击命中后会施加【无力】', hp: '30+5*层数', atk: '6+0.6*层数', def: '4+0.5*层数', spd: '5+0.4*层数', skill: '麻痹病毒 - 攻击时对攻击目标提供一层BUFF：肌无力' },
+            { name: '变异的学生', icon: 'assets/images/xuesheng.png', type: 'common', desc: '被拐来的可怜学生，被注入药剂后发生变异', hp: '50+5.5*层数', atk: '10+0.8*层数', def: '6+0.6*层数', spd: '7+0.5*层数', skill: '无' },
+            { name: '变异的老师', icon: 'assets/images/laoshi.png', type: 'common', desc: '被拐来的可怜老师，被注入药剂后发生变异', hp: '60+6*层数', atk: '8+0.7*层数', def: '6+0.8*层数', spd: '6+0.45*层数', skill: '无' },
+            { name: '守卫', icon: 'assets/images/shouwei.png', type: 'common', desc: '学院的守卫，手持电击器', hp: '80+7*层数', atk: '8+0.8*层数', def: '6+0.8*层数', spd: '6+0.4*层数', skill: '无' },
+            { name: '骨翼魔', icon: 'assets/images/fu.png', type: 'elite', desc: '高级实验体，编号B-017，具备滑翔与低空飞行能力，巨大的爪子锋利异常', hp: '100+8*层数', atk: '12+0.8*层数', def: '8+0.8*层数', spd: '8+0.5*层数', skill: '无' },
+            { name: '宿管', icon: 'assets/images/suguan.png', type: 'boss', desc: '突然变异的宿管，尚且保留部分人类特征，似乎可以操纵影噬虫战斗', hp: '300+10*层数', atk: '25+1*层数', def: '15+0.8*层数', spd: '10+0.8*层数', skill: '召唤 - 召唤一只噬影虫加入战斗帮助自己', floor: '15,30,45,60' }
         ];
         enemies.forEach(enemy => {
             const card = document.createElement('div');
             card.className = `encyc-card ${enemy.type}`;
+            const enemyIconHtml = enemy.icon && enemy.icon.endsWith('.png')
+                ? `<img src="${enemy.icon}" alt="${enemy.name}" style="width: 50px; height: 50px; object-fit: contain;">`
+                : `<div class="encyc-card-icon">${enemy.icon}</div>`;
             card.innerHTML = `
-                <div class="encyc-card-icon">${enemy.icon}</div>
+                ${enemyIconHtml}
                 <div class="encyc-card-name">${enemy.name}</div>
                 <div class="encyc-rarity-cn ${enemy.type}">${this.getRarityCN(enemy.type)}</div>
             `;
-            card.addEventListener('click', () => this.showEncyclopediaDetail(enemy.name, enemy.icon, this.getRarityCN(enemy.type), enemy.desc));
+            const detailInfo = enemy.hp ? `生命: ${enemy.hp}<br>攻击: ${enemy.atk}<br>防御: ${enemy.def}<br>速度: ${enemy.spd}${enemy.skill ? '<br>技能: ' + enemy.skill : ''}${enemy.floor ? '<br>出现层数: ' + enemy.floor : ''}` : enemy.desc;
+            card.addEventListener('click', () => this.showEncyclopediaDetail(enemy.name, enemy.icon, this.getRarityCN(enemy.type), enemy.desc, detailInfo));
             content.appendChild(card);
         });
     }
 
-    showEncyclopediaDetail(name, icon, rarity, description) {
+    showEncyclopediaDetail(name, icon, rarity, description, extraInfo) {
         let popup = document.getElementById('encyc-detail-popup');
         if (!popup) {
             popup = document.createElement('div');
@@ -1927,12 +1971,18 @@ getRarityCN(rarity) {
             document.body.appendChild(popup);
         }
         
+        const extraHtml = extraInfo ? `<div class="encyc-detail-extra" style="margin-top: 10px; font-size: 12px; color: #aaa;">${extraInfo}</div>` : '';
+        const detailIconHtml = icon && icon.endsWith('.png')
+            ? `<img src="${icon}" alt="${name}" style="width: 80px; height: 80px; object-fit: contain;">`
+            : `<div class="encyc-detail-icon">${icon}</div>`;
+        
         popup.innerHTML = `
             <div class="encyc-detail-content">
-                <div class="encyc-detail-icon">${icon}</div>
+                ${detailIconHtml}
                 <div class="encyc-detail-name">${name}</div>
                 <div class="encyc-detail-rarity ${rarity}">${rarity}</div>
                 <div class="encyc-detail-desc">${description}</div>
+                ${extraHtml}
                 <button class="encyc-detail-close">关闭</button>
             </div>
         `;

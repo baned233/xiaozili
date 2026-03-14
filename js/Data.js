@@ -33,7 +33,7 @@ const FLOOR_DATA = {
     12: { name: '110室', enemyLevel: 5, bgClass: 'floor-bg-1' },
     13: { name: '111室', enemyLevel: 5, bgClass: 'floor-bg-1' },
     14: { name: '112室', enemyLevel: 5, bgClass: 'floor-bg-1' },
-    15: { name: '宿舍楼顶', enemyLevel: 6, isBoss: true, bossName: '宿舍管理员', bgClass: 'floor-bg-1' },
+    15: { name: '宿舍楼顶', enemyLevel: 6, isBoss: true, bossName: '宿管', bgClass: 'floor-bg-1' },
     16: { name: '实验室一楼', enemyLevel: 6, bgClass: 'floor-bg-2' },
     17: { name: '化学实验室', enemyLevel: 7, bgClass: 'floor-bg-2' },
     18: { name: '物理实验室', enemyLevel: 7, bgClass: 'floor-bg-2' },
@@ -48,7 +48,7 @@ const FLOOR_DATA = {
     27: { name: '档案室', enemyLevel: 10, bgClass: 'floor-bg-2' },
     28: { name: '会议室', enemyLevel: 10, bgClass: 'floor-bg-2' },
     29: { name: '主任办公室', enemyLevel: 11, bgClass: 'floor-bg-2' },
-    30: { name: '实验室顶层', enemyLevel: 12, isBoss: true, bossName: '176实验体', bgClass: 'floor-bg-2' },
+    30: { name: '实验室顶层', enemyLevel: 12, isBoss: true, bossName: '宿管', bgClass: 'floor-bg-2' },
     31: { name: '磨砂迪加大厅', enemyLevel: 12, bgClass: 'floor-bg-3' },
     32: { name: '前台', enemyLevel: 13, bgClass: 'floor-bg-3' },
     33: { name: '休息区', enemyLevel: 13, bgClass: 'floor-bg-3' },
@@ -63,7 +63,7 @@ const FLOOR_DATA = {
     42: { name: '经理室', enemyLevel: 16, bgClass: 'floor-bg-3' },
     43: { name: '财务室', enemyLevel: 16, bgClass: 'floor-bg-3' },
     44: { name: '监控室', enemyLevel: 17, bgClass: 'floor-bg-3' },
-    45: { name: '顶楼天台', enemyLevel: 18, isBoss: true, bossName: '磨砂迪加老板', bgClass: 'floor-bg-3' },
+    45: { name: '顶楼天台', enemyLevel: 18, isBoss: true, bossName: '宿管', bgClass: 'floor-bg-3' },
     46: { name: '教学楼一楼', enemyLevel: 18, bgClass: 'floor-bg-1' },
     47: { name: '101教室', enemyLevel: 19, bgClass: 'floor-bg-1' },
     48: { name: '102教室', enemyLevel: 19, bgClass: 'floor-bg-1' },
@@ -78,30 +78,30 @@ const FLOOR_DATA = {
     57: { name: '校长室', enemyLevel: 22, bgClass: 'floor-bg-1' },
     58: { name: '会议室', enemyLevel: 22, bgClass: 'floor-bg-1' },
     59: { name: '天台入口', enemyLevel: 23, bgClass: 'floor-bg-1' },
-    60: { name: '教学楼天台', enemyLevel: 25, isBoss: true, bossName: '教导主任', bgClass: 'floor-bg-1' }
+    60: { name: '教学楼天台', enemyLevel: 25, isBoss: true, bossName: '宿管', bgClass: 'floor-bg-1' }
 };
 
 const BOSS_DIALOGS = {
     15: {
-        name: '宿舍管理员',
+        name: '宿管',
         enter: '这么晚了，还不回宿舍？',
         battle: '违反宿舍规定！',
         death: '算你通过...'
     },
     30: {
-        name: '176实验体',
+        name: '宿管',
         enter: '实验体失控了！',
         battle: '接受实验的洗礼！',
         death: '实验...成功...'
     },
     45: {
-        name: '磨砂迪加老板',
+        name: '宿管',
         enter: '欢迎来到磨砂迪加！',
         battle: '尽情享受吧！',
         death: '这不可能...'
     },
     60: {
-        name: '教导主任',
+        name: '宿管',
         enter: '哪个班的？',
         battle: '违反校规！',
         death: '明天来我办公室...'
@@ -109,15 +109,15 @@ const BOSS_DIALOGS = {
 };
 
 const ENEMY_NAMES = {
-    common: ['老鼠', '蟑螂', '骷髅', '僵尸', '蝙蝠', '狱卒', '幽灵', '魅魔', '石魔', '暗影'],
-    elite: ['精英骷髅', '腐尸统领', '深渊恶魔', '黑暗巫师', '炎魔', '暗金龙'],
-    boss: ['地牢守卫者', '大帝', '灵域天王']
+    common: ['噬影虫', '变异的学生', '变异的老师', '守卫'],
+    elite: ['骨翼魔'],
+    boss: ['宿管']
 };
 
 const ENEMY_ICONS = {
-    common: ['🐀', '🪲', '💀', '🧟', '🦇', '👤', '👻', '😈', '🗿', '👤'],
-    elite: ['💀', '🧟', '👹', '🧙', '🔥', '🐉'],
-    boss: ['👹', '👿', '👼']
+    common: ['🐛', '👨‍🎓', '👨‍🏫', '👮'],
+    elite: ['🦇'],
+    boss: ['👺']
 };
 
 const SHOP_ITEMS = [

@@ -35,7 +35,7 @@ class Battle {
         this.enemies = [];
         this.isElite = isElite;
         this.isBoss = isBoss || FLOOR_DATA[floor].isBoss;
-        this.winReward = winReward;  // 战斗胜利后的奖励
+        this.currentFloor = floor;  // 保存当前层数
         
         // 如果有自定义敌人，使用自定义敌人
         if (customEnemy) {
@@ -90,7 +90,7 @@ class Battle {
             player.skills.forEach(skill => {
                 if (skill.name === '开导') {
                     player.skillUseCount = player.skillUseCount || {};
-                    player.skillUseCount['开导'] = 0;
+                    player.skillUseCount[skill.name] = 0;
                 }
             });
         }
@@ -128,6 +128,24 @@ class Battle {
     }
 
     calculateTurnOrder() {
+        const disciples = this.playerTeam.filter(c => c.isDisciple && !c.isDead);
+        disciples.forEach(disciple => {
+            const enemies = this.getAliveEnemies();
+            if (enemies.length > 0) {
+                const target = enemies[Math.floor(Math.random() * enemies.length)];
+                const magicPower = disciple.magicPower || 10;
+                const damage = disciple.dmgBase + magicPower;
+                const result = target.takeDamage(damage, 'magic');
+                this.battleLog.push({
+                    type: 'petAttack',
+                    character: disciple.name,
+                    target: target.name,
+                    damage: result,
+                    message: `${disciple.name} 对 ${target.name} 造成了 ${result} 点法术伤害`
+                });
+            }
+        });
+        
         const allEntities = [];
         
         this.playerTeam.forEach((char) => {
@@ -361,6 +379,24 @@ class Battle {
             this.calculateTurnOrder();
         }
         
+        const skillUsed = this.selectedSkill;
+        
+        if (playerChar.relics) {
+            playerChar.relics.forEach(relic => {
+                if (relic.effect?.type === 'manaOnSkillUse') {
+                    let manaValue = relic.effect.value;
+                    if (skillUsed && skillUsed.name === '开导') {
+                        manaValue = 10;
+                    }
+                    playerChar.restoreMana(manaValue);
+                    this.battleLog.push({
+                        type: 'relicEffect',
+                        message: `${relic.name} 恢复了 ${manaValue} 点法力`
+                    });
+                }
+            });
+        }
+        
         this.battleLog.push({
             type: 'skill',
             character: playerChar.name,
@@ -375,7 +411,6 @@ class Battle {
         }
 
         const targetInfo = this.selectedTarget;
-        const skillUsed = this.selectedSkill;
         const noEndTurn = skillUsed && (skillUsed.noEndTurn || skillUsed.name === '开导');
         
         this.selectedSkill = null;
@@ -460,7 +495,7 @@ class Battle {
         }
         
         let result;
-        const useSkillChance = enemy.skills && enemy.skills.length > 0 ? 0.4 : 0;
+        const useSkillChance = enemy.skills && enemy.skills.length > 0 ? (enemy.type === 'boss' ? 0.3 : 0.4) : 0;
         
         if (target.霸王之卵免疫一次 && !target.isSummoned) {
             target.霸王之卵免疫一次 = false;
@@ -475,13 +510,24 @@ class Battle {
                 const skill = usableSkills[Math.floor(Math.random() * usableSkills.length)];
                 result = skill.use(enemy, target, alivePlayers);
                 
-                this.battleLog.push({
-                    type: 'enemySkill',
-                    enemy: enemy.name,
-                    skill: skill.name,
-                    target: target.name,
-                    result
-                });
+                if (result.type === 'summon' && result.summoned) {
+                    this.enemies.push(result.summoned);
+                    this.battleLog.push({
+                        type: 'enemySkill',
+                        enemy: enemy.name,
+                        skill: skill.name,
+                        target: result.summoned.name,
+                        result
+                    });
+                } else {
+                    this.battleLog.push({
+                        type: 'enemySkill',
+                        enemy: enemy.name,
+                        skill: skill.name,
+                        target: target.name,
+                        result
+                    });
+                }
             } else {
                 result = enemy.attack(target);
                 if (result.dodged) {
@@ -570,7 +616,21 @@ class Battle {
             exp,
             gold
         });
-
+        
+        const playerChar = this.playerTeam[0];
+        if (playerChar && playerChar.relics) {
+            playerChar.relics.forEach(relic => {
+                if (relic.effect?.type === 'killBoostMagicPower') {
+                    const magicPowerBoost = relic.effect.value;
+                    playerChar.magicPower = (playerChar.magicPower || 0) + magicPowerBoost;
+                    this.battleLog.push({
+                        type: 'relicEffect',
+                        message: `${relic.name} 使 ${playerChar.name} 法力强度 +${magicPowerBoost}`
+                    });
+                }
+            });
+        }
+        
         let dropChance = 0.15;
         if (this.isElite) dropChance = 0.3;
         if (this.isBoss) dropChance = 0.5;
@@ -599,6 +659,9 @@ class Battle {
             this.playerTeam.forEach(c => {
                 if (c.clearDebuffsOnBattleEnd) {
                     c.clearDebuffsOnBattleEnd();
+                }
+                if (c.isDisciple) {
+                    c.isDead = true;
                 }
             });
             this.enemies.forEach(e => {

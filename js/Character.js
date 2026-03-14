@@ -278,6 +278,33 @@ class Character {
                         });
                         return { damage: totalDamage, type: 'attack', isCrit: anyCrit };
                     }
+                } else if (skill.effect?.type === 'humorBurstDamage') {
+                    const enemies = battle.getAliveEnemies();
+                    const hasAlly = battle.playerTeam.length > 1;
+                    let power;
+                    if (hasAlly) {
+                        power = skill.effect.hasAllyDmg;
+                    } else {
+                        power = skill.effect.noAllyDmg;
+                    }
+                    let totalDamage = 0;
+                    let anyCrit = false;
+                    enemies.forEach(enemy => {
+                        let damage = this.calculateSkillDamage(power, skill.isMagic);
+                        let isCrit = Math.random() * 100 < this.crit;
+                        if (isCrit) {
+                            damage = Math.floor(damage * (this.critDmg / 100));
+                            anyCrit = true;
+                        }
+                        const damageReduction = enemy.getDamageReduction ? enemy.getDamageReduction() : 0;
+                        if (damageReduction > 0 && !skill.isTrueDamage) {
+                            damage = Math.floor(damage * (1 - damageReduction));
+                        }
+                        const damageType = skill.isTrueDamage ? 'true' : 'physical';
+                        const result = enemy.takeDamage(damage, damageType);
+                        totalDamage += result;
+                    });
+                    return { damage: totalDamage, type: 'attack', isCrit: anyCrit };
                 } else {
                     if (skill.effect?.type === 'currentHpDamage') {
                         const enemies = battle.getAliveEnemies();
@@ -305,6 +332,14 @@ class Character {
                         this.skillUseCount[skill.name] = (this.skillUseCount[skill.name] || 0) + 1;
                         const useCount = this.skillUseCount[skill.name];
                         damage = skill.effect.baseDamage + (useCount - 1) * skill.effect.damageIncrease;
+                    }
+                    
+                    if (skill.effect?.type === 'escalatingMagicDamage') {
+                        this.skillUseCount = this.skillUseCount || {};
+                        this.skillUseCount[skill.name] = (this.skillUseCount[skill.name] || 0) + 1;
+                        const useCount = this.skillUseCount[skill.name];
+                        const magicPower = this.magicPower || 10;
+                        damage = Math.floor(useCount * magicPower / 10);
                     }
                     
                     if (skill.effect?.type === 'sacrificeDamage') {
@@ -479,7 +514,6 @@ class Character {
                     
                     // 处理盾击技能的护盾效果
                     if (skill.effect?.type === 'shield') {
-                        const lostHp = this.maxHp - this.hp;
                         const shieldValue = Math.floor(skill.effect.base + this.atk * skill.effect.multiplier);
                         this.shield = (this.shield || 0) + shieldValue;
                     }
@@ -489,8 +523,7 @@ class Character {
             
             case 'heal':
                 if (skill.effect?.type === 'shield') {
-                    const lostHp = this.maxHp - this.hp;
-                    const shieldValue = Math.floor(skill.effect.base + lostHp * skill.effect.multiplier);
+                    const shieldValue = Math.floor(skill.effect.base + this.atk * skill.effect.multiplier);
                     this.shield = (this.shield || 0) + shieldValue;
                     return { shield: shieldValue, type: 'heal', effect: 'shield' };
                 } else if (skill.effect?.type === 'lifeShare') {
@@ -574,6 +607,35 @@ class Character {
                     };
                     battle.playerTeam.push(summonData);
                     return { summonName: skill.effect.name, type: 'summon' };
+                } else if (skill.effect?.type === 'summonDisciple') {
+                    const discipleName = skill.effect.name;
+                    const existingDisciple = battle.playerTeam.find(c => c.name === discipleName && c.isSummoned && !c.isDead);
+                    
+                    if (existingDisciple) {
+                        const healAmount = Math.floor(existingDisciple.maxHp * skill.effect.healPercent);
+                        existingDisciple.hp = Math.min(existingDisciple.maxHp, existingDisciple.hp + healAmount);
+                        return { heal: healAmount, target: discipleName, type: 'heal' };
+                    } else {
+                        const magicPower = this.magicPower || 10;
+                        const maxHp = magicPower * skill.effect.hpMultiplier;
+                        const summonData = {
+                            name: discipleName,
+                            maxHp: maxHp,
+                            hp: maxHp,
+                            atk: 0,
+                            def: 5,
+                            spd: 5,
+                            isDead: false,
+                            isSummoned: true,
+                            isDisciple: true,
+                            magicPower: magicPower,
+                            dmgBase: skill.effect.dmgBase,
+                            priority: false,
+                            icon: '🧑‍🎓'
+                        };
+                        battle.playerTeam.push(summonData);
+                        return { summonName: discipleName, maxHp: maxHp, type: 'summon' };
+                    }
                 } else {
                     let summonDmg = skill.power;
                     const damageReduction = target.getDamageReduction ? target.getDamageReduction() : 0;

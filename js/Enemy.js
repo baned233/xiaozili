@@ -16,6 +16,7 @@ class EnemySkill {
         this.effect = data.effect || null;
         this.isMagic = data.isMagic || false;
         this.level = data.level || 1;
+        this.summonType = data.summonType || null;
     }
 
     needsTarget() {
@@ -25,6 +26,9 @@ class EnemySkill {
     canUse(enemy) {
         if (this.type === 'heal') {
             return enemy.hp < enemy.maxHp * 0.8;
+        }
+        if (this.type === 'summon') {
+            return true;
         }
         return true;
     }
@@ -76,6 +80,12 @@ class EnemySkill {
                 return { buff: this.power, type: 'buff', skillName: this.name };
             
             case 'debuff': {
+                if (this.buffName) {
+                    if (target.addBuff) {
+                        target.addBuff(this.buffName, 1);
+                    }
+                    return { type: 'debuff', skillName: this.name, target, buffName: this.buffName };
+                }
                 let debuffDamage = this.power;
                 const damageReduction = target.getDamageReduction();
                 if (damageReduction > 0) {
@@ -83,6 +93,15 @@ class EnemySkill {
                 }
                 const debuffResult = target.takeDamage(debuffDamage);
                 return { damage: debuffResult, type: 'debuff', skillName: this.name, target };
+            }
+            
+            case 'summon': {
+                const floor = enemy.floor || enemy.level;
+                const summonedEnemy = Enemy.createSummonedEnemy(this.summonType, floor);
+                if (summonedEnemy) {
+                    return { type: 'summon', skillName: this.name, summoned: summonedEnemy };
+                }
+                return { type: 'summon', skillName: this.name, summoned: null };
             }
             
             default:
@@ -96,6 +115,7 @@ class Enemy {
         this.id = data.id;
         this.name = data.name;
         this.level = data.level || 1;
+        this.floor = data.floor || data.level || 1;  // 保存实际层数
         this.maxHp = data.maxHp || 50;
         this.hp = this.maxHp;
         this.atk = data.atk || 8;
@@ -134,74 +154,92 @@ class Enemy {
         const floorData = FLOOR_DATA[floor];
         const level = floorData.enemyLevel;
         
-        let name, icon, hp, atk, def, spd, type, exp, gold, crit;
+        let name, icon, hp, atk, def, spd, type, exp, gold, crit, skills;
         
         if (isBoss || floorData.isBoss) {
             const bossData = BOSS_DIALOGS[floor];
-            name = bossData?.name || '未知BOSS';
+            name = bossData?.name || '宿管';
             type = 'boss';
-            hp = Math.floor(level * 80 + 200);
-            atk = Math.floor(level * 6 + 10);
-            def = Math.floor(level * 4 + 5);
-            spd = Math.floor(level * 2 + 5);
+            hp = Math.floor(300 + floor * 10);
+            atk = Math.floor(25 + floor * 1);
+            def = Math.floor(15 + floor * 0.8);
+            spd = Math.floor(10 + floor * 0.8);
             crit = 15;
             exp = Math.floor(level * 50 * 0.9);
             gold = Math.floor(level * 40 * 0.9);
-            icon = this.generateBossIcon(floor);
+            icon = 'assets/images/suguan.png';
+            skills = [new EnemySkill({
+                id: 201,
+                name: '召唤',
+                description: '召唤一只噬影虫加入战斗',
+                type: 'summon',
+                summonType: 'shiyichong'
+            })];
         } else if (isElite) {
-            const eliteNames = ENEMY_NAMES.elite;
-            name = eliteNames[Math.floor(Math.random() * eliteNames.length)];
+            name = '骨翼魔';
             type = 'elite';
-            hp = Math.floor(level * 40 + 50);
-            atk = Math.floor(level * 5 + 5);
-            def = Math.floor(level * 3 + 3);
-            spd = Math.floor(level * 2 + 3);
+            hp = Math.floor(100 + level * 8);
+            atk = Math.floor(12 + floor * 0.8);
+            def = Math.floor(8 + floor * 0.8);
+            spd = Math.floor(8 + floor * 0.5);
             crit = 10;
             exp = Math.floor(level * 30);
             gold = Math.floor(level * 20);
-            icon = this.generateEliteIcon(name);
+            icon = 'assets/images/fu.png';
+            skills = [];
         } else {
-            const commonNames = ENEMY_NAMES.common;
-            name = commonNames[Math.floor(Math.random() * commonNames.length)];
+            const enemyTypes = ['噬影虫', '变异的学生', '变异的老师', '守卫'];
+            name = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
             type = 'common';
-            hp = Math.floor(level * 20 + 30);
-            atk = Math.floor(level * 3 + 5);
-            def = Math.floor(level * 2 + 2);
-            spd = Math.floor(level * 2 + 3);
+            
+            if (name === '噬影虫') {
+                hp = Math.floor(30 + floor * 5);
+                atk = Math.floor(6 + floor * 0.6);
+                def = Math.floor(4 + floor * 0.5);
+                spd = Math.floor(5 + floor * 0.4);
+                icon = 'assets/images/chong.png';
+                skills = [new EnemySkill({
+                    id: 202,
+                    name: '麻痹病毒',
+                    description: '攻击时对目标施加一层肌无力',
+                    type: 'debuff',
+                    power: 0,
+                    buffName: '肌无力',
+                    level: 1,
+                    icon: '🦠'
+                })];
+            } else if (name === '变异的学生') {
+                hp = Math.floor(50 + floor * 5.5);
+                atk = Math.floor(10 + floor * 0.8);
+                def = Math.floor(6 + floor * 0.6);
+                spd = Math.floor(7 + floor * 0.5);
+                icon = 'assets/images/xuesheng.png';
+                skills = [];
+            } else if (name === '变异的老师') {
+                hp = Math.floor(60 + floor * 6);
+                atk = Math.floor(8 + floor * 0.7);
+                def = Math.floor(6 + floor * 0.8);
+                spd = Math.floor(6 + floor * 0.45);
+                icon = 'assets/images/laoshi.png';
+                skills = [];
+            } else {
+                hp = Math.floor(80 + floor * 7);
+                atk = Math.floor(8 + floor * 0.8);
+                def = Math.floor(6 + floor * 0.8);
+                spd = Math.floor(6 + floor * 0.4);
+                icon = 'assets/images/shouwei.png';
+                skills = [];
+            }
             crit = 5;
             exp = Math.floor(level * 10);
             gold = Math.floor(level * 5);
-            icon = this.generateIcon(name);
-        }
-        
-        const skills = [];
-        if (type !== 'common' || Math.random() < 0.3) {
-            const basicAttack = ENEMY_SKILL_POOL.find(s => s.id === 101);
-            if (basicAttack) {
-                skills.push(new EnemySkill(basicAttack));
-            }
-        }
-        
-        if ((type === 'elite' || type === 'boss') && Math.random() < 0.7) {
-            const eliteSkills = ENEMY_SKILL_POOL.filter(s => s.id >= 102 && s.id <= 110);
-            if (eliteSkills.length > 0) {
-                const randomSkill = eliteSkills[Math.floor(Math.random() * eliteSkills.length)];
-                skills.push(new EnemySkill(randomSkill));
-            }
-        }
-        
-        if (isBoss) {
-            const bossSkills = ENEMY_SKILL_POOL.filter(s => s.id >= 111);
-            if (bossSkills.length > 0) {
-                const randomSkill = bossSkills[Math.floor(Math.random() * bossSkills.length)];
-                skills.push(new EnemySkill(randomSkill));
-            }
         }
         
         const data = {
             id: Date.now() + Math.random(),
             name,
             level,
+            floor,  // 保存实际层数
             maxHp: hp,
             hp,
             atk,
@@ -245,6 +283,35 @@ class Enemy {
             50: '🦑'
         };
         return bossIcons[floor] || '👹';
+    }
+
+    static createSummonedEnemy(summonType, floor) {
+        if (summonType === 'shiyichong') {
+            const hp = Math.floor(30 + floor * 5);
+            const atk = Math.floor(6 + floor * 0.6);
+            const def = Math.floor(4 + floor * 0.5);
+            const spd = Math.floor(5 + floor * 0.4);
+            
+            return new Enemy({
+                id: Date.now() + Math.random(),
+                name: '噬影虫',
+                level: floor,
+                maxHp: hp,
+                hp: hp,
+                atk: atk,
+                def: def,
+                spd: spd,
+                crit: 5,
+                critDmg: 150,
+                exp: 0,
+                gold: 0,
+                icon: 'assets/images/chong.png',
+                type: 'common',
+                isSummoned: true,
+                skills: []
+            });
+        }
+        return null;
     }
 
     needsTarget() {
@@ -310,6 +377,16 @@ class Enemy {
         }
         
         const actualDamage = target.takeDamage(damage);
+        
+        // 攻击时触发debuff技能（如噬影虫的麻痹病毒）
+        if (this.skills) {
+            this.skills.forEach(skill => {
+                if (skill.type === 'debuff' && skill.buffName && Math.random() < 0.5) {
+                    target.addBuff(skill.buffName, 1);
+                }
+            });
+        }
+        
         return { damage: actualDamage, isCrit, target };
     }
 

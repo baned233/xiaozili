@@ -25,7 +25,18 @@ class Game {
         this.usedEventIds = [];        // 已经触发过的事件ID
         this.betelNutCount = 0;        // 槟榔上瘾后没吃槟榔的层数计数
         this._memoryStorage = {};     // 内存存储（备用）
-        this._storageAvailable = false; // 是否可以使用localStorage
+        this._storageAvailable = this._checkStorageAvailable(); // 检测localStorage是否可用
+    }
+
+    _checkStorageAvailable() {
+        try {
+            const test = '__storage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
 
     // ==================== 存档相关方法 ====================
@@ -1519,6 +1530,13 @@ class Game {
             
             if (this.playerTeam.length > 0) {
                 const player = this.playerTeam[0];
+                const characterProto = Character.prototype;
+                for (const key of Object.getOwnPropertyNames(characterProto)) {
+                    if (key !== 'constructor' && typeof characterProto[key] === 'function') {
+                        player[key] = characterProto[key].bind(player);
+                    }
+                }
+                
                 if (player.maxStamina === undefined) {
                     player.maxStamina = 80;
                     player.stamina = 80;
@@ -1627,6 +1645,10 @@ class Game {
         if (this.loadGame()) {
             this.ui.showGameScreen();
             this.ui.updatePlayerPortrait(this.playerTeam[0]);
+            this.ui.updateGold(this.gold);
+            this.ui.updatePotionBar(this.potions);
+            this.ui.updateFloor(this.currentFloor);
+            this.ui.updatePlayerResources(this.playerTeam[0]);
             audioManager.startBgMusic();
             
             this.battle = null;

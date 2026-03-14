@@ -274,16 +274,16 @@ const SKILL_POOL = [
     {
         id: 23,
         name: '焉有一合之将',
-        description: '滑稽存在四个回合后，爆发了它的潜力！滑稽回复100点生命值，滑稽获得一层滑稽',
-        type: 'passive',
+        description: '若场上无友方单位，则对所有敌人造成100+1.6atk的伤害，否则造成50+1.4atk的伤害',
+        type: 'attack',
         rarity: 'epic',
-        power: 0,
+        power: '100+1.6*atk',
         level: 4,
         icon: '💥',
-        cost: 0,
+        cost: 50,
         isMagic: false,
-        passive: true,
-        effect: { type: 'humorBurst' }
+        targetAll: true,
+        effect: { type: 'humorBurstDamage', noAllyDmg: '100+1.6*atk', hasAllyDmg: '50+1.4*atk' }
     },
     {
         id: 24,
@@ -466,8 +466,8 @@ const SKILL_POOL = [
         power: '20+skillUseCount*15',
         level: 4,
         icon: '📢',
-        cost: 15,
-        isMagic: false,
+        cost: 20,
+        isMagic: true,
         effect: { type: 'escalatingDamage', baseDamage: 20, damageIncrease: 15 },
         noEndTurn: true
     },
@@ -539,16 +539,16 @@ const SKILL_POOL = [
     {
         id: 44,
         name: '啊！徒弟！',
-        description: '复活吧！，当场上任意友方单位死亡时，使其立即复活，并恢复至50%最大生命值。该效果一场战斗只能触发一次',
-        type: 'passive',
+        description: '召唤徒弟加入战斗，徒弟拥有玩家法力强度*5点生命值，每回合对随机敌人造成20+法力强度点伤害。若已存在徒弟，则为其回复50%最大生命值',
+        type: 'summon',
         rarity: 'epic',
         power: 0,
         level: 4,
         icon: '👨‍🏫',
-        cost: 0,
-        isMagic: false,
-        passive: true,
-        effect: { type: 'resurrectAlly' }
+        cost: 40,
+        isMagic: true,
+        targetSelf: true,
+        effect: { type: 'summonDisciple', name: '徒弟', hpMultiplier: 5, dmgBase: 20, healPercent: 0.5 }
     },
     {
         id: 45,
@@ -615,5 +615,18 @@ const SKILL_POOL = [
         cost: 20,
         isMagic: false,
         effect: { type: 'shield', base: 0, multiplier: 0.5 }
+    },
+    {
+        id: 50,
+        name: '超凡邪恶',
+        description: '每次使用该技能都会使该技能伤害永久增加',
+        type: 'attack',
+        rarity: 'rare',
+        power: 'skillUseCount*magicPower/10',
+        level: 3,
+        icon: '😈',
+        cost: 10,
+        isMagic: true,
+        effect: { type: 'escalatingMagicDamage' }
     }
 ];
