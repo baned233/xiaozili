@@ -900,6 +900,167 @@ body::before {
     border-radius: 2px;
 }
 
+#training-panel {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(145deg, #1a1a2e 0%, #0d0d15 100%);
+    border: 2px solid rgba(255, 200, 0, 0.5);
+    border-radius: 12px;
+    padding: 12px 16px;
+    z-index: 200;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    min-width: 280px;
+    max-width: 350px;
+    width: 280px;
+    cursor: move;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+#training-panel.dragging {
+    cursor: grabbing;
+    opacity: 0.9;
+    transform: none;
+    pointer-events: none;
+    width: 280px !important;
+}
+
+#training-panel.collapsed .training-content {
+    display: none;
+}
+
+#training-panel.collapsed {
+    padding: 8px 12px;
+    min-width: auto;
+}
+
+.training-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #ffd700;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+#training-panel.collapsed .training-header {
+    margin-bottom: 0;
+}
+
+.training-collapse-btn {
+    background: none;
+    border: none;
+    color: #ffd700;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 6px;
+    transition: transform 0.2s;
+}
+
+#training-panel.collapsed .training-collapse-btn {
+    transform: rotate(-90deg);
+}
+
+.training-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.training-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.training-search {
+    display: flex;
+    gap: 6px;
+}
+
+.training-search input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #4a4a6a;
+    border-radius: 6px;
+    background: #0d0d15;
+    color: #fff;
+    font-size: 12px;
+    outline: none;
+}
+
+.training-search input:focus {
+    border-color: #ffd700;
+}
+
+.training-search-btn {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    background: #2a2a4a;
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.training-search-btn:hover {
+    background: #3a3a5a;
+}
+
+.training-enemy-list {
+    max-height: 150px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    padding: 4px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.training-enemy-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.training-enemy-item:hover {
+    background: rgba(255, 215, 0, 0.2);
+}
+
+.training-enemy-item .enemy-name {
+    color: #fff;
+}
+
+.training-enemy-item .enemy-type {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.training-enemy-item .enemy-type.common {
+    background: rgba(100, 100, 100, 0.5);
+    color: #aaa;
+}
+
+.training-enemy-item .enemy-type.elite {
+    background: rgba(155, 89, 182, 0.5);
+    color: #d8b4fe;
+}
+
+.training-enemy-item .enemy-type.boss {
+    background: rgba(231, 76, 60, 0.5);
+    color: #f1948a;
+}
+
 .battle-log-entry {
     margin-bottom: 4px;
     padding-bottom: 4px;
@@ -1271,6 +1432,26 @@ body::before {
     filter: grayscale(50%);
 }
 
+.enemy-card.dying {
+    animation: enemyDeath 0.5s forwards;
+}
+
+@keyframes enemyDeath {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+        filter: brightness(2) saturate(0);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0);
+    }
+}
+
 .character-card.pet-card {
     transform: scale(0.8);
     padding: 6px;
@@ -1336,6 +1517,15 @@ body::before {
     border-bottom: 1px solid rgba(168, 85, 247, 0.3);
 }
 
+.enemy-tooltip-desc {
+    font-size: 12px;
+    color: #9ca3af;
+    text-align: center;
+    margin-bottom: 8px;
+    font-style: italic;
+    line-height: 1.4;
+}
+
 .enemy-tooltip-stats {
     font-size: 13px;
     color: #c9c9c9;
@@ -1360,12 +1550,23 @@ body::before {
         min-width: 150px;
         padding: 8px;
         font-size: 12px;
+        z-index: 50;
     }
     .enemy-tooltip-title {
         font-size: 14px;
     }
     .enemy-tooltip-stats {
         font-size: 11px;
+    }
+    .buff-icon {
+        z-index: 60;
+        position: relative;
+    }
+    .buff-icon::before, .buff-icon.buff-active::before {
+        z-index: 1000;
+    }
+    .buff-icon.buff-active {
+        z-index: 1000;
     }
 }
 
@@ -3486,7 +3687,8 @@ body::before {
 
 .buff-icon:hover {
     transform: scale(1.2);
-    z-index: 100;
+    z-index: 1000;
+    position: relative;
 }
 
 .buff-icon.positive {
@@ -3516,6 +3718,35 @@ body::before {
 }
 
 .buff-icon:hover::before {
+    content: attr(data-description);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.95);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: normal;
+    max-width: 300px;
+    min-width: 150px;
+    z-index: 1000;
+    border: 1px solid #444;
+    margin-bottom: 5px;
+    pointer-events: none;
+    writing-mode: horizontal-tb;
+    text-align: left;
+    line-height: 1.4;
+}
+
+.buff-icon.buff-active {
+    transform: scale(1.2);
+    z-index: 1000;
+    position: relative;
+}
+
+.buff-icon.buff-active::before {
     content: attr(data-description);
     position: absolute;
     bottom: 100%;

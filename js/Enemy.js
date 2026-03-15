@@ -154,13 +154,13 @@ class Enemy {
         const floorData = FLOOR_DATA[floor];
         const level = floorData.enemyLevel;
         
-        let name, icon, hp, atk, def, spd, type, exp, gold, crit, skills;
+        let name, icon, hp, atk, def, spd, type, exp, gold, crit, skills, description = '';
         
         if (isBoss || floorData.isBoss) {
             const bossData = BOSS_DIALOGS[floor];
             name = bossData?.name || '宿管';
             type = 'boss';
-            hp = Math.floor(300 + floor * 10);
+            hp = Math.floor(320 + floor * 12);
             atk = Math.floor(25 + floor * 1);
             def = Math.floor(15 + floor * 0.8);
             spd = Math.floor(10 + floor * 0.8);
@@ -168,6 +168,7 @@ class Enemy {
             exp = Math.floor(level * 50 * 0.9);
             gold = Math.floor(level * 40 * 0.9);
             icon = 'assets/images/suguan.png';
+            description = '突然变异的宿管，尚且保留部分人类特征，似乎可以操纵影噬虫战斗';
             skills = [new EnemySkill({
                 id: 201,
                 name: '召唤',
@@ -175,10 +176,32 @@ class Enemy {
                 type: 'summon',
                 summonType: 'shiyichong'
             })];
+            
+            const data = {
+                id: Date.now() + Math.random(),
+                name,
+                description,
+                level,
+                floor,
+                maxHp: hp,
+                hp,
+                atk,
+                def,
+                spd,
+                crit,
+                critDmg: 150,
+                exp,
+                gold,
+                icon,
+                type,
+                skills
+            };
+            
+            return new Enemy(data);
         } else if (isElite) {
             name = '骨翼魔';
             type = 'elite';
-            hp = Math.floor(100 + level * 8);
+            hp = Math.floor(100 + floor * 8);
             atk = Math.floor(12 + floor * 0.8);
             def = Math.floor(8 + floor * 0.8);
             spd = Math.floor(8 + floor * 0.5);
@@ -186,11 +209,35 @@ class Enemy {
             exp = Math.floor(level * 30);
             gold = Math.floor(level * 20);
             icon = 'assets/images/fu.png';
+            description = '高级实验体，编号B-017，具备滑翔与低空飞行能力，巨大的爪子锋利异常';
             skills = [];
+            
+            const data = {
+                id: Date.now() + Math.random(),
+                name,
+                description,
+                level,
+                floor,
+                maxHp: hp,
+                hp,
+                atk,
+                def,
+                spd,
+                crit,
+                critDmg: 150,
+                exp,
+                gold,
+                icon,
+                type,
+                skills
+            };
+            
+            return new Enemy(data);
         } else {
             const enemyTypes = ['噬影虫', '变异的学生', '变异的老师', '守卫'];
             name = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
             type = 'common';
+            let description = '';
             
             if (name === '噬影虫') {
                 hp = Math.floor(30 + floor * 5);
@@ -198,6 +245,7 @@ class Enemy {
                 def = Math.floor(4 + floor * 0.5);
                 spd = Math.floor(5 + floor * 0.4);
                 icon = 'assets/images/chong.png';
+                description = '学院内常见怪物，个体弱小但经常成群出现，攻击命中后会施加【无力】';
                 skills = [new EnemySkill({
                     id: 202,
                     name: '麻痹病毒',
@@ -214,6 +262,7 @@ class Enemy {
                 def = Math.floor(6 + floor * 0.6);
                 spd = Math.floor(7 + floor * 0.5);
                 icon = 'assets/images/xuesheng.png';
+                description = '被拐来的可怜学生，被注入药剂后发生变异';
                 skills = [];
             } else if (name === '变异的老师') {
                 hp = Math.floor(60 + floor * 6);
@@ -221,6 +270,7 @@ class Enemy {
                 def = Math.floor(6 + floor * 0.8);
                 spd = Math.floor(6 + floor * 0.45);
                 icon = 'assets/images/laoshi.png';
+                description = '被拐来的可怜老师，被注入药剂后发生变异';
                 skills = [];
             } else {
                 hp = Math.floor(80 + floor * 7);
@@ -228,33 +278,35 @@ class Enemy {
                 def = Math.floor(6 + floor * 0.8);
                 spd = Math.floor(6 + floor * 0.4);
                 icon = 'assets/images/shouwei.png';
+                description = '学院的守卫，手持电击器';
                 skills = [];
             }
             crit = 5;
             exp = Math.floor(level * 10);
             gold = Math.floor(level * 5);
+            
+            const data = {
+                id: Date.now() + Math.random(),
+                name,
+                description,
+                level,
+                floor,  // 保存实际层数
+                maxHp: hp,
+                hp,
+                atk,
+                def,
+                spd,
+                crit,
+                critDmg: 150,
+                exp,
+                gold,
+                icon,
+                type,
+                skills
+            };
+            
+            return new Enemy(data);
         }
-        
-        const data = {
-            id: Date.now() + Math.random(),
-            name,
-            level,
-            floor,  // 保存实际层数
-            maxHp: hp,
-            hp,
-            atk,
-            def,
-            spd,
-            crit,
-            critDmg: 150,
-            exp,
-            gold,
-            icon,
-            type,
-            skills
-        };
-        
-        return new Enemy(data);
     }
 
     static generateIcon(name) {

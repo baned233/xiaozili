@@ -29,12 +29,13 @@ class Battle {
 
     // ==================== 开始战斗 ====================
     // 初始化战斗，创建敌人，处理召唤物
-    // 参数：customEnemy自定义敌人对象，winReward胜利奖励遗物
-    startBattle(playerTeam, floor, isElite = false, isBoss = false, customEnemy = null, winReward = null) {
+    // 参数：customEnemy自定义敌人对象，winReward胜利奖励遗物，isTraining训练场模式
+    startBattle(playerTeam, floor, isElite = false, isBoss = false, customEnemy = null, winReward = null, isTraining = false) {
         this.playerTeam = playerTeam;
         this.enemies = [];
         this.isElite = isElite;
         this.isBoss = isBoss || FLOOR_DATA[floor].isBoss;
+        this.isTraining = isTraining;
         this.currentFloor = floor;  // 保存当前层数
         
         // 如果有自定义敌人，使用自定义敌人
@@ -48,7 +49,7 @@ class Battle {
                 def: customEnemy.def || 0,
                 spd: customEnemy.spd || 10,
                 level: 1,
-                skills: []
+                skills: customEnemy.skills || []
             });
             this.enemies.push(enemy);
         }
@@ -106,6 +107,25 @@ class Battle {
         
         for (let i = 0; i < enemyCount; i++) {
             this.enemies.push(Enemy.createEnemy(floor, isElite, this.isBoss));
+        }
+        
+        // 染血的沐浴露效果：Boss战时立即造成敌方10%最大生命真实伤害
+        if (this.isBoss && player.relics && player.relics.length > 0) {
+            const yushuui = player.relics.find(r => r.name === '染血的沐浴露');
+            if (yushuui) {
+                this.enemies.forEach(enemy => {
+                    const trueDamage = Math.floor(enemy.maxHp * 0.1);
+                    enemy.hp -= trueDamage;
+                    this.battleLog.push({
+                        type: 'relicEffect',
+                        message: `${yushuui.name} 对 ${enemy.name} 造成了 ${trueDamage} 点真实伤害！`
+                    });
+                    if (enemy.hp <= 0) {
+                        enemy.isDead = true;
+                        enemy.hp = 0;
+                    }
+                });
+            }
         }
 
         this.calculateTurnOrder();

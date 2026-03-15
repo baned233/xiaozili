@@ -14,6 +14,7 @@ class Game {
         this.battle = null;           // 当前战斗对象
         this.ui = null;               // UI界面控制器
         this.state = 'menu';          // 游戏状态：menu(菜单)、map(地图)、battle(战斗)、shop(商店)、rest(安全屋)、event(事件)
+        this.trainingMode = false;    // 训练场模式
         this.shopItems = [];          // 商店里卖的东西
         this.currentPaths = [];       // 当前层的路径选择
         this.karma = 0;               // 善缘值（做好事积累）
@@ -245,6 +246,173 @@ class Game {
         this.enterBattle();                      // 直接开始战斗
     }
 
+    // ==================== 训练场模式 ====================
+    startTrainingMode() {
+        this.state = 'battle';
+        this.trainingMode = true;
+        this.battle = new Battle(this);
+        
+        const player = this.playerTeam[0];
+        if (player) {
+            player.hp = 99999;
+            player.maxHp = 99999;
+            player.baseSpd = player.baseSpd || player.spd;
+        }
+        
+        const trainingEnemy = Enemy.createEnemy(1, false, false);
+        trainingEnemy.hp = 99999;
+        trainingEnemy.maxHp = 99999;
+        this.currentTrainingEnemy = trainingEnemy;
+        
+        const battleResult = this.battle.startBattle(this.playerTeam, 1, false, false, trainingEnemy, null, true);
+        
+        this.ui.setBackgroundClass(1);
+        this.ui.showBattleArea();
+        this.ui.showBattleLog();
+        this.ui.showTrainingControls();
+        
+        this.enterBattle();
+    }
+
+    changeTrainingEnemy(enemyType) {
+        if (!this.trainingMode) return;
+        
+        const player = this.playerTeam[0];
+        if (player) {
+            player.hp = 99999;
+            player.maxHp = 99999;
+        }
+        
+        let trainingEnemy;
+        if (enemyType === 'elite') {
+            trainingEnemy = Enemy.createEnemy(1, true, false);
+        } else if (enemyType === 'boss') {
+            trainingEnemy = Enemy.createEnemy(15, false, true);
+        } else {
+            trainingEnemy = Enemy.createEnemy(1, false, false);
+        }
+        
+        if (!trainingEnemy) {
+            console.error('Failed to create training enemy');
+            return;
+        }
+        
+        trainingEnemy.hp = 99999;
+        trainingEnemy.maxHp = 99999;
+        this.currentTrainingEnemy = trainingEnemy;
+        
+        this.battle.enemies = [trainingEnemy];
+        this.battle.battleLog.push({
+            type: 'system',
+            message: `切换敌人为: ${trainingEnemy.name} (${trainingEnemy.type})`
+        });
+        
+        this.ui.updateBattleArea(this.battle);
+        this.updateBattleUI();
+    }
+
+    searchTrainingEnemy(keyword) {
+        if (!this.trainingMode || !keyword) return;
+        
+        keyword = keyword.trim();
+        
+        const enemyDatabase = [
+            { name: '噬影虫', type: 'common', hp: 30, atk: 6, def: 4, spd: 5, desc: '学院内常见怪物' },
+            { name: '变异的学生', type: 'common', hp: 50, atk: 10, def: 6, spd: 7, desc: '被拐来的学生' },
+            { name: '变异的老师', type: 'common', hp: 60, atk: 8, def: 6, spd: 6, desc: '被拐来的老师' },
+            { name: '守卫', type: 'common', hp: 80, atk: 8, def: 6, spd: 6, desc: '学院守卫' },
+            { name: '骨翼魔', type: 'elite', hp: 100, atk: 12, def: 8, spd: 8, desc: '高级实验体' },
+            { name: '宿管', type: 'boss', hp: 300, atk: 25, def: 15, spd: 10, desc: '变异宿管' }
+        ];
+        
+        const results = enemyDatabase.filter(e => e.name.includes(keyword));
+        
+        const listEl = document.getElementById('training-enemy-list');
+        if (!listEl) return;
+        
+        if (results.length === 0) {
+            listEl.innerHTML = '<div style="color:#888;font-size:11px;">未找到匹配敌人</div>';
+            return;
+        }
+        
+        listEl.innerHTML = results.map(e => 
+            `<div class="training-enemy-item" onclick="game.spawnTrainingEnemy('${e.name}')">
+                <span class="enemy-name">${e.name}</span>
+                <span class="enemy-type ${e.type}">${e.type === 'boss' ? 'BOSS' : e.type === 'elite' ? '精英' : '普通'}</span>
+            </div>`
+        ).join('');
+    }
+
+    spawnTrainingEnemy(enemyName) {
+        if (!this.trainingMode) return;
+        
+        const player = this.playerTeam[0];
+        if (player) {
+            player.hp = 99999;
+            player.maxHp = 99999;
+        }
+        
+        const enemyData = {
+            '噬影虫': { hp: 30, atk: 6, def: 4, spd: 5, icon: 'assets/images/chong.png', type: 'common', desc: '学院内常见怪物' },
+            '变异的学生': { hp: 50, atk: 10, def: 6, spd: 7, icon: 'assets/images/xuesheng.png', type: 'common', desc: '被拐来的学生' },
+            '变异的老师': { hp: 60, atk: 8, def: 6, spd: 6, icon: 'assets/images/laoshi.png', type: 'common', desc: '被拐来的老师' },
+            '守卫': { hp: 80, atk: 8, def: 6, spd: 6, icon: 'assets/images/shouwei.png', type: 'common', desc: '学院守卫' },
+            '骨翼魔': { hp: 100, atk: 12, def: 8, spd: 8, icon: 'assets/images/fu.png', type: 'elite', desc: '高级实验体' },
+            '宿管': { hp: 300, atk: 25, def: 15, spd: 10, icon: 'assets/images/suguan.png', type: 'boss', desc: '变异宿管' }
+        };
+        
+        const data = enemyData[enemyName];
+        if (!data) return;
+        
+        const trainingEnemy = new Enemy({
+            id: Date.now() + Math.random(),
+            name: enemyName,
+            description: data.desc,
+            level: 1,
+            floor: 1,
+            maxHp: 99999,
+            hp: 99999,
+            atk: data.atk * 10,
+            def: data.def * 10,
+            spd: data.spd * 10,
+            crit: 15,
+            critDmg: 150,
+            exp: 0,
+            gold: 0,
+            icon: data.icon,
+            type: data.type,
+            skills: []
+        });
+        
+        this.currentTrainingEnemy = trainingEnemy;
+        
+        this.battle.enemies = [trainingEnemy];
+        this.battle.battleLog.push({
+            type: 'system',
+            message: `召唤敌人: ${enemyName} (${data.type})`
+        });
+        
+        this.ui.updateBattleArea(this.battle);
+        this.updateBattleUI();
+        
+        const listEl = document.getElementById('training-enemy-list');
+        if (listEl) listEl.innerHTML = '';
+        const searchInput = document.getElementById('training-search-input');
+        if (searchInput) searchInput.value = '';
+    }
+
+    exitTrainingMode() {
+        if (!this.trainingMode) return;
+        
+        this.trainingMode = false;
+        this.ui.hideTrainingControls();
+        this.ui.hideBattleArea();
+        this.ui.hideBattleLog();
+        this.state = 'map';
+        this.ui.showMapPanel();
+        this.ui.showDialog('已离开训练场', () => {});
+    }
+
     // ==================== 进入战斗流程 ====================
     enterBattle() {
         this.updateBattleUI();                    // 更新战斗界面
@@ -336,7 +504,9 @@ class Game {
             if (skillResult.type === 'attack') {
                 const skillName = this.currentSelectedSkill?.name;
                 const hitSkills = ['走A', '手痒难耐', '开导', '夺食', '盾击'];
-                if (hitSkills.includes(skillName)) {
+                if (skillName === '火球') {
+                    audioManager.playFire();
+                } else if (hitSkills.includes(skillName)) {
                     audioManager.playHit();
                 } else if (this.currentSelectedSkill && this.currentSelectedSkill.isMagic) {
                     audioManager.playMagicAttack();
@@ -361,10 +531,8 @@ class Game {
         
         this.ui.updatePlayerResources(this.playerTeam[0]);
         
-        if (skillResult && skillResult.type === 'attack') {
-            const attacker = this.playerTeam[0];
-            this.ui.showAttackAnimation(attacker, true);
-        }
+        const attacker = this.playerTeam[0];
+        this.ui.showAttackAnimation(attacker, true);
         
         setTimeout(() => {
             if (skillResult) {
@@ -383,6 +551,19 @@ class Game {
                             });
                         } else {
                             this.ui.showDamageEffect(target, skillResult, isPlayerSide, this.battle.selectedSkill);
+                            
+                            if (target.isDead && !isPlayerSide) {
+                                setTimeout(() => {
+                                    const cardId = `enemy-${target.id}`;
+                                    const card = document.getElementById(cardId);
+                                    if (card) {
+                                        card.classList.add('dying');
+                                        setTimeout(() => {
+                                            this.ui.updateBattleArea(this.battle);
+                                        }, 500);
+                                    }
+                                }, 400);
+                            }
                         }
                     }
                 }
@@ -607,13 +788,51 @@ class Game {
             }
             // 清除召唤物（它们在战斗结束后消失）
             this.playerTeam = this.playerTeam.filter(char => !char.isSummoned);
+            
+            // 训练场模式：胜利后继续战斗
+            if (this.trainingMode) {
+                const player = this.playerTeam[0];
+                if (player) {
+                    player.hp = 99999;
+                    player.restoreStamina(99999);
+                    player.restoreMana(99999);
+                }
+                
+                const enemy = this.currentTrainingEnemy;
+                enemy.hp = 99999;
+                enemy.isDead = false;
+                
+                this.battle.battleState = 'playerSelect';
+                this.battle.battleLog.push({
+                    type: 'system',
+                    message: '训练场：战斗胜利！已恢复满状态，继续战斗！'
+                });
+                
+                this.battle.enemies = [enemy];
+                this.updateBattleUI();
+                return;
+            }
+            
             audioManager.playVictory();  // 播放胜利音效
             // 处理胜利奖励
             this.handleVictory(battleEnd.rewards || [], battleEnd.isElite, battleEnd.isBoss);
         } else if (battleEnd.result === 'lose') {
             // 战斗失败
-            audioManager.playDefeat();   // 播放失败音效
-            this.ui.showGameOver();       // 显示游戏结束界面
+            if (this.trainingMode) {
+                const player = this.playerTeam[0];
+                player.hp = 99999;
+                player.isDead = false;
+                player.banished = false;
+                this.battle.battleState = 'playerSelect';
+                this.battle.battleLog.push({
+                    type: 'system',
+                    message: '训练场：玩家已复活，继续战斗！'
+                });
+                this.updateBattleUI();
+            } else {
+                audioManager.playDefeat();   // 播放失败音效
+                this.ui.showGameOver();       // 显示游戏结束界面
+            }
         }
     }
 
@@ -1476,7 +1695,7 @@ class Game {
         this.ui.updatePlayerResources(player);
         
         // 这些事件触发后不能重复出现
-        if (['cliff', 'rescue', 'crossroad', 'food_steal', 'betel_nut_seller'].includes(event.id)) {
+        if (['cliff', 'rescue', 'crossroad', 'food_steal', 'betel_nut_seller', 'room503', 'dark_bathroom'].includes(event.id)) {
             this.usedEventIds.push(event.id);
         }
         

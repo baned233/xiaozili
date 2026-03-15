@@ -127,7 +127,7 @@ const RELIC_POOL = [
     { id: 6, name: '猫姬吊坠', description: '暴击伤害+20%', type: 'passive', effect: { type: 'critDmg', value: 20 }, icon: '🐅' },
     { id: 7, name: '你光的十字架', description: '法力强度+8', type: 'passive', effect: { type: 'magicPower', value: 8 }, icon: '✝️' },
     { id: 12, name: '血之恶魔的角', description: '攻击力+20', type: 'passive', effect: { type: 'atk', value: 20 }, icon: '😈' },
-    { id: 13, name: '贪婪金币', description: '法力强度+5', type: 'passive', effect: { type: 'magicPower', value: 5 }, icon: '🪙' },
+    { id: 13, name: '贤者之石', description: '法力强度+20', type: 'passive', effect: { type: 'magicPower', value: 20 }, icon: '💎' },
     { id: 14, name: '希沃白板之笔', description: '法力强度+12 防御力+5', type: 'passive', effect: { type: 'magicPower', value: 12, def: 5 }, icon: '🖊' },
     { id: 15, name: '超市里的马', description: '防御力+12 生命+20', type: 'passive', effect: { type: 'def', value: 12 }, icon: '🐎' },
     { id: 16, name: '红牛', description: '最大体力+25', type: 'passive', effect: { type: 'stamina', value: 25 }, icon: '🐂' },
@@ -137,7 +137,7 @@ const RELIC_POOL = [
     { id: 20, name: '能量护符', description: '最大体力+15 最大法力+10', type: 'passive', effect: { type: 'stamina', value: 15 }, icon: '⚡' },
     { id: 21, name: '两姓家奴', description: '怪物对你造成的伤害-10%', type: 'passive', effect: { type: 'damageReduction', value: 10 }, icon: '🔱' },
     { id: 22, name: '变动的世界线', description: '获得时将角色所在的层数提升3层', type: 'passive', effect: { type: 'floorShift', value: -3 }, icon: '🌀' },
-    { id: 23, name: '染血的沐浴露', description: '对BOSS大帝造成的伤害+20%', type: 'passive', effect: { type: 'bossDmgBoost', value: 20 }, icon: '🩸' },
+    { id: 23, name: '染血的沐浴露', description: '进入战斗时，若本场战斗为BOSS战，立即造成随机敌方目标10%最大生命值的真实伤害', type: 'passive', effect: { type: 'bossTrueDamage', value: 10 }, icon: '🩸' },
     { id: 24, name: '不战而怯', description: '战斗时使用技能有10%概率失败', type: 'passive', effect: { type: 'skillFail', value: 10 }, icon: '💤' },
     { id: 25, name: '霸王之卵', description: '每次战斗免疫敌方单位的第一次攻击，死亡后可复活一次', type: 'event', icon: '🥚', effect: { type: '霸王之卵' } },
     { id: 26, name: '连续施法', description: '每回合恢复5点法力值', type: 'passive', effect: { type: 'manaPerTurn', value: 5 }, icon: '🔮', note: '我的力量，无穷无尽' },
@@ -147,5 +147,9 @@ const RELIC_POOL = [
     { id: 30, name: '猫宁的围巾', description: '防御力+3，战斗中若猫宁存活则每回合恢复猫宁10点生命值', type: 'passive', effect: { type: 'def', value: 3 }, icon: '🧣', note: '十分温暖' },
     { id: 31, name: '八宝粥', description: '生命值+100，技能：夺食攻击伤害类型转换为真实伤害', type: 'event', effect: { type: 'hp', value: 100 }, icon: '🥣', note: '"我们这种人就像是野狗一般"' },
     { id: 32, name: '和成天下', description: '最大体力-10，攻击力+20', type: 'event', effect: { type: 'stamina', value: -10, atk: 20 }, icon: '🌴', note: '"白生生的精品大果！"' },
-    { id: 33, name: '杀人书', description: '拥有该遗物时，玩家每杀死一个单位都会获得法力强度+1', type: 'passive', effect: { type: 'killBoostMagicPower', value: 1 }, icon: '📖', note: '"偷窃....灵魂！"' }
+    { id: 33, name: '杀人书', description: '拥有该遗物时，玩家每杀死一个单位都会获得法力强度+1', type: 'passive', effect: { type: 'killBoostMagicPower', value: 1 }, icon: '📖', note: '"偷窃....灵魂！"' },
+    { id: 34, name: '钟表', description: '速度+8', type: 'passive', effect: { type: 'speed', value: 8 }, icon: '🕐', note: '"速度再快也逆转不了时间"' },
+    { id: 35, name: '铃铛', description: '攻击力+8', type: 'passive', effect: { type: 'atk', value: 8 }, icon: '🔔', note: '"宣告我的到来，以及你的...死亡"' },
+    { id: 36, name: '腕豪的指虎', description: '防御力+5，拥有此遗物时，使用技能：手痒难耐必定暴击', type: 'passive', effect: { type: 'def', value: 5, skillCritGuarantee: '手痒难耐' }, icon: '🥊', note: '"那必须是我了"' },
+    { id: 37, name: '莫塔里的计算器', description: '暴击伤害+24%', type: 'passive', effect: { type: 'critDmg', value: 24 }, icon: '🧮', note: '"获得3+3=24点暴击伤害，3+3为什么=24？别问，问就是计算器算的"' }
 ];

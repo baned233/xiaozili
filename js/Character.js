@@ -229,6 +229,14 @@ class Character {
     }
 
     useSkill(skill, target, battle) {
+        // 检查是否有"腕豪的指虎"遗物，拥有时使用"手痒难耐"必定暴击
+        if (this.relics) {
+            const wanhao = this.relics.find(r => r.name === '腕豪的指虎');
+            if (wanhao && wanhao.effect?.skillCritGuarantee === skill.name) {
+                skill.forceCrit = true;
+            }
+        }
+        
         switch(skill.type) {
             case 'attack':
                 if (skill.targetAll) {
@@ -245,7 +253,7 @@ class Character {
                                 killedCount++;
                             } else {
                                 let damage = this.calculateSkillDamage(skill.power, skill.isMagic);
-                                let isCrit = Math.random() * 100 < this.crit;
+                                let isCrit = skill.forceCrit || Math.random() * 100 < this.crit;
                                 if (isCrit) {
                                     damage = Math.floor(damage * (this.critDmg / 100));
                                     anyCrit = true;
@@ -263,7 +271,7 @@ class Character {
                     } else {
                         enemies.forEach(enemy => {
                             let damage = this.calculateSkillDamage(skill.power, skill.isMagic);
-                            let isCrit = Math.random() * 100 < this.crit;
+                            let isCrit = skill.forceCrit || Math.random() * 100 < this.crit;
                             if (isCrit) {
                                 damage = Math.floor(damage * (this.critDmg / 100));
                                 anyCrit = true;
@@ -291,7 +299,7 @@ class Character {
                     let anyCrit = false;
                     enemies.forEach(enemy => {
                         let damage = this.calculateSkillDamage(power, skill.isMagic);
-                        let isCrit = Math.random() * 100 < this.crit;
+                        let isCrit = skill.forceCrit || Math.random() * 100 < this.crit;
                         if (isCrit) {
                             damage = Math.floor(damage * (this.critDmg / 100));
                             anyCrit = true;
@@ -311,7 +319,7 @@ class Character {
                         if (enemies.length > 0) {
                             const randomTarget = enemies[Math.floor(Math.random() * enemies.length)];
                             let percentDamage = Math.floor(randomTarget.hp * skill.effect.percent);
-                            let isCrit = Math.random() * 100 < this.crit;
+                            let isCrit = skill.forceCrit || Math.random() * 100 < this.crit;
                             if (isCrit) {
                                 percentDamage = Math.floor(percentDamage * (this.critDmg / 100));
                             }
@@ -339,14 +347,14 @@ class Character {
                         this.skillUseCount[skill.name] = (this.skillUseCount[skill.name] || 0) + 1;
                         const useCount = this.skillUseCount[skill.name];
                         const magicPower = this.magicPower || 10;
-                        damage = Math.floor(useCount * magicPower / 10);
+                        damage = useCount * 2 + magicPower;
                     }
                     
                     if (skill.effect?.type === 'sacrificeDamage') {
                         const sacrificeCost = Math.floor(this.maxHp * skill.effect.costPercent);
                         this.hp -= sacrificeCost;
                         let percentDamage = Math.floor(target.maxHp * skill.effect.percent);
-                        let isCrit = Math.random() * 100 < this.crit;
+                        let isCrit = skill.forceCrit || Math.random() * 100 < this.crit;
                         if (isCrit) {
                             percentDamage = Math.floor(percentDamage * (this.critDmg / 100));
                         }
@@ -367,7 +375,7 @@ class Character {
                     
                     if (skill.effect?.type === 'counter') {
                         damage = battle.lastPlayerDamage || 1;
-                        let isCrit = Math.random() * 100 < this.crit;
+                        let isCrit = skill.forceCrit || Math.random() * 100 < this.crit;
                         if (isCrit) {
                             damage = Math.floor(damage * (this.critDmg / 100));
                         }
@@ -424,7 +432,7 @@ class Character {
                         return { damage: result1 + result2, type: 'attack', doubleStrike: true };
                     }
                     
-                    let isCrit = Math.random() * 100 < this.crit;
+                    let isCrit = skill.forceCrit || Math.random() * 100 < this.crit;
                     if (isCrit) {
                         damage = Math.floor(damage * (this.critDmg / 100));
                     }

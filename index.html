@@ -335,6 +335,27 @@
             <div id="battle-log-content"></div>
         </div>
         
+        <!-- ==================== 训练场控制面板 ==================== -->
+        <div id="training-panel" class="hidden">
+            <div class="training-header">
+                <span>⚔️ 训练场</span>
+                <button class="training-collapse-btn" onclick="document.getElementById('training-panel').classList.toggle('collapsed')">▼</button>
+            </div>
+            <div class="training-content">
+                <div class="training-controls">
+                    <button class="training-btn" onclick="game.changeTrainingEnemy('common')">普通怪</button>
+                    <button class="training-btn" onclick="game.changeTrainingEnemy('elite')">精英怪</button>
+                    <button class="training-btn" onclick="game.changeTrainingEnemy('boss')">BOSS</button>
+                </div>
+                <div class="training-search">
+                    <input type="text" id="training-search-input" placeholder="搜索敌人..." onkeypress="if(event.key==='Enter')game.searchTrainingEnemy(this.value)">
+                    <button class="training-search-btn" onclick="game.searchTrainingEnemy(document.getElementById('training-search-input').value)">🔍</button>
+                </div>
+                <div id="training-enemy-list" class="training-enemy-list"></div>
+                <button class="training-btn exit-btn" onclick="game.exitTrainingMode()">退出训练场</button>
+            </div>
+        </div>
+        
         <!-- ==================== 图鉴面板 ==================== -->
         <!-- 查看已收集的技能、遗物、宠物、敌人 -->
         <div id="encyclopedia-panel" class="hidden">

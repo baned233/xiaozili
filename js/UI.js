@@ -229,6 +229,14 @@ class UI {
                         audioManager.playClick();
                         this.showDebugConsole();
                         consoleInput.value = '';
+                    } else if (value === 'solo') {
+                        audioManager.playClick();
+                        this.game.startTrainingMode();
+                        consoleInput.value = '';
+                    } else if (value === 'exit' && this.game.trainingMode) {
+                        audioManager.playClick();
+                        this.game.exitTrainingMode();
+                        consoleInput.value = '';
                     }
                 }
             });
@@ -276,27 +284,6 @@ class UI {
             logPanel.style.top = newY + 'px';
         };
 
-        const onMouseUp = () => {
-            if (isDragging) {
-                isDragging = false;
-                logPanel.classList.remove('dragging');
-            }
-        };
-
-        logPanel.addEventListener('mousedown', onMouseDown);
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-
-        logPanel.addEventListener('touchstart', (e) => {
-            if (e.target.closest('button') || e.target.closest('.battle-log-entry')) return;
-            isDragging = true;
-            logPanel.classList.add('dragging');
-            const touch = e.touches[0];
-            offsetX = touch.clientX - logPanel.offsetLeft;
-            offsetY = touch.clientY - logPanel.offsetTop;
-            e.preventDefault();
-        }, { passive: false });
-
         document.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
             const touch = e.touches[0];
@@ -305,17 +292,17 @@ class UI {
             const container = document.getElementById('game-container');
             if (container) {
                 const containerRect = container.getBoundingClientRect();
-                newX = Math.max(containerRect.left, Math.min(newX, containerRect.right - logPanel.offsetWidth));
-                newY = Math.max(containerRect.top, Math.min(newY, containerRect.bottom - logPanel.offsetHeight));
+                newX = Math.max(containerRect.left, Math.min(newX, containerRect.right - panelWidth));
+                newY = Math.max(containerRect.top, Math.min(newY, containerRect.bottom - panelHeight));
             }
-            logPanel.style.left = newX + 'px';
-            logPanel.style.top = newY + 'px';
+            panel.style.left = newX + 'px';
+            panel.style.top = newY + 'px';
         }, { passive: false });
 
         document.addEventListener('touchend', () => {
             if (isDragging) {
                 isDragging = false;
-                logPanel.classList.remove('dragging');
+                panel.classList.remove('dragging');
             }
         });
     }
@@ -338,6 +325,89 @@ class UI {
     showGameScreen() {
         this.mainMenu.classList.add('hidden');
         this.gameScreen.classList.remove('hidden');
+    }
+
+    initDraggableTrainingPanel() {
+        const panel = document.getElementById('training-panel');
+        if (!panel) return;
+
+        let isDragging = false;
+        let offsetX, offsetY;
+        let panelWidth, panelHeight;
+
+        const onMouseDown = (e) => {
+            const target = e.target;
+            if (target.closest('button') || target.closest('input') || target.closest('.training-enemy-item')) return;
+            isDragging = true;
+            panelWidth = panel.offsetWidth;
+            panelHeight = panel.offsetHeight;
+            panel.classList.add('dragging');
+            offsetX = e.clientX - panel.offsetLeft;
+            offsetY = e.clientY - panel.offsetTop;
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
+            let newX = e.clientX - offsetX;
+            let newY = e.clientY - offsetY;
+            const container = document.getElementById('game-container');
+            if (container) {
+                const containerRect = container.getBoundingClientRect();
+                newX = Math.max(containerRect.left, Math.min(newX, containerRect.right - panelWidth));
+                newY = Math.max(containerRect.top, Math.min(newY, containerRect.bottom - panelHeight));
+            }
+            panel.style.left = newX + 'px';
+            panel.style.top = newY + 'px';
+        };
+
+        const onMouseUp = () => {
+            if (isDragging) {
+                isDragging = false;
+                panel.classList.remove('dragging');
+            }
+        };
+
+        panel.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+
+        panel.addEventListener('touchstart', (e) => {
+            const target = e.target;
+            if (target.closest('button') || target.closest('input') || target.closest('.training-enemy-item')) return;
+            isDragging = true;
+            panelWidth = panel.offsetWidth;
+            panelHeight = panel.offsetHeight;
+            panel.classList.add('dragging');
+            const touch = e.touches[0];
+            offsetX = touch.clientX - panel.offsetLeft;
+            offsetY = touch.clientY - panel.offsetTop;
+            e.preventDefault();
+            e.stopPropagation();
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const touch = e.touches[0];
+            let newX = touch.clientX - offsetX;
+            let newY = touch.clientY - offsetY;
+            const container = document.getElementById('game-container');
+            if (container) {
+                const containerRect = container.getBoundingClientRect();
+                newX = Math.max(containerRect.left, Math.min(newX, containerRect.right - panelWidth));
+                newY = Math.max(containerRect.top, Math.min(newY, containerRect.bottom - panelHeight));
+            }
+            panel.style.left = newX + 'px';
+            panel.style.top = newY + 'px';
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            if (isDragging) {
+                isDragging = false;
+                panel.classList.remove('dragging');
+            }
+        });
     }
 
     updateFloor(floor) {
@@ -613,6 +683,22 @@ class UI {
         this.battleLogPanel.classList.add('hidden');
     }
 
+    showTrainingControls() {
+        const panel = document.getElementById('training-panel');
+        if (panel) {
+            panel.classList.remove('hidden');
+            if (!this.trainingPanelInitialized) {
+                this.initDraggableTrainingPanel();
+                this.trainingPanelInitialized = true;
+            }
+        }
+    }
+
+    hideTrainingControls() {
+        const panel = document.getElementById('training-panel');
+        if (panel) panel.classList.add('hidden');
+    }
+
     updateBattleLog(battleLog) {
         const logContent = document.getElementById('battle-log-content');
         if (!logContent) return;
@@ -813,7 +899,7 @@ class UI {
             this.playerSide.appendChild(card);
         });
 
-        battle.enemies.forEach((enemy) => {
+        battle.enemies.filter(e => !e.isDead && !e.banished).forEach((enemy) => {
             const card = this.createEnemyCard(enemy, battle);
             this.enemySide.appendChild(card);
         });
@@ -873,7 +959,13 @@ class UI {
                 const buffData = BUFF_DATA[buff.name];
                 const buffDesc = buffData ? buffData.description : buff.description || '';
                 const buffType = buffData ? buffData.type : (buff.type || 'positive');
-                buffsHtml += `<div class="buff-icon ${buffType}" data-buff="${buff.name}" data-stacks="${buff.stacks}" data-description="${buff.name}: ${buffDesc}" title="${buff.name} (${buff.stacks}层)">${buffData ? buffData.icon : buff.icon}</div>`;
+                buffsHtml += `<div class="buff-icon ${buffType}" 
+                    data-buff="${buff.name}" 
+                    data-stacks="${buff.stacks}" 
+                    data-description="${buff.name}: ${buffDesc}" 
+                    title="${buff.name} (${buff.stacks}层)"
+                    ontouchstart="event.stopPropagation(); this.classList.toggle('buff-active');"
+                    onclick="event.stopPropagation(); this.classList.toggle('buff-active');">${buffData ? buffData.icon : buff.icon}</div>`;
             });
             buffsHtml += `</div>`;
         }
@@ -934,7 +1026,15 @@ class UI {
                 const buffData = BUFF_DATA[buff.name];
                 const buffDesc = buffData ? buffData.description : buff.description || '';
                 const buffType = buffData ? buffData.type : (buff.type || 'positive');
-                buffsHtml += `<div class="buff-icon ${buffType}" data-buff="${buff.name}" data-stacks="${buff.stacks}" data-description="${buff.name}: ${buffDesc}" title="${buff.name} (${buff.stacks}层)">${buffData ? buffData.icon : buff.icon}</div>`;
+                buffsHtml += `<div class="buff-icon ${buffType}" 
+                    data-buff="${buff.name}" 
+                    data-stacks="${buff.stacks}" 
+                    data-description="${buff.name}: ${buffDesc}" 
+                    title="${buff.name} (${buff.stacks}层)"
+                    onmouseenter="event.stopPropagation(); this.setAttribute('data-show-tooltip', 'true');"
+                    onmouseleave="event.stopPropagation(); this.setAttribute('data-show-tooltip', 'false');"
+                    ontouchstart="event.stopPropagation(); this.classList.toggle('buff-active');"
+                    onclick="event.stopPropagation(); this.classList.toggle('buff-active');">${buffData ? buffData.icon : buff.icon}</div>`;
             });
             buffsHtml += `</div>`;
         }
@@ -971,6 +1071,7 @@ class UI {
             <div class="enemy-tooltip hidden">
                 <div class="enemy-tooltip-title">${enemy.name}</div>
                 <div class="enemy-tooltip-type">${enemyTypeName}</div>
+                <div class="enemy-tooltip-desc">${enemy.description || ''}</div>
                 <div class="enemy-tooltip-stats">
                     <div>❤️ 生命: ${enemy.hp}/${enemy.maxHp}</div>
                     <div>⚔️ 攻击: ${enemy.atk}</div>
@@ -985,14 +1086,29 @@ class UI {
         var isSelectingTarget = battle.battleState === 'selectTarget' && battle.isPlayerTurn() && !enemy.isDead;
         
         if (!isSelectingTarget) {
-            card.addEventListener('mouseenter', function() {
+            card.addEventListener('mouseenter', function(e) {
                 var tooltip = this.querySelector('.enemy-tooltip');
-                if (tooltip) tooltip.classList.remove('hidden');
+                var buffIcons = this.querySelectorAll('.buff-icon');
+                var isOverBuff = false;
+                buffIcons.forEach(buffIcon => {
+                    if (buffIcon.getAttribute('data-show-tooltip') === 'true') {
+                        isOverBuff = true;
+                    }
+                });
+                if (tooltip && !isOverBuff) tooltip.classList.remove('hidden');
             });
             
-            card.addEventListener('mouseleave', function() {
+            card.addEventListener('mouseleave', function(e) {
                 var tooltip = this.querySelector('.enemy-tooltip');
-                if (tooltip) tooltip.classList.add('hidden');
+                var related = e.relatedTarget;
+                var isMovingToBuff = false;
+                var buffIcons = this.querySelectorAll('.buff-icon');
+                buffIcons.forEach(buffIcon => {
+                    if (buffIcon.contains(related)) {
+                        isMovingToBuff = true;
+                    }
+                });
+                if (tooltip && !isMovingToBuff) tooltip.classList.add('hidden');
             });
         }
         
@@ -2034,42 +2150,6 @@ getRarityCN(rarity) {
                     <div class="debug-item-desc" style="text-align:left;">${pet.description}</div>
                 </div>
                 <span class="debug-item-rarity ${pet.rarity}">${pet.rarity}</span>
-            `;
-            content.appendChild(div);
-        });
-    }
-
-    renderEncyclopediaEnemies(content) {
-        const enemies = [
-            { name: '老鼠', icon: '🐀', type: 'common', desc: '宿舍常见生物' },
-            { name: '蟑螂', icon: '🪲', type: 'common', desc: '生命力顽强' },
-            { name: '臭虫', icon: '🐛', type: 'common', desc: '令人厌恶' },
-            { name: '跳蚤', icon: '🦟', type: 'common', desc: '吸血害虫' },
-            { name: '衣蛾', icon: '🦋', type: 'common', desc: '衣服杀手' },
-            { name: '螨虫', icon: '🐜', type: 'common', desc: '微小生物' },
-            { name: '虱子', icon: '🐝', type: 'common', desc: '寄生生物' },
-            { name: '蚊子', icon: '🪰', type: 'common', desc: '嗡嗡作响' },
-            { name: '学霸', icon: '👓', type: 'elite', desc: '成绩优异' },
-            { name: '纪检', icon: '👮', type: 'elite', desc: '检查纪律' },
-            { name: '学生会', icon: '🎫', type: 'elite', desc: '管理学生' },
-            { name: '导员', icon: '📋', type: 'elite', desc: '辅导员' },
-            { name: '实验员', icon: '🥼', type: 'elite', desc: '科研人员' },
-            { name: '酒吧经理', icon: '🎰', type: 'elite', desc: '娱乐场所管理者' },
-            { name: '宿舍管理员', icon: '🔑', type: 'boss', desc: '第15层Boss' },
-            { name: '176实验体', icon: '🧪', type: 'boss', desc: '第30层Boss' },
-            { name: '磨砂迪加老板', icon: '💼', type: 'boss', desc: '第45层Boss' },
-            { name: '教导主任', icon: '📏', type: 'boss', desc: '第60层Boss' }
-        ];
-        enemies.forEach(enemy => {
-            const div = document.createElement('div');
-            div.className = 'debug-item';
-            div.innerHTML = `
-                <span class="debug-item-icon">${enemy.icon}</span>
-                <div class="debug-item-info">
-                    <div class="debug-item-name">${enemy.name}</div>
-                    <div class="debug-item-desc">${enemy.desc}</div>
-                </div>
-                <span class="debug-item-rarity ${enemy.type}">${enemy.type}</span>
             `;
             content.appendChild(div);
         });

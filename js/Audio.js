@@ -194,6 +194,10 @@ class AudioManager {
         this.playSoundFile('magic1.mp3');
     }
 
+    playFire() {
+        this.playSoundFile('fire.mp3');
+    }
+
     playHealSkill() {
         this.playTone(523, 0.12, 'sine', 0.3);
         setTimeout(() => this.playTone(659, 0.12, 'sine', 0.3), 80);

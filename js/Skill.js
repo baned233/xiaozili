@@ -462,7 +462,7 @@ const SKILL_POOL = [
         name: '开导',
         description: '开导！本场战斗内每使用一次该技能，其伤害都会提升；且使用该技能后，不会结束玩家的当前回合',
         type: 'attack',
-        rarity: 'legendary',
+        rarity: 'mythic',
         power: '20+skillUseCount*15',
         level: 4,
         icon: '📢',
@@ -622,11 +622,24 @@ const SKILL_POOL = [
         description: '每次使用该技能都会使该技能伤害永久增加',
         type: 'attack',
         rarity: 'rare',
-        power: 'skillUseCount*magicPower/10',
+        power: 'skillUseCount*2+1*matk',
         level: 3,
         icon: '😈',
-        cost: 10,
+        cost: 15,
         isMagic: true,
         effect: { type: 'escalatingMagicDamage' }
+    },
+    {
+        id: 51,
+        name: '火球',
+        description: '丢出火球，对敌人造成魔法伤害',
+        type: 'attack',
+        rarity: 'common',
+        power: '30+1*matk',
+        level: 1,
+        icon: '🔥',
+        cost: 5,
+        isMagic: true,
+        sound: 'fire'
     }
 ];
