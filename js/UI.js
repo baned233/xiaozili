@@ -819,6 +819,12 @@ class UI {
         } else if (floor >= 16 && floor <= 30) {
             bgImage.src = 'assets/images/qianjin2.png';
             bgImage.style.display = 'block';
+        } else if (floor >= 31 && floor <= 45) {
+            bgImage.src = 'assets/images/qianjin3.png';
+            bgImage.style.display = 'block';
+        } else if (floor >= 46 && floor <= 60) {
+            bgImage.src = 'assets/images/qianjin4.png';
+            bgImage.style.display = 'block';
         } else {
             bgImage.style.display = 'none';
         }
@@ -877,6 +883,12 @@ class UI {
             bgImage.style.display = 'block';
         } else if (floor >= 16 && floor <= 30) {
             bgImage.src = 'assets/images/zhandou2.png';
+            bgImage.style.display = 'block';
+        } else if (floor >= 31 && floor <= 45) {
+            bgImage.src = 'assets/images/zhandou3.png';
+            bgImage.style.display = 'block';
+        } else if (floor >= 46 && floor <= 60) {
+            bgImage.src = 'assets/images/zhandou4.png';
             bgImage.style.display = 'block';
         } else {
             bgImage.style.display = 'none';
@@ -1538,22 +1550,152 @@ class UI {
 
     hideRewards() {
         this.rewardPanel.classList.add('hidden');
+        this.rewardPanel.style.overflowY = '';
+        this.rewardPanel.style.maxHeight = '';
+        this.rewardPanel.style.zIndex = '';
+        this.rewardOptions.style.flexWrap = '';
+        this.rewardOptions.style.flexDirection = '';
+        this.rewardOptions.style.overflowY = '';
+        this.rewardOptions.style.maxHeight = '';
     }
 
-    showShop(items, gold) {
+    showSpecialSkillSelection(skills, rarity, rarityName, onSelect) {
+        this.specialSkillCallback = onSelect;
+        this.rewardPanel.classList.remove('hidden');
+        this.rewardPanel.querySelector('h3').textContent = `选择${rarityName}品质技能`;
+        this.rewardOptions.innerHTML = '';
+        this.rewardPanel.style.overflowY = 'auto';
+        this.rewardPanel.style.maxHeight = '80vh';
+        this.rewardPanel.style.zIndex = '10000';
+        this.rewardOptions.style.flexWrap = 'nowrap';
+        this.rewardOptions.style.flexDirection = 'column';
+        this.rewardOptions.style.overflowY = 'visible';
+        this.rewardOptions.style.maxHeight = 'none';
+        this.rewardOptions.style.width = '100%';
+        this.rewardOptions.style.boxSizing = 'border-box';
+        
+        const rarityColors = {
+            'common': '#aaa',
+            'rare': '#4aff4a',
+            'uncommon': '#4a9fff',
+            'epic': '#a34aff',
+            'legendary': '#ffa500',
+            'mythic': '#ff4a4a'
+        };
+        
+        skills.forEach((skill) => {
+            const option = document.createElement('div');
+            option.className = `reward-option ${Skill.getRarityColor(skill.rarity)}`;
+            option.style.position = 'relative';
+            
+            const shortDesc = skill.description.split('，')[0].split(',')[0];
+            const skillIconHtml = skill.icon && skill.icon.endsWith('.png')
+                ? `<img src="${skill.icon}" alt="${skill.name}" style="width:clamp(28px,4vw,36px);height:clamp(28px,4vw,36px);object-fit:contain;">`
+                : `<span class="reward-icon">${skill.icon}</span>`;
+            
+            option.innerHTML = `
+                <div class="skill-tooltip skill-select-tooltip" style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); z-index: 500; white-space: normal; width: 90vw; max-width: 250px; margin-bottom: 5px;">
+                    <div class="tooltip-name">${skill.name}</div>
+                    <div class="tooltip-type">${skill.type === 'attack' ? '攻击技能' : skill.type === 'heal' ? '治疗技能' : skill.type === 'defense' ? '防御技能' : skill.type === 'buff' ? '增益技能' : skill.type === 'summon' ? '召唤技能' : skill.type === 'debuff' ? '减益技能' : skill.type === 'fear' ? '恐惧技能' : skill.type === 'mark' ? '标记技能' : skill.type === 'banish' ? '放逐技能' : skill.type === 'passive' ? '被动技能' : '被动技能'}</div>
+                    <div class="tooltip-desc">${skill.description}</div>
+                    <div class="tooltip-cost">消耗: ${skill.cost} ${skill.isMagic ? '法力' : '体力'}</div>
+                </div>
+                <div class="reward-icon">${skillIconHtml}</div>
+                <div class="reward-name">${skill.name}</div>
+                <div class="reward-desc">${shortDesc}</div>
+            `;
+            
+            option.addEventListener('mouseenter', function() {
+                const tooltip = this.querySelector('.skill-tooltip');
+                if (tooltip) tooltip.style.display = 'block';
+            });
+            option.addEventListener('mouseleave', function() {
+                const tooltip = this.querySelector('.skill-tooltip');
+                if (tooltip) tooltip.style.display = 'none';
+            });
+            
+            option.addEventListener('touchstart', function(e) {
+                const tooltip = this.querySelector('.skill-tooltip');
+                if (tooltip) {
+                    document.querySelectorAll('.skill-tooltip').forEach(t => t.style.display = 'none');
+                    tooltip.style.display = 'block';
+                }
+                e.stopPropagation();
+            });
+            
+            option.addEventListener('click', () => {
+                audioManager.playClick();
+                this.rewardPanel.classList.add('hidden');
+                if (this.specialSkillCallback) {
+                    this.specialSkillCallback(skill);
+                    this.specialSkillCallback = null;
+                }
+            });
+            
+            this.rewardOptions.appendChild(option);
+        });
+        
+        const cancelDiv = document.createElement('div');
+        cancelDiv.className = 'reward-skip';
+        cancelDiv.textContent = '取消 (返还一半金币)';
+        cancelDiv.style.cssText = 'background: rgba(255, 80, 80, 0.3); padding: 12px 15px; width: 100%; box-sizing: border-box; text-align: center; margin-top: 10px;';
+        cancelDiv.addEventListener('click', () => {
+            audioManager.playClick();
+            this.rewardPanel.classList.add('hidden');
+            if (this.specialSkillCallback) {
+                this.specialSkillCallback(null);
+                this.specialSkillCallback = null;
+            }
+        });
+        this.rewardOptions.appendChild(cancelDiv);
+    }
+
+    showShop(items, gold, playAnimation = true) {
         this.shopPanel.classList.remove('hidden');
         this.shopItems.innerHTML = '';
+        
+        const shopDescEl = document.getElementById('shop-desc');
+        if (shopDescEl) {
+            shopDescEl.innerHTML = '你遭遇了侦探<br>"你也迷失在这了吗？"<br>"我或许能帮你，只需一点点代价"';
+        }
+        
+        const rarityColors = {
+            'common': '#aaa',
+            'rare': '#4aff4a',
+            'uncommon': '#4a9fff',
+            'epic': '#a34aff',
+            'legendary': '#ffa500',
+            'mythic': '#ff4a4a'
+        };
         
         items.forEach((item, index) => {
             const div = document.createElement('div');
             const canAfford = gold >= item.price;
             div.className = `shop-item ${item.sold ? 'sold' : ''} ${!canAfford && !item.sold ? 'unaffordable' : ''}`;
+            
+            let baseStyle = 'background: rgba(26, 26, 37, 0.5);';
+            if (playAnimation) {
+                baseStyle += ' opacity: 0; transform: translateY(20px); transition: opacity 0.3s ease, transform 0.3s ease;';
+            }
+            
+            let rarityStyle = '';
+            if (item.rarity) {
+                const color = rarityColors[item.rarity] || '#aaa';
+                rarityStyle = `border: 2px solid ${color}; box-shadow: 0 0 8px ${color}40;`;
+            }
+            
             div.innerHTML = `
-                <div class="shop-item-icon">${item.icon}</div>
-                <div class="shop-item-name">${item.name}</div>
+                <div class="shop-item-icon" ${item.rarity ? `style="color:${rarityColors[item.rarity]};"` : ''}>${item.icon}</div>
+                <div class="shop-item-name" ${item.rarity ? `style="color:${rarityColors[item.rarity]};"` : ''}>${item.name}</div>
                 <div class="shop-item-price">${item.sold ? '已售出' : `${item.price} 金币`}</div>
                 <div class="shop-item-desc">${item.desc}</div>
             `;
+            
+            if (rarityStyle) {
+                div.style.cssText = rarityStyle + ' ' + baseStyle;
+            } else {
+                div.style.cssText = baseStyle;
+            }
             
             if (!item.sold) {
                 if (canAfford) {
@@ -1567,6 +1709,13 @@ class UI {
             }
             
             this.shopItems.appendChild(div);
+            
+            if (playAnimation) {
+                setTimeout(() => {
+                    div.style.opacity = '1';
+                    div.style.transform = 'translateY(0)';
+                }, index * 150);
+            }
         });
     }
 
@@ -1817,6 +1966,7 @@ class UI {
         if (!player) return;
 
         const stats = [
+            { key: 'gold', label: '金币', value: this.game.gold },
             { key: 'maxHp', label: '最大生命', value: player.maxHp },
             { key: 'hp', label: '当前生命', value: player.hp },
             { key: 'atk', label: '攻击力', value: player.atk },
@@ -1865,16 +2015,24 @@ class UI {
             input.addEventListener('change', () => {
                 const statKey = input.dataset.stat;
                 let newValue = parseInt(input.value) || 1;
-                if (statKey === 'maxHp' || statKey === 'hp') {
+                
+                if (statKey === 'gold') {
+                    newValue = Math.max(0, newValue);
+                    this.game.gold = newValue;
+                    this.updateGold(this.game.gold);
+                } else if (statKey === 'maxHp' || statKey === 'hp') {
                     newValue = Math.max(1, newValue);
+                    player[statKey] = newValue;
                 } else if (statKey === 'atk' || statKey === 'def' || statKey === 'spd' || statKey === 'crit' || statKey === 'level') {
                     newValue = Math.max(1, newValue);
+                    player[statKey] = newValue;
                 } else if (statKey === 'critDmg') {
                     newValue = Math.max(100, newValue);
+                    player[statKey] = newValue;
                 } else {
                     newValue = Math.max(0, newValue);
+                    player[statKey] = newValue;
                 }
-                player[statKey] = newValue;
                 this.renderDebugStats(content);
             });
         });
@@ -1886,7 +2044,10 @@ class UI {
                 const action = btn.dataset.action;
                 const change = action === 'inc' ? 1 : -1;
                 
-                if (statKey === 'maxHp' || statKey === 'hp') {
+                if (statKey === 'gold') {
+                    this.game.gold = Math.max(0, this.game.gold + change * 100);
+                    this.updateGold(this.game.gold);
+                } else if (statKey === 'maxHp' || statKey === 'hp') {
                     player[statKey] = Math.max(1, player[statKey] + change * 10);
                 } else if (statKey === 'atk' || statKey === 'def' || statKey === 'spd') {
                     player[statKey] = Math.max(1, player[statKey] + change);
@@ -1899,6 +2060,17 @@ class UI {
                 }
                 this.renderDebugStats(content);
             };
+        });
+        
+        const goldInputs = content.querySelectorAll('.debug-stat-input[data-stat="gold"]');
+        goldInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                let newValue = parseInt(input.value) || 0;
+                newValue = Math.max(0, newValue);
+                this.game.gold = newValue;
+                this.updateGold(this.game.gold);
+                this.renderDebugStats(content);
+            });
         });
     }
 

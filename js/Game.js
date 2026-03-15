@@ -1081,44 +1081,75 @@ class Game {
     openShop() {
         this.state = 'shop';
         this.shopItems = this.generateShopItems();  // 生成商店商品
-        this.ui.showShop(this.shopItems, this.gold);  // 显示商店界面
+        this.ui.showShop(this.shopItems, this.gold, true);  // 显示商店界面
     }
 
     // ==================== 生成商店商品 ====================
     generateShopItems() {
         const items = [];
-        const itemCount = 4 + Math.floor(this.currentFloor / 10);  // 层数越高商品越多
-        const usedItems = new Set();
         
         // 检查玩家是否有槟榔上瘾BUFF，如果有则固定添加槟榔
         const player = this.playerTeam[0];
         const hasBetelNutAddiction = player && player.buffs && player.buffs.some(b => b.name === '槟榔上瘾');
         
-        if (hasBetelNutAddiction) {
-            const betelNutItem = SHOP_ITEMS.find(item => item.id === 'betel_nut');
-            if (betelNutItem) {
-                const priceMultiplier = 1 + (this.currentFloor - 1) * 0.05;
-                items.push({
-                    ...betelNutItem,
-                    price: Math.floor(betelNutItem.price * priceMultiplier),
-                    sold: false
-                });
-                usedItems.add('betel_nut');
-            }
-        }
+        const priceMultiplier = 1 + (this.currentFloor - 1) * 0.05;
         
-        while (items.length < itemCount) {
-            const item = SHOP_ITEMS[Math.floor(Math.random() * SHOP_ITEMS.length)];
-            if (!usedItems.has(item.id)) {
-                usedItems.add(item.id);
-                const priceMultiplier = 1 + (this.currentFloor - 1) * 0.05;
-                items.push({
-                    ...item,
-                    price: Math.floor(item.price * priceMultiplier),
-                    sold: false
-                });
+        // 固定刷新每个商品一个
+        SHOP_ITEMS.forEach(shopItem => {
+            // 如果有槟榔上瘾，槟榔已经包含在SHOP_ITEMS中，不需要额外添加
+            if (shopItem.id === 'betel_nut' && hasBetelNutAddiction) {
+                return;
             }
-        }
+            
+            let item = { ...shopItem, price: Math.floor(shopItem.price * priceMultiplier), sold: false };
+            
+            // 特质激活试剂需要随机品质和价格
+            if (shopItem.id === 'special_skill_activation') {
+                const rarityWeights = {
+                    'common': 35,
+                    'rare': 25,
+                    'uncommon': 20,
+                    'epic': 10,
+                    'legendary': 8,
+                    'mythic': 2
+                };
+                const rarityPrices = {
+                    'common': 150,
+                    'rare': 250,
+                    'uncommon': 375,
+                    'epic': 565,
+                    'legendary': 800,
+                    'mythic': 1600
+                };
+                const rarityNames = {
+                    'common': '普通',
+                    'rare': '稀有',
+                    'uncommon': '罕见',
+                    'epic': '史诗',
+                    'legendary': '传说',
+                    'mythic': '神话'
+                };
+                
+                const random = Math.random() * 100;
+                let cumulative = 0;
+                let selectedRarity = 'common';
+                for (const [rarity, weight] of Object.entries(rarityWeights)) {
+                    cumulative += weight;
+                    if (random < cumulative) {
+                        selectedRarity = rarity;
+                        break;
+                    }
+                }
+                
+                item.rarity = selectedRarity;
+                item.rarityName = rarityNames[selectedRarity];
+                item.price = Math.floor(rarityPrices[selectedRarity] * priceMultiplier);
+                item.name = `特质激活试剂(${rarityNames[selectedRarity]})`;
+                item.desc = `选择${rarityNames[selectedRarity]}品质技能`;
+            }
+            
+            items.push(item);
+        });
         
         return items;
     }
@@ -1149,7 +1180,7 @@ class Game {
             this.ui.updatePlayerResources(player);
             this.ui.showDialog(`嚼了口槟榔，恢复了 ${item.effect.value} 点生命！`, () => {
                 this.ui.updateGold(this.gold);
-                this.ui.showShop(this.shopItems, this.gold);
+                this.ui.showShop(this.shopItems, this.gold, false);
             });
             return;
         }
@@ -1161,7 +1192,7 @@ class Game {
                     this.ui.showDialog(`获得了治疗药水，已存入药水栏！`, () => {
                         this.ui.updateGold(this.gold);
                         this.ui.updatePotionBar(this.potions);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     });
                 } else if (this.potions.length >= this.maxPotions) {
                     player.heal(item.effect.value);
@@ -1169,7 +1200,7 @@ class Game {
                     this.ui.updatePlayerResources(player);
                     this.ui.showDialog(`药水栏已满，直接恢复了 ${item.effect.value} 点生命！`, () => {
                         this.ui.updateGold(this.gold);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     });
                 } else {
                     player.heal(item.effect.value);
@@ -1177,7 +1208,7 @@ class Game {
                     this.ui.updatePlayerResources(player);
                     this.ui.showDialog(`恢复了 ${item.effect.value} 点生命！`, () => {
                         this.ui.updateGold(this.gold);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     });
                 }
                 break;
@@ -1187,7 +1218,7 @@ class Game {
                     this.ui.showDialog(`获得了体力药水，已存入药水栏！`, () => {
                         this.ui.updateGold(this.gold);
                         this.ui.updatePotionBar(this.potions);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     });
                 } else if (this.potions.length >= this.maxPotions) {
                     player.restoreStamina(item.effect.value);
@@ -1195,7 +1226,7 @@ class Game {
                     this.ui.updatePlayerResources(player);
                     this.ui.showDialog(`药水栏已满，直接恢复了 ${item.effect.value} 点体力！`, () => {
                         this.ui.updateGold(this.gold);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     });
                 } else {
                     player.restoreStamina(item.effect.value);
@@ -1203,7 +1234,7 @@ class Game {
                     this.ui.updatePlayerResources(player);
                     this.ui.showDialog(`恢复了 ${item.effect.value} 点体力！`, () => {
                         this.ui.updateGold(this.gold);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     });
                 }
                 break;
@@ -1213,7 +1244,7 @@ class Game {
                     this.ui.showDialog(`获得了法力药水，已存入药水栏！`, () => {
                         this.ui.updateGold(this.gold);
                         this.ui.updatePotionBar(this.potions);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     });
                 } else if (this.potions.length >= this.maxPotions) {
                     player.restoreMana(item.effect.value);
@@ -1221,7 +1252,7 @@ class Game {
                     this.ui.updatePlayerResources(player);
                     this.ui.showDialog(`药水栏已满，直接恢复了 ${item.effect.value} 点法力！`, () => {
                         this.ui.updateGold(this.gold);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     });
                 } else {
                     player.restoreMana(item.effect.value);
@@ -1229,7 +1260,7 @@ class Game {
                     this.ui.updatePlayerResources(player);
                     this.ui.showDialog(`恢复了 ${item.effect.value} 点法力！`, () => {
                         this.ui.updateGold(this.gold);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     });
                 }
                 break;
@@ -1239,7 +1270,7 @@ class Game {
                 audioManager.playBuff();
                 this.ui.showDialog(`攻击力 +${item.effect.value}！`, () => {
                     this.ui.updateGold(this.gold);
-                    this.ui.showShop(this.shopItems, this.gold);
+                    this.ui.showShop(this.shopItems, this.gold, false);
                 });
                 break;
             case 'def':
@@ -1248,7 +1279,7 @@ class Game {
                 audioManager.playDefense();
                 this.ui.showDialog(`防御力 +${item.effect.value}！`, () => {
                     this.ui.updateGold(this.gold);
-                    this.ui.showShop(this.shopItems, this.gold);
+                    this.ui.showShop(this.shopItems, this.gold, false);
                 });
                 break;
             case 'maxHp':
@@ -1258,7 +1289,7 @@ class Game {
                 this.ui.updatePlayerResources(player);
                 this.ui.showDialog(`最大生命 +${item.effect.value}！`, () => {
                     this.ui.updateGold(this.gold);
-                    this.ui.showShop(this.shopItems, this.gold);
+                    this.ui.showShop(this.shopItems, this.gold, false);
                 });
                 break;
             case 'maxStamina':
@@ -1268,7 +1299,7 @@ class Game {
                 this.ui.updatePlayerResources(player);
                 this.ui.showDialog(`最大体力 +${item.effect.value}！`, () => {
                     this.ui.updateGold(this.gold);
-                    this.ui.showShop(this.shopItems, this.gold);
+                    this.ui.showShop(this.shopItems, this.gold, false);
                 });
                 break;
             case 'maxMana':
@@ -1278,7 +1309,7 @@ class Game {
                 this.ui.updatePlayerResources(player);
                 this.ui.showDialog(`最大法力 +${item.effect.value}！`, () => {
                     this.ui.updateGold(this.gold);
-                    this.ui.showShop(this.shopItems, this.gold);
+                    this.ui.showShop(this.shopItems, this.gold, false);
                 });
                 break;
             case 'crit':
@@ -1286,7 +1317,7 @@ class Game {
                 audioManager.playBuff();
                 this.ui.showDialog(`暴击率 +${item.effect.value}%！`, () => {
                     this.ui.updateGold(this.gold);
-                    this.ui.showShop(this.shopItems, this.gold);
+                    this.ui.showShop(this.shopItems, this.gold, false);
                 });
                 break;
             case 'skill':
@@ -1296,13 +1327,13 @@ class Game {
                     audioManager.playMagic();
                     this.ui.showDialog(`学会技能: ${skill.name}！`, () => {
                         this.ui.updateGold(this.gold);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     });
                 } else {
                     this.gold += Math.floor(item.price * 0.5);
                     this.ui.showDialog('技能栏已满或无新技能，返还一半金币！', () => {
                         this.ui.updateGold(this.gold);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     });
                 }
                 break;
@@ -1313,7 +1344,7 @@ class Game {
                     audioManager.playMagic();
                     this.ui.showDialog(`获得遗物: ${relic.name}！`, () => {
                         this.ui.updateGold(this.gold);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     }, {
                         icon: relic.icon,
                         name: relic.name,
@@ -1323,9 +1354,139 @@ class Game {
                     this.gold += Math.floor(item.price * 0.5);
                     this.ui.showDialog('无新遗物，返还一半金币！', () => {
                         this.ui.updateGold(this.gold);
-                        this.ui.showShop(this.shopItems, this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
                     });
                 }
+                break;
+            case 'supply':
+                const supplyTypes = ['heal', 'stamina', 'mana'];
+                const supplyType = supplyTypes[Math.floor(Math.random() * supplyTypes.length)];
+                const supplyValues = { 'heal': 50, 'stamina': 50, 'mana': 30 };
+                const supplyNames = { 'heal': '治疗药水', 'stamina': '体力药水', 'mana': '法力药水' };
+                const supplyIcons = { 'heal': '🧪', 'stamina': '🍖', 'mana': '🧊' };
+                
+                if (this.potions.length < this.maxPotions && this.addPotion(supplyType)) {
+                    this.ui.updatePlayerResources(player);
+                    this.ui.showDialog(`获得了${supplyNames[supplyType]}，已存入药水栏！`, () => {
+                        this.ui.updateGold(this.gold);
+                        this.ui.updatePotionBar(this.potions);
+                        this.ui.showShop(this.shopItems, this.gold, false);
+                    });
+                } else if (this.potions.length >= this.maxPotions) {
+                    if (supplyType === 'heal') {
+                        player.heal(supplyValues[supplyType]);
+                    } else if (supplyType === 'stamina') {
+                        player.restoreStamina(supplyValues[supplyType]);
+                    } else if (supplyType === 'mana') {
+                        player.restoreMana(supplyValues[supplyType]);
+                    }
+                    audioManager.playHeal();
+                    this.ui.updatePlayerResources(player);
+                    this.ui.showDialog(`药水栏已满，直接获得了${supplyNames[supplyType]}效果！`, () => {
+                        this.ui.updateGold(this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
+                    });
+                } else {
+                    if (supplyType === 'heal') {
+                        player.heal(supplyValues[supplyType]);
+                    } else if (supplyType === 'stamina') {
+                        player.restoreStamina(supplyValues[supplyType]);
+                    } else if (supplyType === 'mana') {
+                        player.restoreMana(supplyValues[supplyType]);
+                    }
+                    audioManager.playHeal();
+                    this.ui.updatePlayerResources(player);
+                    this.ui.showDialog(`获得了${supplyNames[supplyType]}！`, () => {
+                        this.ui.updateGold(this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
+                    });
+                }
+                break;
+            case 'enhancement':
+                const enhancement = this.getRandomAttributeBoost();
+                player[enhancement.stat] += enhancement.value;
+                if (enhancement.stat === 'maxHp') {
+                    player.hp += enhancement.value;
+                } else if (enhancement.stat === 'maxStamina') {
+                    player.stamina += enhancement.value;
+                } else if (enhancement.stat === 'maxMana') {
+                    player.mana += enhancement.value;
+                }
+                audioManager.playBuff();
+                this.ui.updatePlayerResources(player);
+                this.ui.showDialog(`${enhancement.name} +${enhancement.value}！`, () => {
+                    this.ui.updateGold(this.gold);
+                    this.ui.showShop(this.shopItems, this.gold, false);
+                });
+                break;
+            case 'special_skill':
+                let selectedRarity = item.rarity || 'common';
+                
+                const playerSkillIds = player.skills ? player.skills.map(s => s.id) : [];
+                const allOwnedSkillIds = [...new Set([...this.obtainedSkillIds, ...playerSkillIds])];
+                
+                const rarityNames = {
+                    'common': '普通',
+                    'rare': '稀有',
+                    'uncommon': '罕见',
+                    'epic': '史诗',
+                    'legendary': '传说',
+                    'mythic': '神话'
+                };
+                
+                const skillPool = SKILL_POOL.filter(s => !allOwnedSkillIds.includes(s.id) && s.rarity === selectedRarity);
+                let allSkills = skillPool.map(s => new Skill(s));
+                
+                if (skillPool.length === 0) {
+                    for (const r of ['uncommon', 'rare', 'common', 'epic', 'legendary', 'mythic']) {
+                        const fallbackPool = SKILL_POOL.filter(s => !allOwnedSkillIds.includes(s.id) && s.rarity === r);
+                        if (fallbackPool.length > 0) {
+                            allSkills = fallbackPool.map(s => new Skill(s));
+                            selectedRarity = r;
+                            break;
+                        }
+                    }
+                }
+                
+                if (allSkills.length === 0) {
+                    this.gold += Math.floor(item.price * 0.5);
+                    this.ui.showDialog('无新技能，返还一半金币！', () => {
+                        this.ui.updateGold(this.gold);
+                        this.ui.showShop(this.shopItems, this.gold, false);
+                    });
+                    return;
+                }
+                
+                this.pendingSpecialSkillChoice = {
+                    item: item,
+                    rarity: selectedRarity,
+                    skills: allSkills
+                };
+                this.ui.hideShop();
+                this.ui.showSpecialSkillSelection(this.pendingSpecialSkillChoice.skills, selectedRarity, rarityNames[selectedRarity], (selectedSkill) => {
+                    if (selectedSkill === null) {
+                        this.gold += Math.floor(item.price * 0.5);
+                        this.ui.showDialog('已取消购买，返还一半金币！', () => {
+                            this.ui.updateGold(this.gold);
+                            this.ui.showShop(this.shopItems, this.gold, false);
+                        });
+                        return;
+                    }
+                    if (player.addSkill(selectedSkill)) {
+                        this.obtainedSkillIds.push(selectedSkill.id);
+                        audioManager.playMagic();
+                        this.ui.showDialog(`学会${rarityNames[selectedRarity]}品质技能: ${selectedSkill.name}！`, () => {
+                            this.ui.updateGold(this.gold);
+                            this.ui.showShop(this.shopItems, this.gold, false);
+                        });
+                    } else {
+                        this.gold += Math.floor(item.price * 0.5);
+                        this.ui.showDialog('技能栏已满，返还一半金币！', () => {
+                            this.ui.updateGold(this.gold);
+                            this.ui.showShop(this.shopItems, this.gold, false);
+                        });
+                    }
+                });
                 break;
         }
         

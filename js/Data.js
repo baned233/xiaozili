@@ -121,17 +121,11 @@ const ENEMY_ICONS = {
 };
 
 const SHOP_ITEMS = [
-    { id: 'heal_potion', name: '治疗药水', icon: '🧪', price: 30, effect: { type: 'heal', value: 50 }, desc: '恢复50点生命' },
-    { id: 'stamina_potion', name: '体力药水', icon: '🍖', price: 25, effect: { type: 'stamina', value: 50 }, desc: '恢复50点体力' },
-    { id: 'mana_potion', name: '法力药水', icon: '🧊', price: 35, effect: { type: 'mana', value: 30 }, desc: '恢复30点法力' },
-    { id: 'atk_boost', name: '力量药剂', icon: '💪', price: 60, effect: { type: 'atk', value: 3 }, desc: '永久+3攻击' },
-    { id: 'def_boost', name: '护甲碎片', icon: '🛡️', price: 50, effect: { type: 'def', value: 2 }, desc: '永久+2防御' },
-    { id: 'hp_boost', name: '生命宝石', icon: '❤️', price: 80, effect: { type: 'maxHp', value: 20 }, desc: '永久+20最大生命' },
-    { id: 'stamina_boost', name: '体力精髓', icon: '💥', price: 70, effect: { type: 'maxStamina', value: 15 }, desc: '永久+15最大体力' },
-    { id: 'mana_boost', name: '魔法水晶', icon: '💎', price: 90, effect: { type: 'maxMana', value: 10 }, desc: '永久+10最大法力' },
-    { id: 'crit_boost', name: '幸运符', icon: '🍀', price: 70, effect: { type: 'crit', value: 5 }, desc: '永久+5%暴击率' },
-    { id: 'skill_scroll', name: '技能卷轴', icon: '📜', price: 100, effect: { type: 'skill' }, desc: '随机获得一个技能' },
-    { id: 'relic_box', name: '遗物盒子', icon: '📦', price: 150, effect: { type: 'relic' }, desc: '随机获得一个遗物' },
+    { id: 'relic_box', name: '遗物盲盒', icon: '🎁', price: 150, effect: { type: 'relic' }, desc: '随机获得一个遗物' },
+    { id: 'skill_activation_b', name: '激活试剂-b型', icon: '🧪', price: 100, effect: { type: 'skill' }, desc: '随机获得一个技能' },
+    { id: 'supply', name: '补给', icon: '📦', price: 50, effect: { type: 'supply' }, desc: '随机获得一个物品' },
+    { id: 'enhancement_1', name: '强化试剂-1型', icon: '💎', price: 80, effect: { type: 'enhancement' }, desc: '随机强化一个属性' },
+    { id: 'special_skill_activation', name: '特质激活试剂', icon: '🔮', price: 200, effect: { type: 'special_skill' }, desc: '选择品质的技能' },
     { id: 'betel_nut', name: '槟榔', icon: '🌴', price: 20, effect: { type: 'heal', value: 30 }, desc: '恢复30点生命' }
 ];
 
