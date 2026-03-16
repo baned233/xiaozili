@@ -163,8 +163,25 @@
                 <div id="rest-options">
                     <button id="btn-rest" class="action-btn">休息 (恢复30%生命)</button>
                     <button id="btn-enhance" class="action-btn">强化 (随机提升属性)</button>
+                    <button id="btn-transform" class="action-btn">转换技能</button>
+                    <button id="btn-synthesize" class="action-btn">遗物合成</button>
                     <button id="btn-leave-rest" class="action-btn">离开</button>
                 </div>
+            </div>
+            
+            <!-- ==================== 技能转换面板 ==================== -->
+            <div id="transform-panel" class="hidden">
+                <h3>技能转换</h3>
+                <p style="color:#aaa;font-size:12px;margin-bottom:10px;">选择要转换的技能，转换后变为同品质随机技能</p>
+                <div id="transform-skill-options"></div>
+            </div>
+            
+            <!-- ==================== 遗物合成面板 ==================== -->
+            <div id="synthesis-panel" class="hidden">
+                <h3>遗物合成</h3>
+                <p style="color:#aaa;font-size:12px;margin-bottom:10px;">选择两个相同品质的遗物进行合成</p>
+                <div id="synthesis-relic-options"></div>
+                <button id="btn-close-synthesis" class="action-btn" style="margin-top:10px;">关闭</button>
             </div>
             
             <!-- ==================== 事件界面 ==================== -->
@@ -257,6 +274,10 @@
             <!-- 背景音乐开关 -->
             <label>
                 <input type="checkbox" id="music-toggle" checked> 背景音乐
+            </label>
+            <!-- 走路动画开关 -->
+            <label>
+                <input type="checkbox" id="walk-animation-toggle" checked> 走路动画
             </label>
             <!-- 返回按钮 -->
             <button id="btn-close-settings" class="menu-btn">返回</button>

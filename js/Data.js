@@ -273,6 +273,56 @@ const RANDOM_EVENTS = [
             { text: '进入搜索', effect: { relic: 'bloody_soap', message: '在黑暗中摸索半天，摸到了一个东西！' } },
             { text: '放弃进入', effect: { relic: 'coward', message: '你的勇气受到了大帝的鄙夷！' } }
         ]
+    },
+    {
+        id: 'hanzhong_choice',
+        name: '汉中抉择',
+        icon: '⚔️',
+        desc: '蜀道艰险😨粮草如何运送🤔北伐空耗国力😔不如效仿东吴🤓五虎仅剩一人😭谁敢当北伐先锋🤔',
+        options: [
+            { 
+                text: '有何不敢', 
+                effect: { 
+                    relic: { id: 41, name: '汉中兵符', description: '最大生命值+50，血量归零时，若你有技能壮誓，失去壮誓和该遗物，将生命值回复至60%', type: 'event', effect: { type: 'hanZhongBingFu' }, icon: '📜', note: '"汉中乃北伐剑锋，文长可担太守之则？有何不敢😡"' },
+                    message: '既承先帝遗志😏怎能困守不前😡嗯嗯嗯~哈！！😡😡我！！😡魏延😡只进不退！！！😡😡若魏寇将十万之众延当为主公尽歼😡👊纵曹贼举天下进犯👊👊👊😡延亦可勠力拒退为主破敌👊😡😡😡👊如鱼饮水魏文长在此👋😂👊尔辈何敢乃尔！😡👊😡👊主公有延助力，何忧汉室难兴？此身搏杀不懈，只为成主公之业😡👊曹贼吴犬，我有何惧哉？😠我尚未全力一搏，又试问谁能阻挡？😡😡👊丞相无需多虑🤫，我定能轻身立功。'
+                } 
+            },
+            { 
+                text: '江东杰瑞有何不好？', 
+                effect: { 
+                    message: '我有十万众，岂惧他八百士？' 
+                } 
+            }
+        ]
+    },
+    {
+        id: 'weiyan',
+        name: '胃炎',
+        icon: '🤢',
+        desc: '最近有点肚子痛😨，好像是胃炎...魏延🤔？',
+        options: [
+            { 
+                text: '玄德公匡扶汉室，我等当弃暗投明', 
+                effect: { 
+                    skill: { id: 55, name: '子午谷奇谋', description: '消耗最大生命值的10%对敌方单体造成较高物理伤害', type: 'attack', rarity: 'mythic', power: '100+1.6*atk', level: 5, icon: '🗡️', costType: 'sacrifice', costPercent: 0.1, tag: '普攻', isMagic: false, targetAll: false },
+                    message: '十万之众至，请为大王吞之，举天下来犯，请为大王拒之'
+                } 
+            },
+            { 
+                text: '平定益州，为主公夺龙兴之地', 
+                effect: { 
+                    skill: { id: 54, name: '壮誓', description: '献祭自身80%当前生命值，该技能每消耗40生命值获得一层【壮誓】，至多获得5层', type: 'sacrifice', rarity: 'legendary', power: 0, level: 5, icon: '🔥', costType: 'sacrifice', costPercent: 0.8, maxStacks: 5, isMagic: false, targetSelf: true },
+                    message: '得此猛将，何愁大业不成？'
+                } 
+            },
+            { 
+                text: '杀尽魏贼，扬主公汉室威名', 
+                effect: { 
+                    relic: { id: 40, name: '魏延药', description: '速度+50，防御锁定为零，攻击+25，最大生命值+100，你不再能够闪避', type: 'event', effect: { type: 'weiYanYao' }, icon: '💊', note: '"我，魏延，只进，不退😡"' },
+                    message: '杀！杀！杀！'
+                } 
+            }
+        ]
     }
 ];
 
@@ -498,6 +548,15 @@ const BUFF_DATA = {
                 isStamina: true
             });
             return staminaLoss;
+        }
+    },
+    '壮誓': {
+        name: '壮誓',
+        icon: '💪',
+        type: 'positive',
+        description: '使用带有"普攻"标签的技能后不会结束回合，至多X层，使用普攻后减少一层',
+        effect: (character, stacks) => {
+            return {};
         }
     }
 };

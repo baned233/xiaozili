@@ -188,27 +188,30 @@ class Game {
         }
         
         audioManager.playClick();       // 播放点击音效
-        this.ui.hideMapPanel();         // 隐藏地图面板
         
-        // 根据路径类型执行不同操作
-        switch (path.type) {
-            case 'battle':
-            case 'elite':
-                this.startBattle(path.type === 'elite');  // 开始战斗
-                break;
-            case 'boss':
-                this.startBattle(false, true);             // BOSS战
-                break;
-            case 'shop':
-                this.openShop();            // 打开商店
-                break;
-            case 'rest':
-                this.openRest();            // 打开安全屋
-                break;
-            case 'event':
-                this.triggerEvent();
-                break;
-        }
+        this.ui.playWalkAnimation(() => {
+            this.ui.hideMapPanel();         // 隐藏地图面板
+            
+            // 根据路径类型执行不同操作
+            switch (path.type) {
+                case 'battle':
+                case 'elite':
+                    this.startBattle(path.type === 'elite');  // 开始战斗
+                    break;
+                case 'boss':
+                    this.startBattle(false, true);             // BOSS战
+                    break;
+                case 'shop':
+                    this.openShop();            // 打开商店
+                    break;
+                case 'rest':
+                    this.openRest();            // 打开安全屋
+                    break;
+                case 'event':
+                    this.triggerEvent();
+                    break;
+            }
+        });
     }
 
     // ==================== 开始战斗 ====================
@@ -1034,6 +1037,10 @@ class Game {
     // ==================== 进入下一层 ====================
     // 完成任务后进入下一层
     nextFloor() {
+        this.doNextFloor();
+    }
+
+    doNextFloor() {
         this.currentFloor++;  // 层数+1
         
         // 更新宠物生命值
@@ -1274,8 +1281,10 @@ class Game {
                 });
                 break;
             case 'def':
-                player.def += item.effect.value;
-                player.relicBonusDef = (player.relicBonusDef || 0) + item.effect.value;
+                if (!player.defLocked) {
+                    player.def += item.effect.value;
+                    player.relicBonusDef = (player.relicBonusDef || 0) + item.effect.value;
+                }
                 audioManager.playDefense();
                 this.ui.showDialog(`防御力 +${item.effect.value}！`, () => {
                     this.ui.updateGold(this.gold);
@@ -1480,11 +1489,10 @@ class Game {
                             this.ui.showShop(this.shopItems, this.gold, false);
                         });
                     } else {
-                        this.gold += Math.floor(item.price * 0.5);
-                        this.ui.showDialog('技能栏已满，返还一半金币！', () => {
-                            this.ui.updateGold(this.gold);
-                            this.ui.showShop(this.shopItems, this.gold, false);
-                        });
+                        this.pendingSkillToLearn = selectedSkill;
+                        this.pendingSkillFromShop = true;
+                        this.ui.hideShop();
+                        this.ui.showSkillReplacePanel(player.skills, selectedSkill);
                     }
                 });
                 break;
@@ -1500,6 +1508,7 @@ class Game {
 
     openRest() {
         this.state = 'rest';
+        this.restUsed = false;
         this.ui.showRest();
     }
 
@@ -1537,6 +1546,143 @@ class Game {
     leaveRest() {
         this.ui.hideRest();
         this.showMapSelection();
+    }
+
+    openTransformSkill() {
+        if (this.restUsed) {
+            this.ui.showDialog('本次安全屋功能已使用完毕！', () => {});
+            return;
+        }
+        
+        const player = this.playerTeam[0];
+        if (!player.skills || player.skills.length === 0) {
+            this.ui.showDialog('没有可转换的技能！', () => {});
+            return;
+        }
+        
+        this.ui.hideRest();
+        this.ui.showTransformSkillPanel(player.skills, (skillIndex) => {
+            this.transformSkill(skillIndex);
+        });
+    }
+
+    transformSkill(skillIndex) {
+        const player = this.playerTeam[0];
+        const oldSkill = player.skills[skillIndex];
+        const rarity = oldSkill.rarity;
+        
+        const playerSkillIds = player.skills.map(s => s.id);
+        const allOwnedSkillIds = [...new Set([...this.obtainedSkillIds, ...playerSkillIds])];
+        
+        const skillPool = SKILL_POOL.filter(s => !allOwnedSkillIds.includes(s.id) && s.rarity === rarity);
+        
+        if (skillPool.length === 0) {
+            for (const r of ['uncommon', 'rare', 'common', 'epic', 'legendary', 'mythic']) {
+                const fallbackPool = SKILL_POOL.filter(s => !allOwnedSkillIds.includes(s.id) && s.rarity === r);
+                if (fallbackPool.length > 0) {
+                    const newSkill = new Skill(fallbackPool[Math.floor(Math.random() * fallbackPool.length)]);
+                    this.doTransformSkill(player, skillIndex, oldSkill, newSkill);
+                    return;
+                }
+            }
+            this.ui.showDialog('转换失败，没有可用的同品质技能！', () => {
+                this.ui.hideTransformSkillPanel();
+                this.ui.showRest();
+            });
+            return;
+        }
+        
+        const newSkill = new Skill(skillPool[Math.floor(Math.random() * skillPool.length)]);
+        this.doTransformSkill(player, skillIndex, oldSkill, newSkill);
+    }
+
+    doTransformSkill(player, skillIndex, oldSkill, newSkill) {
+        const oldSkillIdIndex = this.obtainedSkillIds.indexOf(oldSkill.id);
+        
+        player.skills.splice(skillIndex, 1);
+        player.skills.push(newSkill);
+        
+        if (oldSkillIdIndex !== -1) {
+            this.obtainedSkillIds[oldSkillIdIndex] = newSkill.id;
+        }
+        
+        this.restUsed = true;
+        
+        audioManager.playMagic();
+        this.ui.hideTransformSkillPanel();
+        this.ui.showDialog(`技能转换成功！\n${oldSkill.name} → ${newSkill.name}`, () => {
+            this.ui.hideRest();
+            this.nextFloor();
+        });
+    }
+
+    openRelicSynthesis() {
+        if (this.restUsed) {
+            this.ui.showDialog('本次安全屋功能已使用完毕！', () => {});
+            return;
+        }
+        
+        const player = this.playerTeam[0];
+        if (!player.relics || player.relics.length < 2) {
+            this.ui.showDialog('遗物不足，需要至少2个遗物才能合成！', () => {});
+            return;
+        }
+        
+        const synthesisRecipes = this.getSynthesisRecipes();
+        
+        this.ui.hideRest();
+        this.ui.showRelicSynthesisPanel(synthesisRecipes, player.relics, (material1Id, material2Id, resultId) => {
+            this.synthesizeRelic(material1Id, material2Id, resultId);
+        });
+    }
+
+    getSynthesisRecipes() {
+        return [
+            { material1Id: 34, material2Id: 35, resultId: 38, rarity: 'rare' }
+        ];
+    }
+
+    synthesizeRelic(material1Id, material2Id, resultId) {
+        const player = this.playerTeam[0];
+        
+        const relic1Index = player.relics.findIndex(r => r.id === material1Id);
+        const relic2Index = player.relics.findIndex(r => r.id === material2Id);
+        
+        if (relic1Index === -1 || relic2Index === -1) {
+            this.ui.showDialog('遗物不足，无法合成！', () => {});
+            return;
+        }
+        
+        const resultRelicData = RELIC_POOL.find(r => r.id === resultId);
+        if (!resultRelicData) {
+            this.ui.showDialog('合成失败，未知的遗物！', () => {});
+            return;
+        }
+        
+        const relic1 = player.relics[relic1Index];
+        const relic2 = player.relics[relic2Index];
+        
+        const removeIndex1 = relic1Index < relic2Index ? relic1Index : relic1Index - 1;
+        player.relics.splice(removeIndex1, 1);
+        const removeIndex2 = relic2Index < relic1Index ? relic2Index : relic2Index - 1;
+        player.relics.splice(removeIndex2, 1);
+        
+        const newRelic = new Relic(resultRelicData);
+        newRelic.applyEffect(player);
+        player.relics.push(newRelic);
+        this.obtainedRelicIds.push(newRelic.id);
+        
+        this.restUsed = true;
+        
+        audioManager.playMagic();
+        this.ui.hideSynthesisPanel();
+        this.ui.showDialog(`遗物合成成功！\n${relic1.name} + ${relic2.name}\n→ ${newRelic.name}`, () => {
+            this.ui.showRest();
+        }, {
+            icon: newRelic.icon,
+            name: newRelic.name,
+            description: newRelic.description
+        });
     }
 
     triggerEvent() {
@@ -1645,9 +1791,10 @@ class Game {
         
         if (option.effect.buff) {
             player.atk += option.effect.buff.atk || 0;
-            player.def += option.effect.buff.def || 0;
-            player.relicBonusAtk = (player.relicBonusAtk || 0) + (option.effect.buff.atk || 0);
-            player.relicBonusDef = (player.relicBonusDef || 0) + (option.effect.buff.def || 0);
+            if (!player.defLocked) {
+                player.def += option.effect.buff.def || 0;
+                player.relicBonusDef = (player.relicBonusDef || 0) + (option.effect.buff.def || 0);
+            }
             audioManager.playBuff();
             resultText = '获得了增益效果！';
         }
@@ -1667,8 +1814,10 @@ class Game {
                         audioManager.playBuff(); 
                         break;
                     case 'def': 
-                        player.def += baseItem.effect.value; 
-                        player.relicBonusDef = (player.relicBonusDef || 0) + baseItem.effect.value;
+                        if (!player.defLocked) {
+                            player.def += baseItem.effect.value; 
+                            player.relicBonusDef = (player.relicBonusDef || 0) + baseItem.effect.value;
+                        }
                         audioManager.playDefense(); 
                         break;
                 }
@@ -1789,48 +1938,88 @@ class Game {
             }
         }
         
-        if (option.effect.relic) {
-            const relicIdMap = {
-                'two_surname_servant': 21,
-                'world_line': 22,
-                'bloody_soap': 23,
-                'coward': 24
-            };
-            
-            let relicId = relicIdMap[option.effect.relic];
-            if (!relicId && typeof option.effect.relic === 'number') {
-                relicId = option.effect.relic;
+        // 处理事件选项中获得技能
+        if (option.effect.skill) {
+            const newSkill = new Skill(option.effect.skill);
+            const hasSkill = player.skills && player.skills.some(s => s.name === newSkill.name);
+            if (!hasSkill) {
+                if (player.skills.length < 6) {
+                    player.skills.push(newSkill);
+                    this.obtainedSkillIds.push(newSkill.id);
+                    resultText = option.effect.message || `获得了新技能——${newSkill.name}！`;
+                    rewardInfo = {
+                        icon: newSkill.icon,
+                        name: newSkill.name,
+                        description: newSkill.description
+                    };
+                    audioManager.playMagic();
+                } else {
+                    resultText = option.effect.message || '技能栏已满，无法获得新技能！';
+                }
+            } else {
+                resultText = option.effect.message || `你已有技能——${newSkill.name}！`;
             }
-            
-            if (relicId) {
-                const relicPoolItem = RELIC_POOL.find(r => r.id === relicId);
-                if (relicPoolItem) {
-                    const relic = new Relic(relicPoolItem);
-                    if (option.effect.relic === 'two_surname_servant') {
-                        player.maxHp -= 10;
-                        player.hp = Math.min(player.hp, player.maxHp);
-                        resultText = '被503中的成员邀请加入！最大生命值降低10点，';
-                    } else if (option.effect.relic === 'world_line') {
-                        this.currentFloor = Math.max(1, this.currentFloor + 3);
-                        resultText = '获得了变动的世界线！角色上升3层！';
-                    } else if (option.effect.relic === 'bloody_soap') {
-                        resultText = '在黑暗中摸索半天，摸到了一个东西！';
-                    } else if (option.effect.relic === 'coward') {
-                        resultText = '你的勇气受到了大帝的鄙夷！';
-                    } else if (typeof option.effect.relic === 'number') {
-                        resultText = option.effect.message || '';
-                    }
-                    
-                    if (player && typeof player.addRelic === 'function' && player.addRelic(relic, this)) {
-                        this.obtainedRelicIds.push(relic.id);
-                        const relicText = resultText ? ` ${resultText}` : `获得圣人遗物——${relic.name}！`;
-                        resultText = relicText;
-                        rewardInfo = {
-                            icon: relic.icon,
-                            name: relic.name,
-                            description: relic.description
-                        };
-                        audioManager.playMagic();
+        }
+        
+        if (option.effect.relic) {
+            // 支持传入完整的relic对象或relic ID
+            if (typeof option.effect.relic === 'object' && option.effect.relic.id) {
+                const relic = new Relic(option.effect.relic);
+                resultText = option.effect.message || '';
+                if (player && typeof player.addRelic === 'function' && player.addRelic(relic, this)) {
+                    this.obtainedRelicIds.push(relic.id);
+                    const relicText = resultText ? ` ${resultText}` : `获得圣人遗物——${relic.name}！`;
+                    resultText = relicText;
+                    rewardInfo = {
+                        icon: relic.icon,
+                        name: relic.name,
+                        description: relic.description
+                    };
+                    audioManager.playMagic();
+                }
+            } else {
+                const relicIdMap = {
+                    'two_surname_servant': 21,
+                    'world_line': 22,
+                    'bloody_soap': 23,
+                    'coward': 24
+                };
+                
+                let relicId = relicIdMap[option.effect.relic];
+                if (!relicId && typeof option.effect.relic === 'number') {
+                    relicId = option.effect.relic;
+                }
+                
+                if (relicId) {
+                    const relicPoolItem = RELIC_POOL.find(r => r.id === relicId);
+                    if (relicPoolItem) {
+                        const relic = new Relic(relicPoolItem);
+                        if (option.effect.relic === 'two_surname_servant') {
+                            player.maxHp -= 10;
+                            player.hp = Math.min(player.hp, player.maxHp);
+                            resultText = '被503中的成员邀请加入！最大生命值降低10点，';
+                        } else if (option.effect.relic === 'world_line') {
+                            this.currentFloor = Math.max(1, this.currentFloor + 3);
+                            resultText = '获得了变动的世界线！角色上升3层！';
+                        } else if (option.effect.relic === 'bloody_soap') {
+                            resultText = '在黑暗中摸索半天，摸到了一个东西！';
+                        } else if (option.effect.relic === 'coward') {
+                            resultText = '你的勇气受到了大帝的鄙夷！';
+                        } else if (typeof option.effect.relic === 'number') {
+                            resultText = option.effect.message || '';
+                        }
+                        
+                        if (player && typeof player.addRelic === 'function' && player.addRelic(relic, this)) {
+                            this.obtainedRelicIds.push(relic.id);
+                            const relicText = resultText ? ` ${resultText}` : `获得圣人遗物——${relic.name}！`;
+                            resultText = relicText;
+                            rewardInfo = {
+                                icon: relic.icon,
+                                name: relic.name,
+                                description: relic.description
+                            };
+                            audioManager.playMagic();
+                        }
                     }
                 }
             }
@@ -1932,6 +2121,12 @@ class Game {
                     player.relicBonusAtk = 0;
                     player.relicBonusDef = 0;
                     player.relicBonusSpd = 0;
+                    player.adaptationPoints = 0;
+                }
+                // 检查是否有魏延药，设置防御锁定
+                if (player.relics && player.relics.some(r => r.name === '魏延药')) {
+                    player.defLocked = true;
+                    player.cannotDodge = true;
                 }
                 player.getHpPercent = function() {
                     return Math.floor((this.hp / this.maxHp) * 100);
@@ -2111,12 +2306,22 @@ class Game {
     replaceSkill(oldSkillIndex) {
         const player = this.playerTeam[0];
         const newSkill = this.pendingSkillToLearn;
+        const fromShop = this.pendingSkillFromShop;
         
         if (!newSkill || oldSkillIndex < 0 || oldSkillIndex >= player.skills.length) {
             this.ui.hideSkillReplacePanel();
-            this.ui.showDialog('替换取消', () => {
-                this.nextFloor();
-            });
+            if (fromShop) {
+                this.gold += Math.floor(this.pendingSpecialSkillChoice.item.price * 0.5);
+                this.ui.showDialog('替换取消，返还一半金币！', () => {
+                    this.ui.updateGold(this.gold);
+                    this.ui.showShop(this.shopItems, this.gold, false);
+                });
+            } else {
+                this.ui.showDialog('替换取消', () => {
+                    this.nextFloor();
+                });
+            }
+            this.pendingSkillFromShop = false;
             return;
         }
         
@@ -2133,20 +2338,40 @@ class Game {
         }
         
         this.pendingSkillToLearn = null;
+        this.pendingSkillFromShop = false;
         
         this.ui.hideSkillReplacePanel();
-        this.ui.showDialog(`学会了新技能: ${newSkill.name}！替换了 ${oldSkill.name}`, () => {
-            this.nextFloor();
-        });
+        if (fromShop) {
+            this.ui.showDialog(`学会新技能: ${newSkill.name}！替换了 ${oldSkill.name}`, () => {
+                this.ui.updateGold(this.gold);
+                this.ui.showShop(this.shopItems, this.gold, false);
+            });
+        } else {
+            this.ui.showDialog(`学会了新技能: ${newSkill.name}！替换了 ${oldSkill.name}`, () => {
+                this.nextFloor();
+            });
+        }
     }
 
     cancelSkillReplace() {
-        this.gold += 20;
-        this.ui.updateGold(this.gold);
+        const fromShop = this.pendingSkillFromShop;
+        this.pendingSkillToLearn = null;
+        this.pendingSkillFromShop = false;
+        
         this.ui.hideSkillReplacePanel();
-        this.ui.showDialog('技能栏已满，获得20金币！', () => {
-            this.nextFloor();
-        });
+        if (fromShop) {
+            this.gold += Math.floor(this.pendingSpecialSkillChoice.item.price * 0.5);
+            this.ui.updateGold(this.gold);
+            this.ui.showDialog('已取消购买，返还一半金币！', () => {
+                this.ui.showShop(this.shopItems, this.gold, false);
+            });
+        } else {
+            this.gold += 20;
+            this.ui.updateGold(this.gold);
+            this.ui.showDialog('技能栏已满，获得20金币！', () => {
+                this.nextFloor();
+            });
+        }
     }
 
     obtainDebugItem(type, item) {

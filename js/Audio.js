@@ -123,6 +123,14 @@ class AudioManager {
         });
     }
 
+    playStep() {
+        const audio = new Audio('assets/sounds/step.mp3');
+        audio.volume = Math.min(this.sfxVolume * 3, 1);
+        audio.play().catch(e => {
+            console.log('Sound step.mp3 play failed');
+        });
+    }
+
     playHit() {
         this.playSoundFile('hit.mp3');
     }

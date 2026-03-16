@@ -164,10 +164,26 @@ class UI {
             audioManager.playClick();
             this.game.enhance();
         });
+        document.getElementById('btn-transform').addEventListener('click', () => {
+            audioManager.playClick();
+            this.game.openTransformSkill();
+        });
+        document.getElementById('btn-synthesize').addEventListener('click', () => {
+            audioManager.playClick();
+            this.game.openRelicSynthesis();
+        });
         document.getElementById('btn-leave-rest').addEventListener('click', () => {
             audioManager.playClick();
             this.game.leaveRest();
         });
+        
+        const closeSynthesisBtn = document.getElementById('btn-close-synthesis');
+        if (closeSynthesisBtn) {
+            closeSynthesisBtn.addEventListener('click', () => {
+                audioManager.playClick();
+                this.hideSynthesisPanel();
+            });
+        }
         
         const toggleLogBtn = document.getElementById('btn-toggle-battle-log');
         if (toggleLogBtn) {
@@ -182,6 +198,7 @@ class UI {
         const sfxVolume = document.getElementById('sfx-volume');
         const musicVolume = document.getElementById('music-volume');
         const musicToggle = document.getElementById('music-toggle');
+        const walkAnimationToggle = document.getElementById('walk-animation-toggle');
         
         if (sfxVolume) {
             sfxVolume.addEventListener('input', (e) => {
@@ -203,6 +220,13 @@ class UI {
                     audioManager.stopBgMusic();
                 }
             });
+        }
+        
+        if (walkAnimationToggle) {
+            walkAnimationToggle.addEventListener('change', (e) => {
+                this.walkAnimationEnabled = e.target.checked;
+            });
+            this.walkAnimationEnabled = walkAnimationToggle.checked;
         }
 
         if (this.playerPortrait) {
@@ -260,11 +284,14 @@ class UI {
 
         let isDragging = false;
         let offsetX, offsetY;
+        let logPanelWidth, logPanelHeight;
 
         const onMouseDown = (e) => {
             if (e.target.closest('button') || e.target.closest('.battle-log-entry')) return;
             isDragging = true;
             logPanel.classList.add('dragging');
+            logPanelWidth = logPanel.offsetWidth;
+            logPanelHeight = logPanel.offsetHeight;
             offsetX = e.clientX - logPanel.offsetLeft;
             offsetY = e.clientY - logPanel.offsetTop;
             e.preventDefault();
@@ -277,12 +304,35 @@ class UI {
             const container = document.getElementById('game-container');
             if (container) {
                 const containerRect = container.getBoundingClientRect();
-                newX = Math.max(containerRect.left, Math.min(newX, containerRect.right - logPanel.offsetWidth));
-                newY = Math.max(containerRect.top, Math.min(newY, containerRect.bottom - logPanel.offsetHeight));
+                newX = Math.max(containerRect.left, Math.min(newX, containerRect.right - logPanelWidth));
+                newY = Math.max(containerRect.top, Math.min(newY, containerRect.bottom - logPanelHeight));
             }
             logPanel.style.left = newX + 'px';
             logPanel.style.top = newY + 'px';
         };
+
+        const onMouseUp = () => {
+            if (isDragging) {
+                isDragging = false;
+                logPanel.classList.remove('dragging');
+            }
+        };
+
+        logPanel.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+
+        logPanel.addEventListener('touchstart', (e) => {
+            if (e.target.closest('button') || e.target.closest('.battle-log-entry')) return;
+            isDragging = true;
+            logPanel.classList.add('dragging');
+            logPanelWidth = logPanel.offsetWidth;
+            logPanelHeight = logPanel.offsetHeight;
+            const touch = e.touches[0];
+            offsetX = touch.clientX - logPanel.offsetLeft;
+            offsetY = touch.clientY - logPanel.offsetTop;
+            e.preventDefault();
+        }, { passive: false });
 
         document.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
@@ -292,17 +342,17 @@ class UI {
             const container = document.getElementById('game-container');
             if (container) {
                 const containerRect = container.getBoundingClientRect();
-                newX = Math.max(containerRect.left, Math.min(newX, containerRect.right - panelWidth));
-                newY = Math.max(containerRect.top, Math.min(newY, containerRect.bottom - panelHeight));
+                newX = Math.max(containerRect.left, Math.min(newX, containerRect.right - logPanelWidth));
+                newY = Math.max(containerRect.top, Math.min(newY, containerRect.bottom - logPanelHeight));
             }
-            panel.style.left = newX + 'px';
-            panel.style.top = newY + 'px';
+            logPanel.style.left = newX + 'px';
+            logPanel.style.top = newY + 'px';
         }, { passive: false });
 
         document.addEventListener('touchend', () => {
             if (isDragging) {
                 isDragging = false;
-                panel.classList.remove('dragging');
+                logPanel.classList.remove('dragging');
             }
         });
     }
@@ -325,6 +375,27 @@ class UI {
     showGameScreen() {
         this.mainMenu.classList.add('hidden');
         this.gameScreen.classList.remove('hidden');
+        this.initBgParticles();
+    }
+
+    initBgParticles() {
+        const gameScreen = document.getElementById('game-screen');
+        if (!gameScreen) return;
+        
+        const existingParticles = gameScreen.querySelectorAll('.bg-particle');
+        if (existingParticles.length > 0) return;
+        
+        for (let i = 0; i < 15; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'bg-particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 15 + 's';
+            particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+            particle.style.width = (2 + Math.random() * 4) + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.opacity = 0.2 + Math.random() * 0.4;
+            gameScreen.appendChild(particle);
+        }
     }
 
     initDraggableTrainingPanel() {
@@ -861,6 +932,60 @@ class UI {
 
     hideMapPanel() {
         this.mapPanel.classList.add('hidden');
+    }
+
+    playWalkAnimation(callback) {
+        // 检查是否启用走路动画
+        if (this.walkAnimationEnabled === false) {
+            if (callback) callback();
+            return;
+        }
+        
+        const mapPanel = document.getElementById('map-panel');
+        if (!mapPanel) {
+            if (callback) callback();
+            return;
+        }
+        
+        // 播放走路音效
+        audioManager.playStep();
+        
+        // 隐藏map-panel上的文字和选项
+        const mapContent = mapPanel.querySelectorAll('h3, #path-options');
+        mapContent.forEach(el => el.style.visibility = 'hidden');
+        
+        mapPanel.style.transition = 'transform 1.5s ease-out';
+        mapPanel.style.transformOrigin = 'center bottom';
+        mapPanel.style.transform = 'scale(1.15)';
+        
+        let shakeCount = 0;
+        const maxShakes = 6;
+        const shakeInterval = setInterval(() => {
+            if (shakeCount >= maxShakes) {
+                clearInterval(shakeInterval);
+                mapPanel.style.transform = 'scale(1.15) translate(0px, 0px)';
+                return;
+            }
+            
+            const shakeX = (Math.random() - 0.5) * 40;
+            const shakeY = (Math.random() - 0.5) * 30;
+            mapPanel.style.transform = `scale(1.15) translate(${shakeX}px, ${shakeY}px)`;
+            shakeCount++;
+        }, 250);
+        
+        setTimeout(() => {
+            clearInterval(shakeInterval);
+            mapPanel.style.transition = 'transform 0.3s ease-out';
+            mapPanel.style.transform = 'scale(1)';
+            setTimeout(() => {
+                mapPanel.style.transition = '';
+                mapPanel.style.transform = '';
+                mapPanel.style.transformOrigin = '';
+                // 显示文字和选项
+                mapContent.forEach(el => el.style.visibility = 'visible');
+                if (callback) callback();
+            }, 300);
+        }, 1500);
     }
 
     // ==================== 显示战斗区域 ====================
@@ -1734,6 +1859,139 @@ class UI {
         this.restPanel.classList.add('hidden');
     }
 
+    showTransformSkillPanel(skills, onSelect) {
+        const panel = document.getElementById('transform-panel');
+        panel.classList.remove('hidden');
+        
+        const optionsContainer = document.getElementById('transform-skill-options');
+        optionsContainer.innerHTML = '';
+        
+        if (skills.length === 0) {
+            optionsContainer.innerHTML = '<div style="color:#666;text-align:center;padding:20px;">没有可转换的技能</div>';
+            const backBtn = document.createElement('button');
+            backBtn.className = 'action-btn';
+            backBtn.textContent = '返回';
+            backBtn.style.marginTop = '10px';
+            backBtn.addEventListener('click', () => {
+                audioManager.playClick();
+                this.hideTransformSkillPanel();
+            });
+            optionsContainer.appendChild(backBtn);
+            return;
+        }
+        
+        const rarityNames = {
+            'common': '普通',
+            'rare': '稀有',
+            'uncommon': '罕见',
+            'epic': '史诗',
+            'legendary': '传说',
+            'mythic': '神话'
+        };
+        
+        skills.forEach((skill, index) => {
+            const shortDesc = skill.description.split('，')[0].split(',')[0];
+            const skillIconHtml = skill.icon && skill.icon.endsWith('.png')
+                ? `<img src="${skill.icon}" alt="${skill.name}" style="width:28px;height:28px;object-fit:contain;">`
+                : `<span class="skill-icon">${skill.icon}</span>`;
+            const btn = document.createElement('button');
+            btn.className = `replace-skill-btn ${Skill.getRarityColor(skill.rarity)}`;
+            btn.style.margin = '5px auto';
+            btn.style.display = 'block';
+            btn.innerHTML = `
+                ${skillIconHtml}
+                <span class="skill-name">${skill.name}</span>
+                <span class="skill-desc">${shortDesc}</span>
+                <span class="skill-rarity">${rarityNames[skill.rarity]}</span>
+            `;
+            btn.addEventListener('click', () => {
+                audioManager.playClick();
+                onSelect(index);
+            });
+            optionsContainer.appendChild(btn);
+        });
+        
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'action-btn';
+        cancelBtn.textContent = '取消';
+        cancelBtn.style.marginTop = '10px';
+        cancelBtn.addEventListener('click', () => {
+            audioManager.playClick();
+            this.hideTransformSkillPanel();
+        });
+        optionsContainer.appendChild(cancelBtn);
+    }
+
+    hideTransformSkillPanel() {
+        const panel = document.getElementById('transform-panel');
+        panel.classList.add('hidden');
+        this.showRest();
+    }
+
+    showRelicSynthesisPanel(synthesisRecipes, playerRelics, onSynthesize) {
+        const panel = document.getElementById('synthesis-panel');
+        panel.classList.remove('hidden');
+        
+        const optionsContainer = document.getElementById('synthesis-relic-options');
+        optionsContainer.innerHTML = '';
+        
+        if (playerRelics.length < 2) {
+            optionsContainer.innerHTML = '<div style="color:#666;text-align:center;padding:20px;">遗物不足，无法合成</div>';
+            return;
+        }
+        
+        const rarityNames = {
+            'common': '普通',
+            'rare': '稀有',
+            'uncommon': '罕见',
+            'epic': '史诗',
+            'legendary': '传说',
+            'mythic': '神话'
+        };
+        
+        const rarityColors = {
+            'common': '#fff',
+            'rare': '#4caf50',
+            'uncommon': '#2196f3',
+            'epic': '#9c27b0',
+            'legendary': '#ff9800',
+            'mythic': '#f44336'
+        };
+        
+        let html = '<div style="display:flex;flex-direction:column;gap:10px;">';
+        
+        synthesisRecipes.forEach(recipe => {
+            const canSynthesize = playerRelics.some(r => r.id === recipe.material1Id) && 
+                                  playerRelics.some(r => r.id === recipe.material2Id);
+            
+            const material1 = RELIC_POOL.find(r => r.id === recipe.material1Id);
+            const material2 = RELIC_POOL.find(r => r.id === recipe.material2Id);
+            const result = RELIC_POOL.find(r => r.id === recipe.resultId);
+            
+            html += `
+                <div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;${!canSynthesize ? 'opacity:0.5;' : ''}">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">
+                        <span>${material1?.icon || '📿'} ${material1?.name || ''}</span>
+                        <span>+</span>
+                        <span>${material2?.icon || '📿'} ${material2?.name || ''}</span>
+                        <span>=</span>
+                        <span style="color:${rarityColors[recipe.rarity] || '#fff'};font-weight:bold;">${result?.icon || '📿'} ${result?.name || ''}</span>
+                    </div>
+                    <div style="text-align:center;font-size:11px;color:#888;">${result?.note || ''}</div>
+                    ${canSynthesize ? `<button class="action-btn" style="width:100%;margin-top:5px;" onclick="game.synthesizeRelic(${recipe.material1Id}, ${recipe.material2Id}, ${recipe.resultId})">合成</button>` : '<div style="text-align:center;color:#666;font-size:11px;">材料不足</div>'}
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        optionsContainer.innerHTML = html;
+    }
+
+    hideSynthesisPanel() {
+        const panel = document.getElementById('synthesis-panel');
+        panel.classList.add('hidden');
+    }
+
     showEvent(event) {
         this.eventPanel.classList.remove('hidden');
         this.eventTitle.textContent = event.name;
@@ -2179,7 +2437,7 @@ getRarityCN(rarity) {
                 <div class="encyc-card-name">${skill.name}</div>
                 <div class="encyc-rarity-cn ${skill.rarity}">${this.getRarityCN(skill.rarity)}</div>
             `;
-            card.addEventListener('click', () => this.showEncyclopediaDetail(skill.name, skill.icon, this.getRarityCN(skill.rarity), skill.description));
+            card.addEventListener('click', () => this.showEncyclopediaDetail(skill.name, skill.icon, this.getRarityCN(skill.rarity), skill.description, null, skill));
             content.appendChild(card);
         });
     }
@@ -2250,13 +2508,18 @@ getRarityCN(rarity) {
         });
     }
 
-    showEncyclopediaDetail(name, icon, rarity, description, extraInfo) {
+    showEncyclopediaDetail(name, icon, rarity, description, extraInfo, skill) {
         let popup = document.getElementById('encyc-detail-popup');
         if (!popup) {
             popup = document.createElement('div');
             popup.id = 'encyc-detail-popup';
             popup.className = 'hidden';
             document.body.appendChild(popup);
+        }
+        
+        let damageFormulaHtml = '';
+        if (skill && skill.power) {
+            damageFormulaHtml = `<div class="encyc-detail-power" style="margin-top: 8px; font-size: 13px; color: #ff6b6b;">伤害公式: ${skill.power}${skill.isTrueDamage ? ' (真实伤害)' : ''}</div>`;
         }
         
         const extraHtml = extraInfo ? `<div class="encyc-detail-extra" style="margin-top: 10px; font-size: 12px; color: #aaa;">${extraInfo}</div>` : '';
@@ -2270,6 +2533,7 @@ getRarityCN(rarity) {
                 <div class="encyc-detail-name">${name}</div>
                 <div class="encyc-detail-rarity ${rarity}">${rarity}</div>
                 <div class="encyc-detail-desc">${description}</div>
+                ${damageFormulaHtml}
                 ${extraHtml}
                 <button class="encyc-detail-close">关闭</button>
             </div>

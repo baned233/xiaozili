@@ -398,7 +398,8 @@ class Enemy {
     attack(target) {
         const speedDiff = target.spd - this.spd;
         let dodged = false;
-        if (speedDiff > 0 && Math.random() * 100 < speedDiff) {
+        // 如果目标没有"不能闪避"属性，则计算闪避
+        if (!target.cannotDodge && speedDiff > 0 && Math.random() * 100 < speedDiff) {
             dodged = true;
         }
         

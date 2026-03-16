@@ -59,6 +59,9 @@ class Character {
         this.relicBonusAtk = 0;
         this.relicBonusDef = 0;
         this.relicBonusSpd = 0;
+        this.relicBonusMagicPower = 0;
+        this.adaptationPoints = 0;
+        this.defLocked = false;  // 防御力锁定（魏延药）
         this.霸王之卵免疫一次 = false;
         this.霸王之卵复活 = false;
     }
@@ -108,6 +111,24 @@ class Character {
         }
         
         this.hp = Math.max(0, this.hp - actualDamage);
+        
+        // 检查汉中兵符效果：血量归零时，若有技能壮誓，失去壮誓和遗物，回血60%
+        if (this.hp <= 0 && !this.isDead) {
+            const hasHanZhong = this.relics && this.relics.some(r => r.name === '汉中兵符');
+            const hasZhuangshiSkill = this.skills && this.skills.some(s => s.name === '壮誓');
+            
+            if (hasHanZhong && hasZhuangshiSkill) {
+                // 失去壮誓技能
+                this.skills = this.skills.filter(s => s.name !== '壮誓');
+                // 失去汉中兵符遗物
+                this.relics = this.relics.filter(r => r.name !== '汉中兵符');
+                // 回复60%生命
+                this.hp = Math.floor(this.maxHp * 0.6);
+                this.isDead = false;
+                return actualDamage;
+            }
+        }
+        
         if (this.hp <= 0) {
             this.isDead = true;
         }
@@ -153,7 +174,8 @@ class Character {
     attack(target, weapon = null) {
         const speedDiff = target.spd - this.spd;
         let dodged = false;
-        if (speedDiff > 0 && Math.random() * 100 < speedDiff) {
+        // 如果目标没有"不能闪避"属性，则计算闪避
+        if (!target.cannotDodge && speedDiff > 0 && Math.random() * 100 < speedDiff) {
             dodged = true;
         }
         
@@ -239,6 +261,12 @@ class Character {
         
         switch(skill.type) {
             case 'attack':
+                // 处理献祭类型消耗（如子午谷奇谋）
+                if (skill.costType === 'sacrifice' && skill.costPercent) {
+                    const sacrificeCost = Math.floor(this.maxHp * skill.costPercent);
+                    this.takeDamage(sacrificeCost);
+                }
+                
                 if (skill.targetAll) {
                     const enemies = battle.getAliveEnemies();
                     let totalDamage = 0;
@@ -526,6 +554,28 @@ class Character {
                         this.shield = (this.shield || 0) + shieldValue;
                     }
                     
+                    // 处理饮战被动 - 普攻造成伤害后回复生命
+                    // 检查是否是有"普攻"标签的技能，或者是子午谷奇谋/挥砍
+                    const isNormalAttack = skill.tag === '普攻' || skill.name === '挥砍' || skill.name === '子午谷奇谋';
+                    if (isNormalAttack && result > 0) {
+                        const hasYinzhan = this.skills && this.skills.some(s => s.name === '饮战');
+                        if (hasYinzhan) {
+                            const healAmount = Math.min(
+                                Math.floor(result * 0.1),
+                                Math.floor(this.maxHp * 0.5)
+                            );
+                            if (healAmount > 0) {
+                                this.heal(healAmount);
+                                battle.battleLog.push({
+                                    type: 'heal',
+                                    target: this.name,
+                                    amount: healAmount,
+                                    source: '饮战'
+                                });
+                            }
+                        }
+                    }
+                    
                     return { damage: result, type: 'attack', isCrit };
                 }
             
@@ -565,7 +615,9 @@ class Character {
                 return { heal: skill.heal, type: 'heal' };
             
             case 'defense':
-                this.def += skill.defense;
+                if (!this.defLocked) {
+                    this.def += skill.defense;
+                }
                 this.defending = true;
                 return { defense: skill.defense, type: 'defense' };
             
@@ -799,6 +851,23 @@ class Character {
             case 'passive':
                 return { type: 'passive', effect: skill.effect };
             
+            case 'sacrifice':
+                // 壮誓技能：每消耗40生命值获得一层壮誓，至多5层
+                const sacrificeCost = Math.floor((this.hp || 0) * skill.costPercent);
+                const stacksGained = Math.min(Math.floor(sacrificeCost / 40), skill.maxStacks || 5);
+                
+                // 扣除生命值
+                if (sacrificeCost > 0) {
+                    this.takeDamage(sacrificeCost);
+                }
+                
+                // 添加壮誓buff
+                if (stacksGained > 0) {
+                    this.addBuff('壮誓', stacksGained);
+                }
+                
+                return { type: 'sacrifice', stacks: stacksGained, cost: sacrificeCost };
+            
             default:
                 return { type: 'none' };
         }
@@ -809,10 +878,12 @@ class Character {
         if (weapon) {
             this.weapon = { type: weaponType, ...weapon };
             this.atk += weapon.atkBonus || 0;
-            this.def += weapon.defBonus || 0;
+            if (!this.defLocked) {
+                this.def += weapon.defBonus || 0;
+                this.relicBonusDef = (this.relicBonusDef || 0) + (weapon.defBonus || 0);
+            }
             this.crit += weapon.critBonus || 0;
             this.relicBonusAtk = (this.relicBonusAtk || 0) + (weapon.atkBonus || 0);
-            this.relicBonusDef = (this.relicBonusDef || 0) + (weapon.defBonus || 0);
         }
         return this.weapon;
     }
@@ -912,7 +983,7 @@ class Character {
         for (let i = 0; i < actualStacks; i++) {
             const effect = buff.effect(this, 1);
             if (effect.atk) this.atk += effect.atk;
-            if (effect.def) this.def += effect.def;
+            if (effect.def && !this.defLocked) this.def += effect.def;
             if (effect.spd) this.spd += effect.spd;
         }
     }
@@ -932,7 +1003,9 @@ class Character {
         const savedBaseSpd = this.baseSpd;
         
         this.atk = (savedBaseAtk !== undefined ? savedBaseAtk : this.atk) + (this.relicBonusAtk || 0);
-        this.def = (savedBaseDef !== undefined ? savedBaseDef : this.def) + (this.relicBonusDef || 0);
+        if (!this.defLocked) {
+            this.def = (savedBaseDef !== undefined ? savedBaseDef : this.def) + (this.relicBonusDef || 0);
+        }
         this.spd = (savedBaseSpd !== undefined ? savedBaseSpd : this.spd) + (this.relicBonusSpd || 0);
         
         this.baseAtk = savedBaseAtk;
@@ -945,7 +1018,7 @@ class Character {
                 for (let i = 0; i < buff.stacks; i++) {
                     const effect = buffData.effect(this, 1);
                     if (effect.atk) this.atk += effect.atk;
-                    if (effect.def) this.def += effect.def;
+                    if (effect.def && !this.defLocked) this.def += effect.def;
                     if (effect.spd) this.spd += effect.spd;
                     if (effect.atkReduction) {
                         this.atk = Math.floor(this.atk * (1 - effect.atkReduction));

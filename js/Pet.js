@@ -138,11 +138,13 @@ class Pet {
     applyBuff(character) {
         if (this.battleType === 'buff') {
             character.atk += this.stats.atk;
-            character.def += this.stats.def;
+            if (!character.defLocked) {
+                character.def += this.stats.def;
+                character.relicBonusDef = (character.relicBonusDef || 0) + this.stats.def;
+            }
             character.maxHp += this.stats.hp;
             character.hp += this.stats.hp;
             character.relicBonusAtk = (character.relicBonusAtk || 0) + this.stats.atk;
-            character.relicBonusDef = (character.relicBonusDef || 0) + this.stats.def;
         }
     }
 

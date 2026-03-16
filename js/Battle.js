@@ -279,6 +279,14 @@ class Battle {
                                 });
                             }
                         }
+                        if (relic.effect?.type === 'maseSeSe') {
+                            const healAmount = Math.floor(c.maxHp * 0.05);
+                            c.heal(healAmount);
+                            this.battleLog.push({
+                                type: 'relicEffect',
+                                message: `${relic.name} 恢复了 ${healAmount} 点生命值`
+                            });
+                        }
                     });
                 }
                 
@@ -431,7 +439,10 @@ class Battle {
         }
 
         const targetInfo = this.selectedTarget;
-        const noEndTurn = skillUsed && (skillUsed.noEndTurn || skillUsed.name === '开导');
+        const player = this.playerTeam[0];
+        const hasZhuangshi = player.buffs && player.buffs.some(b => b.name === '壮誓');
+        const skillHasNormalTag = skillUsed && skillUsed.tag === '普攻';
+        const noEndTurn = skillUsed && (skillUsed.noEndTurn || skillUsed.name === '开导' || (hasZhuangshi && skillHasNormalTag));
         
         this.selectedSkill = null;
         this.selectedTarget = null;
@@ -442,6 +453,17 @@ class Battle {
             if (battleEnd.ended) {
                 return { success: true, battleEnd, result, target: targetInfo };
             }
+            
+            // 壮誓buff效果：使用普攻后减少一层
+            if (hasZhuangshi && skillHasNormalTag) {
+                player.buffs.forEach(buff => {
+                    if (buff.name === '壮誓') {
+                        buff.stacks = Math.max(0, buff.stacks - 1);
+                    }
+                });
+                player.buffs = player.buffs.filter(b => b.name !== '壮誓' || b.stacks > 0);
+            }
+            
             return { success: true, state: 'playerSelect', nextActor: this.currentActor, result, target: targetInfo };
         }
         

@@ -27,6 +27,9 @@ class Skill {
         this.passive = data.passive || false;  // 是否是被动技能
         this.stacks = data.stacks || 1;        // 叠加层数
         this.noEndTurn = data.noEndTurn || false;  // 使用后是否结束回合
+        this.tag = data.tag || null;  // 技能标签（如"普攻"）
+        this.costPercent = data.costPercent || null;  // 献祭消耗百分比
+        this.maxStacks = data.maxStacks || 1;  // 最大叠加层数
     }
 
     // 判断这个技能是否需要选择目标
@@ -35,6 +38,7 @@ class Skill {
         if (this.type === 'fear' && this.effect?.type === 'fear') return false;
         if (this.type === 'execute') return false;
         if (this.type === 'heal' && this.targetSelf) return false;
+        if (this.type === 'sacrifice' && this.targetSelf) return false;
         return this.type === 'attack' || this.type === 'debuff' || this.type === 'mark' || this.type === 'banish' || this.type === 'buff' || this.type === 'heal' || (this.type === 'summon' && !this.targetSelf);
     }
 
@@ -120,7 +124,8 @@ const SKILL_POOL = [
         level: 1,
         icon: 'assets/images/huikan.png',
         cost: 0,
-        isMagic: false
+        isMagic: false,
+        tag: '普攻'
     },
     {
         id: 12,
@@ -411,7 +416,7 @@ const SKILL_POOL = [
         power: '50+1.2*atk',
         level: 2,
         icon: '🦷',
-        cost: 25,
+        cost: 20,
         isMagic: false
     },
     {
@@ -641,5 +646,64 @@ const SKILL_POOL = [
         cost: 5,
         isMagic: true,
         sound: 'fire'
+    },
+    {
+        id: 52,
+        name: '梦强',
+        description: '越梦越强！使用后玩家立即获得五层BUFF：士气',
+        type: 'buff',
+        rarity: 'rare',
+        power: 0,
+        level: 3,
+        icon: '💤',
+        cost: 30,
+        isMagic: false,
+        targetSelf: true,
+        effect: { type: 'gainBuff', buffName: '士气', stacks: 5 }
+    },
+    {
+        id: 53,
+        name: '饮战',
+        description: '普攻回血！，你使用带有"普攻"标签的技能造成伤害后回复本次伤害10%的生命值（不大于最大生命值的50%）',
+        type: 'passive',
+        rarity: 'rare',
+        power: 0,
+        level: 3,
+        icon: '🩸',
+        cost: 0,
+        isMagic: false,
+        targetSelf: true,
+        passive: true,
+        effect: { type: 'lifestealAttack', rate: 0.1, maxRate: 0.5 }
+    },
+    {
+        id: 54,
+        name: '壮誓',
+        description: '献祭自身80%当前生命值，该技能每消耗40生命值获得一层【壮誓】，至多获得5层',
+        type: 'sacrifice',
+        rarity: 'legendary',
+        power: 0,
+        level: 5,
+        icon: '🔥',
+        costType: 'sacrifice',
+        costPercent: 0.8,
+        maxStacks: 5,
+        isMagic: false,
+        targetSelf: true
+    },
+    {
+        id: 55,
+        name: '子午谷奇谋',
+        description: '对敌方单体造成较高物理伤害，消耗最大生命值的10%',
+        type: 'attack',
+        rarity: 'mythic',
+        power: '100+1.6*atk',
+        level: 5,
+        icon: '🗡️',
+        costType: 'sacrifice',
+        costPercent: 0.1,
+        tag: '普攻',
+        isMagic: false,
+        targetAll: false
     }
 ];
