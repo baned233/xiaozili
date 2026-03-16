@@ -230,7 +230,7 @@ const RANDOM_EVENTS = [
         icon: '⚠️',
         desc: '你不小心踩到了一个陷阱！',
         options: [
-            { text: '触发陷阱', effect: { trapDamage: 0.2, skill: 'disciple' } }
+            { text: '触发陷阱', effect: { trapDamage: 0.2 } }
         ]
     },
 

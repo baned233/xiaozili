@@ -29,6 +29,9 @@ class Relic {
         // 排除事件类型遗物（只能通过事件获得）
         pool = pool.filter(r => r.type !== 'event');
         
+        // 排除合成类型遗物（只能通过合成获得）
+        pool = pool.filter(r => r.type !== 'synthesize');
+        
         // 如果不允许独占遗物，排除它们
         if (!allowExclusive) {
             pool = pool.filter(r => !this.EXCLUSIVE_RELIC_IDS.includes(r.id));
@@ -188,7 +191,7 @@ const RELIC_POOL = [
     { id: 35, name: '铃铛', description: '攻击力+8', type: 'passive', effect: { type: 'atk', value: 8 }, icon: '🔔', note: '"宣告我的到来，以及你的...死亡"' },
     { id: 36, name: '腕豪的指虎', description: '防御力+5，拥有此遗物时，使用技能：手痒难耐必定暴击', type: 'passive', effect: { type: 'def', value: 5, skillCritGuarantee: '手痒难耐' }, icon: '🥊', note: '"那必须是我了"' },
     { id: 37, name: '莫塔里的计算器', description: '暴击伤害+24%', type: 'passive', effect: { type: 'critDmg', value: 24 }, icon: '🧮', note: '"获得3+3=24点暴击伤害，3+3为什么=24？别问，问就是计算器算的"' },
-    { id: 38, name: '马瑟瑟', description: '攻击力+12，速度+12，每回合回复角色5%最大生命值', type: 'passive', effect: { type: 'maseSeSe' }, icon: '🐴', note: '"为什么钟和铃铛合成会变成这个呢？我也不知道"君子如是说道"' },
+    { id: 38, name: '马瑟瑟', description: '攻击力+12，速度+12，每回合回复角色5%最大生命值', type: 'synthesize', effect: { type: 'maseSeSe' }, icon: '🐴', note: '"为什么钟和铃铛合成会变成这个呢？我也不知道"君子如是说道"' },
     { id: 39, name: '足力健', description: '速度+9', type: 'passive', effect: { type: 'speed', value: 9 }, icon: '👟', note: '"健步如飞"' },
     { id: 40, name: '魏延药', description: '速度+50，防御锁定为零，攻击+25，最大生命值+100，你不再能够闪避', type: 'event', effect: { type: 'weiYanYao' }, icon: '💊', note: '"我，魏延，只进，不退😡"' },
     { id: 41, name: '汉中兵符', description: '最大生命值+50，血量归零时，若你有技能壮誓，失去壮誓和该遗物，将生命值回复至60%', type: 'event', effect: { type: 'hanZhongBingFu' }, icon: '📜', note: '"汉中乃北伐剑锋，文长可担太守之则？有何不敢😡"' },

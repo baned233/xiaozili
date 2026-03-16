@@ -1990,6 +1990,7 @@ class UI {
     hideSynthesisPanel() {
         const panel = document.getElementById('synthesis-panel');
         panel.classList.add('hidden');
+        this.showRest();
     }
 
     showEvent(event) {
